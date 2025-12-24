@@ -1,5 +1,5 @@
-import LayoutComponent from '@/components/layout_component';
-import { getIcon } from '@/components/icons';
+import LayoutComponent from '@/components/common/layout_component';
+import { getIcon } from '@/components/common/icons';
 
 export default function layout({ children }: { children: React.ReactNode }) {
     // Example usage in a layout or page:

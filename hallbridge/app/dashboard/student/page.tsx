@@ -1,4 +1,4 @@
-import { getIcon } from "@/components/icons";
+import { getIcon } from "@/components/common/icons";
 import TomorrowMeals from "@/components/student/tomorrow_meals";
 import Link from "next/link";
 
