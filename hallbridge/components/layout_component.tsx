@@ -21,12 +21,12 @@ export default function LayoutComponent({ navItems }: LayoutComponentProps){
     const currentPage = usePathname();
     
     return(
-        <div className="w-64 h-256 bg-linear-to-l from-gray-800 to-zinc-800 flex flex-col">
-            <div className='h-16'>
+        <div className="w-64 min-h-screen bg-linear-to-l from-gray-800 to-zinc-800 flex flex-col">
+            <div className='h-16 flex-shrink-0'>
                 <Logo />
             </div>
             
-            <div className='h-190'>
+            <div className='flex-1 overflow-y-auto'>
                 <nav className="flex px-4 py-6">
                     <ul className="space-y-2 w-full">
                         {navItems.map((item) => (
@@ -51,7 +51,7 @@ export default function LayoutComponent({ navItems }: LayoutComponentProps){
                 </nav>
             </div>
 
-            <div className="flex px-4 py-6 flex-col gap-4">
+            <div className="flex px-4 py-6 flex-col gap-4 flex-shrink-0">
                 <button 
                     className="w-full px-4 py-3 border border-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium cursor-pointer"
                 >
