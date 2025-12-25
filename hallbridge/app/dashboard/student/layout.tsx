@@ -1,5 +1,5 @@
-import LayoutComponent from '@/components/layout_component';
-import { getIcon } from '@/components/icons';
+import LayoutComponent from '@/components/common/layout_component';
+import { getIcon } from '@/components/common/icons';
 
 export default function layout({ children }: { children: React.ReactNode }) {
     // Example usage in a layout or page:
@@ -14,8 +14,10 @@ export default function layout({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="flex flex-row">
-            <LayoutComponent navItems={studentNavItems} />
-            {children}
+            <LayoutComponent navItems={studentNavItems}/>
+            <div className="flex-l flex-col w-400 h-screen overflow-y-auto">
+                {children}
+            </div>
         </div>
     )
 }

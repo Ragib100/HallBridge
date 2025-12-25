@@ -26,6 +26,7 @@ const Icons = {
 	money: '💰',
 	dollar: '💵',
 	bills: '💰',
+	taka: '৳',
 	payment: '💳',
 	revenue: '💰',
 	expense: '💸',
@@ -97,6 +98,7 @@ const Icons = {
 	thumbsDown: '👎',
 	like: '👍',
 	dislike: '👎',
+	wave: '👋',
 	sos: '🚨',
 	alert: '🚨',
 	siren: '🚨',
@@ -117,6 +119,7 @@ const Icons = {
 	lock: '🔐',
 	key: '🔑',
 	logout: '🚪',
+	pin: '📍',
 }
 
 export function getIcon(name: keyof typeof Icons): string {
