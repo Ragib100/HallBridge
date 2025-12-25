@@ -15,7 +15,9 @@ export default function layout({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex flex-row">
             <LayoutComponent navItems={studentNavItems}/>
-            {children}
+            <div className="flex-l flex-col w-400 h-screen overflow-y-auto">
+                {children}
+            </div>
         </div>
     )
 }

@@ -3,7 +3,7 @@ import { getIcon } from "@/components/common/icons";
 
 export default function HomePage() {
 	return (
-		<div className="flex-l flex-col w-400 h-screen">
+		<div className="flex-l flex-col">
 			<header className="flex w-auto h-16 items-center px-4 font-bold text-lg shadow-[0_1px_2px_rgba(0,0,0,0.5)]">My Bill</header>
 			<main className="bg-[#f3f4f6] w-full h-full">
 				<div className="bg-white mx-8 my-4 p-8 shadow-[0px_1px_2px_0_rgba(0,0,0,0.3)] rounded-2xl">
