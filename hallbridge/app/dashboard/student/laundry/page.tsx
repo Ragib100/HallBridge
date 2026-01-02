@@ -1,345 +1,161 @@
 'use client';
 
 import { useState } from 'react';
-import '../../staff/staff.css';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem, SelectLabel } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { getIcon } from '@/components/common/icons';
+
+interface LaundryFormData {
+	pickupDate: string;
+	pickupTime: string;
+	serviceType: string;
+	itemCount: string;
+	specialInstructions: string;
+}
+
+interface CardInfo {
+	title: string;
+	price: string;
+	backgroundColor: string;
+}
 
 export default function StudentLaundryPage() {
-  const [activeTab, setActiveTab] = useState('schedule');
-  const [formData, setFormData] = useState({
-    pickupDate: '',
-    pickupTime: '',
-    serviceType: '',
-    itemCount: '',
-    specialInstructions: ''
-  });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
 
-  return (
-    <div className="staff-content">
-      <div className="tabs">
-        <div 
-          className={`tab ${activeTab === 'schedule' ? 'active' : ''}`}
-          onClick={() => setActiveTab('schedule')}
-        >
-          Schedule Pickup
-        </div>
-        <div 
-          className={`tab ${activeTab === 'tracking' ? 'active' : ''}`}
-          onClick={() => setActiveTab('tracking')}
-        >
-          Track Laundry
-        </div>
-        <div 
-          className={`tab ${activeTab === 'history' ? 'active' : ''}`}
-          onClick={() => setActiveTab('history')}
-        >
-          History & Billing
-        </div>
-      </div>
+	const [submitting, setSubmitting] = useState<boolean>(false);
 
-      {activeTab === 'schedule' && (
-        <div className="section">
-          <div className="section-header">
-            <span className="section-title">🧺 Schedule Laundry Pickup</span>
-          </div>
+	const [formData, setFormData] = useState<LaundryFormData>({
+		pickupDate: '',
+		pickupTime: "10:00:00",
+		serviceType: '',
+		itemCount: '',
+		specialInstructions: ''
+	});
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="meal-cards" style={{ marginBottom: '16px' }}>
-              <div className="meal-card blue">
-                <div className="meal-type">Regular Wash</div>
-                <div className="meal-number">$2/kg</div>
-              </div>
-              <div className="meal-card yellow">
-                <div className="meal-type">Express Wash</div>
-                <div className="meal-number">$3/kg</div>
-              </div>
-              <div className="meal-card green">
-                <div className="meal-type">Dry Clean</div>
-                <div className="meal-number">$5/item</div>
-              </div>
-            </div>
+	const cards: CardInfo[] = [
+		{ title: 'Regular Wash (2-3 days)', price: '30/kg', backgroundColor: '#364ff5' },
+		{ title: 'Express Wash (24 hours)', price: '50/kg', backgroundColor: '#f5bc36' },
+		{ title: 'Dry Clean (3-4 days)', price: '80/piece', backgroundColor: '#2ef71b' },
+		{ title: 'Iron Only', price: '5/piece', backgroundColor: '#07f0b2' }
+	];
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Pickup Date *</label>
-                <input 
-                  type="date"
-                  name="pickupDate"
-                  value={formData.pickupDate}
-                  onChange={handleInputChange}
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Pickup Time *</label>
-                <select 
-                  name="pickupTime"
-                  value={formData.pickupTime}
-                  onChange={handleInputChange}
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-                >
-                  <option value="">Select Time</option>
-                  <option value="morning">Morning (9 AM - 12 PM)</option>
-                  <option value="afternoon">Afternoon (2 PM - 5 PM)</option>
-                  <option value="evening">Evening (6 PM - 8 PM)</option>
-                </select>
-              </div>
-            </div>
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+		setFormData({
+			...formData,
+			[e.target.name]: e.target.value
+		});
+	};
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Service Type *</label>
-              <select 
-                name="serviceType"
-                value={formData.serviceType}
-                onChange={handleInputChange}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-              >
-                <option value="">Select Service</option>
-                <option value="regular">Regular Wash (2-3 days)</option>
-                <option value="express">Express Wash (24 hours)</option>
-                <option value="dry-clean">Dry Clean (3-4 days)</option>
-                <option value="iron-only">Iron Only</option>
-              </select>
-            </div>
+	const handle_submit = async () => {
+		setSubmitting(true);
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Estimated Item Count/Weight</label>
-              <input 
-                type="text"
-                name="itemCount"
-                value={formData.itemCount}
-                onChange={handleInputChange}
-                placeholder="e.g., 10 items or 5 kg"
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-              />
-            </div>
+		setTimeout(() => {
+			alert('Laundry pickup scheduled successfully!');
+			setSubmitting(false);
+		}, 2000);
+	}
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Special Instructions</label>
-              <textarea 
-                name="specialInstructions"
-                value={formData.specialInstructions}
-                onChange={handleInputChange}
-                placeholder="Any special care instructions..."
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', minHeight: '80px' }}
-              />
-            </div>
+	return (
+		<Card className="mx-4 my-6 w-full h-full p-6 gap-4">
+			<CardHeader className="mb-4">
+				<label className="font-bold text-2xl">{getIcon('laundry')} Schedule Laundry Pickup</label>
+			</CardHeader>
 
-            <button className="export-btn">📝 Schedule Pickup</button>
-          </div>
+			<div className="flex w-full h-auto gap-4">
+				{cards.map((card) => (
+					<div className="flex flex-col w-full py-4 border items-center justify-center rounded-2xl" style={{ backgroundColor: card.backgroundColor }} key={card.title}>
+						<p className="text-2xl">{card.title}</p>
+						<p>{getIcon('taka')} {card.price}</p>
+					</div>
+				))}
+			</div>
 
-          <div className="section" style={{ marginTop: '20px' }}>
-            <div className="section-title">📋 Available Pickup Slots This Week</div>
-            <div className="forecast-item">
-              <span>Tomorrow (Dec 25)</span>
-              <div className="forecast-meals">
-                <span className="forecast-meal" style={{ backgroundColor: '#4caf50' }}>Morning ✓</span>
-                <span className="forecast-meal" style={{ backgroundColor: '#4caf50' }}>Afternoon ✓</span>
-                <span className="forecast-meal" style={{ backgroundColor: '#ccc' }}>Evening ✗</span>
-              </div>
-            </div>
-            <div className="forecast-item">
-              <span>Dec 26</span>
-              <div className="forecast-meals">
-                <span className="forecast-meal" style={{ backgroundColor: '#4caf50' }}>Morning ✓</span>
-                <span className="forecast-meal" style={{ backgroundColor: '#4caf50' }}>Afternoon ✓</span>
-                <span className="forecast-meal" style={{ backgroundColor: '#4caf50' }}>Evening ✓</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+			<CardContent>
+				<form
+					onSubmit={(e) => { e.preventDefault(); handle_submit(); }}
+					className="flex flex-col gap-4 px-4 py-6"
+				>
+					<div className="flex gap-4 w-full pb-6">
+						<div className="w-full">
+							<label className="font-bold">Pickup Date *</label>
+							<Input
+								type="date"
+								name="pickupDate"
+								value={formData.pickupDate}
+								onChange={handleInputChange}
+								className="p-2 border rounded-lg"
+							/>
+						</div>
+						<div className="w-full">
+							<label className="font-bold">Pickup Time *</label>
+							<Input
+								type="time"
+								name="pickupTime"
+								value={formData.pickupTime}
+								onChange={handleInputChange}
+								className="p-2 border rounded-lg"
+							/>
+						</div>
+					</div>
 
-      {activeTab === 'tracking' && (
-        <div className="section">
-          <div className="section-header">
-            <span className="section-title">📦 Track Your Laundry</span>
-          </div>
+					<div className="pb-6">
+						<label className="font-bold">Service Type *</label>
+						<Select
+							value={formData.serviceType}
+							onValueChange={(value) => setFormData({ ...formData, serviceType: value })}
+						>
+							<SelectTrigger className="w-full">
+								<SelectValue placeholder="Select Service Type" />
+							</SelectTrigger>
 
-          <div className="menu-day">
-            <h3 className="menu-day-title">In Progress</h3>
-            <div className="forecast-item" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold' }}>Order #LN-2024-234</div>
-                  <div style={{ fontSize: '14px', color: '#666' }}>Service: Regular Wash</div>
-                </div>
-                <span style={{ backgroundColor: '#007aff', color: 'white', padding: '4px 12px', borderRadius: '12px', fontSize: '14px' }}>
-                  Washing
-                </span>
-              </div>
-              <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
-                Picked up: Dec 23, 2025 | Expected delivery: Dec 25, 2025
-              </div>
-              <div style={{ width: '100%', marginTop: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
-                  <span>Progress</span>
-                  <span>60%</span>
-                </div>
-                <div className="voting-bar-container">
-                  <div className="voting-bar" style={{ width: '60%', backgroundColor: '#007aff' }}></div>
-                </div>
-              </div>
-              <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                Status: Currently in washing process
-              </div>
-            </div>
+							<SelectContent>
+								<SelectGroup>
+									<SelectLabel className="text-lg">Service Types</SelectLabel>
+									<SelectItem value="regular">Regular Wash (2-3 days)</SelectItem>
+									<SelectItem value="express">Express Wash (24 hours)</SelectItem>
+									<SelectItem value="dry-clean">Dry Clean (3-4 days)</SelectItem>
+									<SelectItem value="iron-only">Iron Only</SelectItem>
+								</SelectGroup>
+							</SelectContent>
+						</Select>
+					</div>
 
-            <div className="forecast-item" style={{ flexDirection: 'column', alignItems: 'flex-start', marginTop: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold' }}>Order #LN-2024-241</div>
-                  <div style={{ fontSize: '14px', color: '#666' }}>Service: Express Wash</div>
-                </div>
-                <span style={{ backgroundColor: '#ffa500', color: 'white', padding: '4px 12px', borderRadius: '12px', fontSize: '14px' }}>
-                  Drying
-                </span>
-              </div>
-              <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
-                Picked up: Dec 24, 2025 | Expected delivery: Dec 25, 2025
-              </div>
-              <div style={{ width: '100%', marginTop: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
-                  <span>Progress</span>
-                  <span>80%</span>
-                </div>
-                <div className="voting-bar-container">
-                  <div className="voting-bar" style={{ width: '80%', backgroundColor: '#ffa500' }}></div>
-                </div>
-              </div>
-              <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                Status: Drying and ironing in progress
-              </div>
-            </div>
-          </div>
+					<div className="pb-6">
+						<label className="font-bold">Estimated Item Count or Weight</label>
+						<Input
+							type="text"
+							name="itemCount"
+							value={formData.itemCount}
+							onChange={handleInputChange}
+							placeholder="e.g., 10 items or 5 kg"
+						/>
+					</div>
 
-          <div className="menu-day">
-            <h3 className="menu-day-title">Ready for Delivery</h3>
-            <div className="forecast-item" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold' }}>Order #LN-2024-228</div>
-                  <div style={{ fontSize: '14px', color: '#666' }}>Service: Regular Wash</div>
-                </div>
-                <span style={{ backgroundColor: '#4caf50', color: 'white', padding: '4px 12px', borderRadius: '12px', fontSize: '14px' }}>
-                  Ready
-                </span>
-              </div>
-              <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
-                Items: 8 pieces | Weight: 4.5 kg | Amount: $9
-              </div>
-              <button className="export-btn" style={{ marginTop: '12px', padding: '8px 16px' }}>
-                📍 Track Delivery
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+					<div className="pb-6">
+						<label className="font-bold">Special Instructions (optional)</label>
+						<Textarea
+							name="specialInstructions"
+							value={formData.specialInstructions}
+							onChange={handleInputChange}
+							placeholder="Any special care instructions..."
+							className="py-8"
+						/>
+					</div>
 
-      {activeTab === 'history' && (
-        <div className="section">
-          <div className="section-header">
-            <span className="section-title">📊 Laundry History & Billing</span>
-            <button className="export-btn">📊 Export Statement</button>
-          </div>
+					<Button
+						className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold mt-2 py-6 cursor-pointer"
+						onClick={() => { setSubmitting(true) }}
+						disabled={submitting}
+					>
+						{submitting ? <Spinner /> : "📝 Schedule Pickup"}
+					</Button>
 
-          <div className="meal-cards" style={{ marginBottom: '20px' }}>
-            <div className="meal-card blue">
-              <div className="meal-type">This Month</div>
-              <div className="meal-number">$45</div>
-              <div style={{ fontSize: '14px', marginTop: '8px' }}>6 orders</div>
-            </div>
-            <div className="meal-card yellow">
-              <div className="meal-type">Last Month</div>
-              <div className="meal-number">$38</div>
-              <div style={{ fontSize: '14px', marginTop: '8px' }}>5 orders</div>
-            </div>
-            <div className="meal-card green">
-              <div className="meal-type">Total (2025)</div>
-              <div className="meal-number">$425</div>
-              <div style={{ fontSize: '14px', marginTop: '8px' }}>58 orders</div>
-            </div>
-          </div>
-
-          <div className="menu-day">
-            <h3 className="menu-day-title">Recent Orders</h3>
-            
-            <div className="forecast-item" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold' }}>Order #LN-2024-228</div>
-                  <div style={{ fontSize: '14px', color: '#666' }}>Regular Wash | Dec 20, 2025</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 'bold', color: '#4caf50' }}>$9.00</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>Paid</div>
-                </div>
-              </div>
-              <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
-                Items: 8 pieces | Weight: 4.5 kg
-              </div>
-            </div>
-
-            <div className="forecast-item" style={{ flexDirection: 'column', alignItems: 'flex-start', marginTop: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold' }}>Order #LN-2024-219</div>
-                  <div style={{ fontSize: '14px', color: '#666' }}>Express Wash | Dec 18, 2025</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 'bold', color: '#4caf50' }}>$15.00</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>Paid</div>
-                </div>
-              </div>
-              <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
-                Items: 12 pieces | Weight: 5 kg
-              </div>
-            </div>
-
-            <div className="forecast-item" style={{ flexDirection: 'column', alignItems: 'flex-start', marginTop: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold' }}>Order #LN-2024-205</div>
-                  <div style={{ fontSize: '14px', color: '#666' }}>Dry Clean | Dec 15, 2025</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 'bold', color: '#4caf50' }}>$25.00</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>Paid</div>
-                </div>
-              </div>
-              <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
-                Items: 5 pieces (Formal wear)
-              </div>
-            </div>
-          </div>
-
-          <div className="section" style={{ marginTop: '20px' }}>
-            <h3 className="voting-subtitle">Billing Summary</h3>
-            <div className="forecast-item">
-              <span>Regular Wash Services</span>
-              <span style={{ fontWeight: 'bold' }}>$320</span>
-            </div>
-            <div className="forecast-item">
-              <span>Express Wash Services</span>
-              <span style={{ fontWeight: 'bold' }}>$80</span>
-            </div>
-            <div className="forecast-item">
-              <span>Dry Clean Services</span>
-              <span style={{ fontWeight: 'bold' }}>$25</span>
-            </div>
-            <div className="forecast-item" style={{ borderTop: '2px solid #ddd', paddingTop: '12px', marginTop: '12px' }}>
-              <span style={{ fontWeight: 'bold' }}>Total (2025)</span>
-              <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#007aff' }}>$425</span>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+				</form>
+			</CardContent>
+		</Card>
+	);
 }
