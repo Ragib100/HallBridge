@@ -55,14 +55,14 @@ const meals = [
 
 export default function GuestMeal() {
     return (
-        <div className="container mx-auto py-8 px-4">
+        <div className="container mx-auto py-8 px-2 md:px-4 max-w-full overflow-x-hidden">
             <div className="mb-8 text-center">
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Weekly Meal Menu</h1>
                 <p className="text-gray-600">Check out this week's meal schedule</p>
             </div>
 
-            <div className="rounded-lg border border-gray-200 shadow-lg bg-white">
-                <Table>
+            <div className="rounded-lg border border-gray-200 shadow-lg bg-white overflow-x-auto">
+                <Table className="min-w-full">
                     <TableHeader>
                         <TableRow className="bg-blue-600 hover:bg-blue-800">
                             <TableHead className="text-white font-bold text-base pl-4">Day</TableHead>

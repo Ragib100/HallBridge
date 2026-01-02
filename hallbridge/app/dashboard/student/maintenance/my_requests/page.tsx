@@ -1,4 +1,5 @@
 import '@/app/dashboard/staff/staff.css'
+import { Button } from '@/components/ui/button';
 
 export default function MyRequestsPage() {
     return (
@@ -85,9 +86,9 @@ export default function MyRequestsPage() {
                     <div style={{ fontSize: '14px', color: '#666' }}>
                         Completed on: Dec 20, 2025
                     </div>
-                    <button className="export-btn" style={{ marginTop: '8px', padding: '6px 12px', fontSize: '14px' }}>
+                    <Button className="w-full mt-3 bg-blue-500 hover:bg-blue-600 border border-blue-700 cursor-pointer">
                         ⭐ Rate Service
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

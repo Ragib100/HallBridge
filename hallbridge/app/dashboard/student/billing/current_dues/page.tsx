@@ -42,25 +42,25 @@ export default function CurrentDuesPage() {
     };
 
     return (
-        <div className="fgap-8 py-6">
-            <div className="flex flex-col px-4 py-4">
+        <div className="gap-8 py-6 max-w-full overflow-x-hidden">
+            <div className="flex flex-col px-2 md:px-4 py-4">
                 <p className="text-lg font-bold">{getIcon('bills')} Current Dues Overview</p>
                 <p className="">Due Date: Dec 31, 2025</p>
             </div>
 
-            <div className="flex gap-4 px-4">
+            <div className="flex flex-col md:flex-row gap-4 px-2 md:px-4">
                 {Object.entries(billdata.billinfo).map(([key, value], index) => (
-                    <div key={key} className="rounded-lg py-6 items-center justify-center flex flex-col w-full" style={{background: colors[index]}}>
-                        <p className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
-                        <div className="text-3xl">{getIcon('taka')} {value}</div>
+                    <div key={key} className="rounded-lg py-4 md:py-6 items-center justify-center flex flex-col w-full" style={{background: colors[index]}}>
+                        <p className="capitalize text-sm md:text-base">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                        <div className="text-2xl md:text-3xl">{getIcon('taka')} {value}</div>
                     </div>
                 ))}
             </div>
 
-            <div className="px-4 py-8 my-4">
+            <div className="px-2 md:px-4 py-8 my-4">
                 <h3 className="text-lg font-bold mb-4">Payment Breakdown</h3>
                 {Object.entries(billdata.billinfo).map(([key, value]) => (
-                    <div key={key} className="px-4 border-t py-2">
+                    <div key={key} className="px-2 md:px-4 border-t py-2">
                         <div className="flex justify-between items-center">
                             <p className="font-semibold capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
                             <p className="flex items-center">{getIcon('taka')} {value}</p>
@@ -68,7 +68,7 @@ export default function CurrentDuesPage() {
                     </div>
                 ))}
 
-                <div className="px-4 border-t-2 border-black py-3 mt-2">
+                <div className="px-2 md:px-4 border-t-2 border-black py-3 mt-2">
                     <div className="flex justify-between items-center">
                         <p className="font-bold text-lg">Total Amount</p>
                         <p className="flex items-center font-bold text-lg">{getIcon('taka')} {billdata.amount}</p>
@@ -76,12 +76,12 @@ export default function CurrentDuesPage() {
                 </div>
             </div>
 
-            <div className="flex w-full justify-between">
-                <div className="w-[49%]">
+            <div className="flex flex-col md:flex-row w-full gap-2 md:gap-0 justify-between px-2 md:px-0">
+                <div className="w-full md:w-[49%]">
                     <PayNow amount={billdata.amount} dueDate="Dec 31, 2025" />
                 </div>
                 <Button 
-                    className="w-[49%] h-10 cursor-pointer" 
+                    className="w-full md:w-[49%] h-10 cursor-pointer" 
                     style={{backgroundColor:"gray"}}
                     onClick={handleDownloadInvoice}
                 >

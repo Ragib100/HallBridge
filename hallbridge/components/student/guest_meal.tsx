@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Spinner } from "@/components/ui/spinner";
 import {
 	Select,
@@ -151,36 +150,36 @@ export default function GuestMeal() {
 							<Label>Select Meals</Label>
 							<div className="space-y-3">
 								<div className="flex items-center space-x-2">
-									<Checkbox
+									<Input
 										id="breakfast"
+										type="checkbox"
 										checked={formData.breakfast}
-										onCheckedChange={() => handleCheckboxChange("breakfast")}
+										onChange={() => handleCheckboxChange("breakfast")}
+										className="w-4 h-4 cursor-pointer"
 									/>
-									<Label htmlFor="breakfast" className="cursor-pointer font-normal">
-										Breakfast
-									</Label>
+									<label htmlFor="breakfast" className="cursor-pointer">Breakfast</label>
 								</div>
 
 								<div className="flex items-center space-x-2">
-									<Checkbox
+									<Input
 										id="lunch"
+										type="checkbox"
 										checked={formData.lunch}
-										onCheckedChange={() => handleCheckboxChange("lunch")}
+										onChange={() => handleCheckboxChange("lunch")}
+										className="w-4 h-4 cursor-pointer"
 									/>
-									<Label htmlFor="lunch" className="cursor-pointer font-normal">
-										Lunch
-									</Label>
+									<label htmlFor="lunch" className="cursor-pointer">Lunch</label>
 								</div>
 
 								<div className="flex items-center space-x-2">
-									<Checkbox
+									<Input
 										id="dinner"
+										type="checkbox"
 										checked={formData.dinner}
-										onCheckedChange={() => handleCheckboxChange("dinner")}
+										onChange={() => handleCheckboxChange("dinner")}
+										className="w-4 h-4 cursor-pointer"
 									/>
-									<Label htmlFor="dinner" className="cursor-pointer font-normal">
-										Dinner
-									</Label>
+									<label htmlFor="dinner" className="cursor-pointer">Dinner</label>
 								</div>
 							</div>
 						</div>

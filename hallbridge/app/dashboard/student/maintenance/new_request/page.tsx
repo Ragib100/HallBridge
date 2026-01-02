@@ -40,14 +40,14 @@ export default function NewRequestPage() {
     };
 
     return (
-        <div className="p-7">
+        <div className="p-4 md:p-7 max-w-full overflow-x-hidden">
             <div className="mb-7">
                 <span className="font-semibold text-lg">🔧 Submit Maintenance Request</span>
             </div>
 
             <div className="flex flex-col gap-4">
 
-                <div className="flex gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                     <div className="space-y-2 w-full">
                         <p>Category *</p>
                         <Select

@@ -60,16 +60,16 @@ export default function StudentLaundryPage() {
 	}
 
 	return (
-		<Card className="mx-4 my-6 w-full h-full p-6 gap-4">
+		<Card className="mx-2 md:mx-4 my-6 w-full max-w-full h-full p-4 md:p-6 gap-4 overflow-x-hidden">
 			<CardHeader className="mb-4">
-				<label className="font-bold text-2xl">{getIcon('laundry')} Schedule Laundry Pickup</label>
+				<label className="font-bold text-xl md:text-2xl">{getIcon('laundry')} Schedule Laundry Pickup</label>
 			</CardHeader>
 
-			<div className="flex w-full h-auto gap-4">
+			<div className="flex flex-col md:flex-row w-full h-auto gap-4">
 				{cards.map((card) => (
-					<div className="flex flex-col w-full py-4 border items-center justify-center rounded-2xl" style={{ backgroundColor: card.backgroundColor }} key={card.title}>
-						<p className="text-2xl">{card.title}</p>
-						<p>{getIcon('taka')} {card.price}</p>
+					<div className="flex flex-col w-full py-4 border items-center justify-center rounded-2xl text-center" style={{ backgroundColor: card.backgroundColor }} key={card.title}>
+						<p className="text-lg md:text-2xl px-2">{card.title}</p>
+						<p className="text-base md:text-lg">{getIcon('taka')} {card.price}</p>
 					</div>
 				))}
 			</div>
@@ -77,9 +77,9 @@ export default function StudentLaundryPage() {
 			<CardContent>
 				<form
 					onSubmit={(e) => { e.preventDefault(); handle_submit(); }}
-					className="flex flex-col gap-4 px-4 py-6"
+					className="flex flex-col gap-4 px-2 md:px-4 py-6"
 				>
-					<div className="flex gap-4 w-full pb-6">
+					<div className="flex flex-col md:flex-row gap-4 w-full pb-6">
 						<div className="w-full">
 							<label className="font-bold">Pickup Date *</label>
 							<Input

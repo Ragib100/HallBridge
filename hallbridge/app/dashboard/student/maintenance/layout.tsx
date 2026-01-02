@@ -11,8 +11,8 @@ export default function MaintenanceLayout( { children } : { children: React.Reac
     ];
 
     return(
-        <div className="px-8 py-4">
-            <header className="flex w-auto h-16 items-center px-4 font-bold text-lg">Maintenance</header>
+        <div className="px-4 md:px-8 py-4 max-w-full overflow-x-hidden">
+            <header className="flex w-full h-16 items-center px-2 md:px-4 font-bold text-lg">Maintenance</header>
             <TopNavigation navItems={nav_items} />
             {children}
         </div>

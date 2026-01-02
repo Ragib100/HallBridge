@@ -52,17 +52,17 @@ export default function InvoicesPage() {
     };
 
     return (
-        <div className="px-4 py-6">
+        <div className="px-2 md:px-4 py-6 max-w-full overflow-x-hidden">
             <div className="mb-8">
                 <span className="text-lg font-bold">{getIcon('invoices')} Invoices</span>
             </div>
 
-            <div className="px-4">
+            <div className="px-2 md:px-4">
                 {invoices.map(({ month, invoice_id, amount }, idx) => (
                     <div key={invoice_id} className="py-4">
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                             <p>{getIcon('invoices')} {month}</p>
-                            <div className="flex gap-3">
+                            <div className="flex gap-2 md:gap-3 flex-wrap">
                                 
                                 <StudentInvoice invoiceinfo={invoices[idx]} />
 

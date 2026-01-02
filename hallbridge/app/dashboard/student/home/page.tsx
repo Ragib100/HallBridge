@@ -31,51 +31,50 @@ export default function HomePage() {
 	}, []);
 
 	return (
-		<div className="bg-[#f3f4f6] flex-l flex-col w-400 h-screen px-8 py-4">
-			<header className="flex w-auto h-16 items-center px-4 font-bold text-lg ">Dashboard</header>
-			<main className="w-full h-full">
+		<div className="bg-[#f3f4f6] flex flex-col w-full min-h-screen px-4 md:px-8 py-4 overflow-x-hidden">
+			<header className="flex w-full h-16 items-center px-4 font-bold text-lg">Dashboard</header>
+			<main className="w-full flex-1 overflow-x-hidden">
 				<div className="flex w-full h-16 items-center px-4 font-bold text-lg">
 					{getIcon('wave')} Welcome back
 				</div>
 
-				{/* Countdown Timer */}
-				<div className="px-6 py-4 mx-8 my-4 bg-indigo-600 rounded-lg shadow-lg">
-					<div className="flex items-center justify-between text-white">
+				<div className="px-4 md:px-6 py-4 mx-2 md:mx-8 my-4 bg-indigo-600 rounded-lg shadow-lg">
+					<div className="flex flex-col md:flex-row items-center justify-between text-white gap-4">
 						<div className="flex items-center gap-2">
 							<span className="text-2xl">{getIcon('time')}</span>
-							<span className="font-semibold text-lg">Time Until Midnight</span>
+							<span className="font-semibold text-base md:text-lg">Time Until Midnight</span>
 						</div>
-						<div className="flex gap-3 items-center">
-							<div className="flex flex-col items-center bg-white/20 rounded-lg px-4 py-2 min-w-17">
-								<span className="text-3xl font-bold">{String(timeUntilMidnight.hours).padStart(2, '0')}</span>
+						<div className="flex gap-2 md:gap-3 items-center">
+							<div className="flex flex-col items-center bg-white/20 rounded-lg px-3 md:px-4 py-2 min-w-[60px] md:min-w-[68px]">
+								<span className="text-2xl md:text-3xl font-bold">{String(timeUntilMidnight.hours).padStart(2, '0')}</span>
 								<span className="text-xs font-medium opacity-90">Hours</span>
 							</div>
-							<span className="text-2xl font-bold">:</span>
-							<div className="flex flex-col items-center bg-white/20 rounded-lg px-4 py-2 min-w-17">
-								<span className="text-3xl font-bold">{String(timeUntilMidnight.minutes).padStart(2, '0')}</span>
+							<span className="text-xl md:text-2xl font-bold">:</span>
+							<div className="flex flex-col items-center bg-white/20 rounded-lg px-3 md:px-4 py-2 min-w-[60px] md:min-w-[68px]">
+								<span className="text-2xl md:text-3xl font-bold">{String(timeUntilMidnight.minutes).padStart(2, '0')}</span>
 								<span className="text-xs font-medium opacity-90">Minutes</span>
 							</div>
-							<span className="text-2xl font-bold">:</span>
-							<div className="flex flex-col items-center bg-white/20 rounded-lg px-4 py-2 min-w-17">
-								<span className="text-3xl font-bold">{String(timeUntilMidnight.seconds).padStart(2, '0')}</span>
+							<span className="text-xl md:text-2xl font-bold">:</span>
+							<div className="flex flex-col items-center bg-white/20 rounded-lg px-3 md:px-4 py-2 min-w-[60px] md:min-w-[68px]">
+								<span className="text-2xl md:text-3xl font-bold">{String(timeUntilMidnight.seconds).padStart(2, '0')}</span>
 								<span className="text-xs font-medium opacity-90">Seconds</span>
 							</div>
 						</div>
 					</div>
 				</div>
 
-				<div className="flex m-5 px-4 py-8 rounded-lg justify-between gap-4">
-					<div className="px-4 py-8 bg-white rounded-lg w-[50%] shadow-lg">
+				<div className="flex flex-col md:flex-row m-2 md:m-5 px-2 md:px-4 py-4 md:py-8 rounded-lg justify-between gap-4">
+					<div className="px-4 py-6 md:py-8 bg-white rounded-lg w-full md:w-[50%] shadow-lg">
 						<div className="font-bold text-lg pb-4">
 							{getIcon('pin')} Current Status
 						</div>
 
-						<div className="bg-green-200 w-30 rounded-2xl mt-2 px-2 py-1 text-green-800 font-medium">
+						<div className="bg-green-200 w-fit rounded-2xl mt-2 px-2 py-1 text-green-800 font-medium">
 							{getIcon('dotGreen')} Inside Hall
 						</div>
 					</div>
 
-					<div className="px-4 py-8 bg-white rounded-lg w-[50%] shadow-lg text-right">
+					<div className="px-4 py-6 md:py-8 bg-white rounded-lg w-full md:w-[50%] shadow-lg md:text-right">
 						<div className="font-bold text-lg pb-4">
 							{getIcon('bills')} Current Bill
 						</div>
@@ -93,7 +92,7 @@ export default function HomePage() {
 					</div>
 				</div>
 
-				<div className="px-4">
+				<div className="px-2 md:px-4">
 					<TomorrowMeals />
 				</div>
 			</main>

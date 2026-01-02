@@ -28,13 +28,13 @@ export default function StudentGatePassPage() {
 	}
 
 	return (
-		<div className="px-8 py-8">
+		<div className="px-4 md:px-8 py-8 max-w-full overflow-x-hidden">
 			
 			<Label className="text-lg py-4">{getIcon('gatepass')} Gate Pass</Label>
 
 			<form
 				onSubmit={handleSubmit}
-				className="px-4 py-4"
+				className="px-2 md:px-4 py-4"
 			>
 				<div className="pb-6">
 					<label className="font-bold mb-2">Purpose of Leave *</label>
@@ -71,7 +71,7 @@ export default function StudentGatePassPage() {
 					/>
 				</div>
 
-				<div className="flex gap-4 pb-6">
+				<div className="flex flex-col md:flex-row gap-4 pb-6">
 					<div className="w-full">
 						<label className="font-bold">Out Date *</label>
 						<Input
@@ -92,7 +92,7 @@ export default function StudentGatePassPage() {
 					</div>
 				</div>
 
-				<div className="flex gap-4 pb-6">
+				<div className="flex flex-col md:flex-row gap-4 pb-6">
 					<div className="w-full">
 						<label className="font-bold">Return Date *</label>
 						<Input
