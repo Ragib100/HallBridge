@@ -34,7 +34,7 @@ export default function VoteForMealsPage() {
 
     return (
         <div className="space-y-6 p-2 md:p-4 max-w-full overflow-x-hidden">
-            <h1 className="text-2xl font-bold mb-4">Vote for Today&apos;s Meals</h1>
+            <h1 className="text-2xl font-bold mb-4">Vote for Today's Meals</h1>
             <p className="text-muted-foreground mb-6">Rate and provide feedback for the meals you&apos;ve had today.</p>
             
             {todaysMeals.map((meal, index) => (

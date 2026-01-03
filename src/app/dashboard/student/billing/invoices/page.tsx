@@ -32,7 +32,6 @@ export default function InvoicesPage() {
     ]);
 
     const handleDownloadInvoice = (invoice: Invoice) => {
-        // Calculate due date based on invoice month
         const monthYear = invoice.month.split(' ');
         const month = monthYear[0];
         const year = monthYear[1];
@@ -43,7 +42,7 @@ export default function InvoicesPage() {
             invoice,
             dueDate,
             {
-                name: "Student Name", // Replace with actual student data
+                name: "Student Name",
                 studentId: "2021-123456",
                 hallName: "Hall Name",
                 roomNo: "101"

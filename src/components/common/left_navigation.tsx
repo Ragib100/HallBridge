@@ -26,7 +26,7 @@ export default function LayoutComponent({ navItems }: LayoutComponentProps){
     };
 
     return(
-        <div className="w-64 min-h-screen bg-linear-to-l from-gray-800 to-zinc-800 flex flex-col">
+        <div className="w-85 min-h-screen bg-linear-to-l from-gray-800 to-zinc-800 flex flex-col">
             <div className='h-16 shrink-0 pt-4'>
                 <Logo />
             </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import '@/styles/dashboard.css';
+import './staff.css';
 import { useState } from 'react';
 
 export default function StaffMealCount() {

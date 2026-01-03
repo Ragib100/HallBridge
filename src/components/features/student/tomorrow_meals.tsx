@@ -1,7 +1,7 @@
 'use client'
 
 import Toggle from "@/components/features/student/toggle_button";
-import { getIcon } from "@/components/ui/icons";
+import { getIcon } from "@/components/common/icons";
 import { useState, useEffect } from "react";
 
 export default function TomorrowMeals() {

@@ -27,7 +27,7 @@ export default function LoginPage() {
     // TODO: Implement actual authentication
     // For now, redirect based on user type
     if (formData.userType === "student") {
-      router.push("/dashboard/student");
+      router.push("/dashboard/student/home");
     } else if (formData.userType === "staff") {
       router.push("/dashboard/staff");
     } else {

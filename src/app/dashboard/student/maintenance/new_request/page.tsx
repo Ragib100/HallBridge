@@ -13,6 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { getIcon } from '@/components/common/icons';
 
 export default function NewRequestPage() {
 
@@ -42,7 +43,7 @@ export default function NewRequestPage() {
     return (
         <div className="p-4 md:p-7 max-w-full overflow-x-hidden">
             <div className="mb-7">
-                <span className="font-semibold text-lg">🔧 Submit Maintenance Request</span>
+                <span className="font-semibold text-lg">{getIcon('repair')} Submit Maintenance Request</span>
             </div>
 
             <div className="flex flex-col gap-4">
@@ -129,7 +130,9 @@ export default function NewRequestPage() {
 
                 <Button
                     className="mt-4 bg-blue-600 hover:bg-blue-700 border border-blue-700 cursor-pointer text-white"
-                >📝 Submit Request</Button>
+                >
+                    {getIcon('submit')} Submit Request
+                </Button>
             </div>
         </div>
     );

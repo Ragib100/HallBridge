@@ -3,7 +3,7 @@
 import Logo from '@/components/layout/logo'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { getIcon } from '@/components/ui/icons'
+import { getIcon } from '@/components/common/icons'
 
 interface NavItem {
     name: string
