@@ -1,0 +1,263 @@
+hallbridge/
+├── app/
+│   ├── (auth)/                          # Auth-specific layout group
+│   │   ├── login/
+│   │   │   └── page.tsx
+│   │   ├── register/
+│   │   │   └── page.tsx
+│   │   └── layout.tsx
+│   │
+│   ├── (dashboard)/                     # Dashboard layout group
+│   │   ├── student/                     # Student role routes
+│   │   │   ├── page.tsx                 # Main dashboard
+│   │   │   ├── meals/
+│   │   │   │   ├── page.tsx             # Meal toggle & calendar
+│   │   │   │   └── menu/page.tsx        # Menu viewing & voting
+│   │   │   ├── gate-pass/
+│   │   │   │   ├── page.tsx             # Gate pass list
+│   │   │   │   ├── create/page.tsx
+│   │   │   │   └── [id]/page.tsx        # Individual pass view
+│   │   │   ├── billing/
+│   │   │   │   ├── page.tsx             # Bill details
+│   │   │   │   └── payment/page.tsx
+│   │   │   ├── maintenance/
+│   │   │   │   ├── page.tsx             # View requests
+│   │   │   │   └── create/page.tsx      # Report issue
+│   │   │   ├── facilities/
+│   │   │   │   └── page.tsx             # Book facilities
+│   │   │   ├── laundry/
+│   │   │   │   └── page.tsx             # Track laundry
+│   │   │   ├── lost-found/
+│   │   │   │   └── page.tsx
+│   │   │   └── profile/
+│   │   │       └── page.tsx
+│   │   │
+│   │   ├── staff/                       # Operations Staff routes
+│   │   │   ├── page.tsx                 # Staff dashboard
+│   │   │   ├── mess/
+│   │   │   │   ├── page.tsx             # Meal count view
+│   │   │   │   ├── menu/page.tsx        # Upload/edit menu
+│   │   │   │   ├── expenses/page.tsx    # Log market expenses
+│   │   │   │   └── voting/page.tsx      # Manage voting
+│   │   │   ├── maintenance/
+│   │   │   │   ├── page.tsx             # View all tickets
+│   │   │   │   └── [id]/page.tsx        # Update ticket status
+│   │   │   ├── laundry/
+│   │   │   │   └── page.tsx             # Manage laundry workflow
+│   │   │   └── verify/
+│   │   │       └── page.tsx             # QR code scanner
+│   │   │
+│   │   ├── admin/                       # Hall Admin routes
+│   │   │   ├── page.tsx                 # Admin dashboard
+│   │   │   ├── students/
+│   │   │   │   ├── page.tsx             # Student list
+│   │   │   │   ├── approve/page.tsx     # Approve registrations
+│   │   │   │   └── [id]/page.tsx        # Student details
+│   │   │   ├── rooms/
+│   │   │   │   ├── page.tsx             # Room allocation view
+│   │   │   │   ├── allocate/page.tsx
+│   │   │   │   └── requests/page.tsx    # Roommate requests
+│   │   │   ├── finance/
+│   │   │   │   ├── page.tsx             # Financial dashboard
+│   │   │   │   ├── reports/page.tsx
+│   │   │   │   └── defaulters/page.tsx
+│   │   │   ├── notices/
+│   │   │   │   ├── page.tsx
+│   │   │   │   └── create/page.tsx
+│   │   │   ├── alerts/
+│   │   │   │   └── page.tsx             # SOS & late returns
+│   │   │   └── audit/
+│   │   │       └── page.tsx             # Audit logs
+│   │   │
+│   │   └── layout.tsx                   # Shared dashboard layout
+│   │
+│   ├── api/                             # API Routes
+│   │   ├── auth/
+│   │   │   └── [...nextauth]/
+│   │   │       └── route.ts             # NextAuth configuration
+│   │   ├── students/
+│   │   │   ├── route.ts                 # GET, POST students
+│   │   │   └── [id]/
+│   │   │       └── route.ts             # GET, PATCH, DELETE
+│   │   ├── meals/
+│   │   │   ├── toggle/route.ts          # Meal ON/OFF
+│   │   │   ├── count/route.ts           # Daily count
+│   │   │   ├── menu/route.ts            # Menu CRUD
+│   │   │   └── voting/route.ts          # Vote on menu
+│   │   ├── gate-pass/
+│   │   │   ├── route.ts
+│   │   │   ├── [id]/route.ts
+│   │   │   └── checkin/route.ts
+│   │   ├── billing/
+│   │   │   ├── calculate/route.ts       # Auto-calculate bill
+│   │   │   ├── payment/route.ts         # Payment webhook
+│   │   │   └── [studentId]/route.ts
+│   │   ├── maintenance/
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
+│   │   ├── rooms/
+│   │   │   ├── route.ts
+│   │   │   ├── allocate/route.ts
+│   │   │   └── requests/route.ts
+│   │   ├── facilities/
+│   │   │   ├── route.ts
+│   │   │   └── book/route.ts
+│   │   ├── laundry/
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
+│   │   ├── notices/
+│   │   │   └── route.ts
+│   │   ├── lost-found/
+│   │   │   └── route.ts
+│   │   ├── expenses/
+│   │   │   └── route.ts
+│   │   ├── reports/
+│   │   │   ├── financial/route.ts
+│   │   │   ├── attendance/route.ts
+│   │   │   └── movement/route.ts
+│   │   ├── notifications/
+│   │   │   └── route.ts
+│   │   ├── emergency/
+│   │   │   └── sos/route.ts
+│   │   └── cron/
+│   │       ├── meal-cutoff/route.ts     # 11 PM meal lock
+│   │       ├── billing/route.ts         # Monthly billing
+│   │       └── late-alerts/route.ts     # Check late returns
+│   │
+│   ├── globals.css
+│   ├── layout.tsx                       # Root layout
+│   └── page.tsx                         # Landing page
+│
+├── components/
+│   ├── ui/                              # Shadcn/Radix UI components
+│   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   ├── dialog.tsx
+│   │   ├── form.tsx
+│   │   ├── input.tsx
+│   │   ├── select.tsx
+│   │   ├── toast.tsx
+│   │   └── ...
+│   │
+│   ├── shared/                          # Shared components
+│   │   ├── Header.tsx
+│   │   ├── Sidebar.tsx
+│   │   ├── MobileNav.tsx
+│   │   ├── QRCodeGenerator.tsx
+│   │   ├── QRScanner.tsx
+│   │   ├── ImageUploader.tsx
+│   │   ├── DatePicker.tsx
+│   │   └── LoadingSpinner.tsx
+│   │
+│   ├── student/                         # Student-specific components
+│   │   ├── MealToggle.tsx
+│   │   ├── MealCalendar.tsx
+│   │   ├── BillBreakdown.tsx
+│   │   ├── GatePassCard.tsx
+│   │   ├── EmergencySOSButton.tsx
+│   │   └── MaintenanceForm.tsx
+│   │
+│   ├── staff/                           # Staff-specific components
+│   │   ├── MealCountDisplay.tsx
+│   │   ├── MenuUploader.tsx
+│   │   ├── ExpenseLogger.tsx
+│   │   ├── MaintenanceTicket.tsx
+│   │   ├── LaundryTracker.tsx
+│   │   └── QRVerifier.tsx
+│   │
+│   ├── admin/                           # Admin-specific components
+│   │   ├── StudentApprovalCard.tsx
+│   │   ├── RoomAllocationGrid.tsx
+│   │   ├── FinancialDashboard.tsx
+│   │   ├── AlertsPanel.tsx
+│   │   ├── AuditLogTable.tsx
+│   │   └── ReportExporter.tsx
+│   │
+│   └── providers/                       # Context providers
+│       ├── SessionProvider.tsx
+│       ├── ToastProvider.tsx
+│       └── ThemeProvider.tsx
+│
+├── lib/
+│   ├── db/
+│   │   ├── mongodb.ts                   # MongoDB connection
+│   │   └── models/                      # Mongoose models
+│   │       ├── User.ts
+│   │       ├── Student.ts
+│   │       ├── Meal.ts
+│   │       ├── MealToggle.ts
+│   │       ├── Menu.ts
+│   │       ├── GatePass.ts
+│   │       ├── Room.ts
+│   │       ├── Maintenance.ts
+│   │       ├── Billing.ts
+│   │       ├── Laundry.ts
+│   │       ├── Facility.ts
+│   │       ├── Notice.ts
+│   │       ├── LostFound.ts
+│   │       ├── Expense.ts
+│   │       ├── AuditLog.ts
+│   │       └── Emergency.ts
+│   │
+│   ├── validations/                     # Zod schemas
+│   │   ├── auth.ts
+│   │   ├── student.ts
+│   │   ├── meal.ts
+│   │   ├── gatepass.ts
+│   │   ├── billing.ts
+│   │   ├── maintenance.ts
+│   │   └── room.ts
+│   │
+│   ├── services/                        # Business logic
+│   │   ├── meal.service.ts
+│   │   ├── billing.service.ts
+│   │   ├── gatepass.service.ts
+│   │   ├── notification.service.ts
+│   │   ├── payment.service.ts
+│   │   ├── email.service.ts
+│   │   ├── sms.service.ts
+│   │   └── export.service.ts
+│   │
+│   ├── utils/
+│   │   ├── auth.ts                      # Auth helpers
+│   │   ├── constants.ts                 # App constants
+│   │   ├── date.ts                      # Date utilities
+│   │   ├── formatting.ts                # Format helpers
+│   │   ├── permissions.ts               # RBAC logic
+│   │   └── cn.ts                        # Class merger
+│   │
+│   └── hooks/                           # Custom React hooks
+│       ├── useAuth.ts
+│       ├── useMealToggle.ts
+│       ├── useBilling.ts
+│       ├── useNotifications.ts
+│       └── useMediaQuery.ts
+│
+├── types/
+│   ├── index.ts                         # Global types
+│   ├── auth.ts
+│   ├── models.ts
+│   ├── api.ts
+│   └── next-auth.d.ts                   # NextAuth type augmentation
+│
+├── public/
+│   ├── icons/
+│   │   ├── icon-192.png
+│   │   └── icon-512.png
+│   ├── manifest.json                    # PWA manifest
+│   ├── sw.js                            # Service worker
+│   └── images/
+│       └── logo.svg
+│
+├── middleware.ts                        # Route protection
+├── next.config.ts
+├── tsconfig.json
+├── package.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+├── postcss.config.mjs
+├── tailwind.config.ts
+├── eslint.config.mjs
+├── .env.local                           # Environment variables
+├── .gitignore
+└── README.md
