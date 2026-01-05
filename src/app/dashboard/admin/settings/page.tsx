@@ -10,16 +10,14 @@ interface PricingItem {
   description: string;
   price: number;
   unit: string;
+  editable: boolean;
 }
 
 const pricingItems: PricingItem[] = [
-  { id: "1", name: "Monthly Rent", description: "Room rent per month", price: 3000, unit: "/month" },
-  { id: "2", name: "Laundry Service", description: "Weekly laundry charge", price: 400, unit: "/week" },
-  { id: "3", name: "Maintenance Fee", description: "Monthly maintenance", price: 100, unit: "/month" },
-  { id: "4", name: "Breakfast", description: "Per meal charge", price: 50, unit: "/meal" },
-  { id: "5", name: "Lunch", description: "Per meal charge", price: 70, unit: "/meal" },
-  { id: "6", name: "Dinner", description: "Per meal charge", price: 80, unit: "/meal" },
-  { id: "7", name: "Guest Meal", description: "Additional guest meal", price: 120, unit: "/meal" },
+  { id: "1", name: "Monthly Rent", description: "Room rent per month", price: 3000, unit: "/month", editable: true },
+  { id: "2", name: "Laundry Service", description: "Weekly laundry charge", price: 400, unit: "/week", editable: true },
+  { id: "3", name: "Maintenance Fee", description: "Monthly maintenance", price: 100, unit: "/month", editable: true },
+  { id: "4", name: "WiFi Bill", description: "Monthly internet charges", price: 100, unit: "/month", editable: true },
 ];
 
 export default function SettingsPage() {
@@ -320,6 +318,17 @@ export default function SettingsPage() {
             <div>
               <p className="text-sm font-medium text-yellow-800">Price Change Notice</p>
               <p className="text-xs text-yellow-700">Changes will apply to new billing cycles only. Existing bills will remain unchanged.</p>
+            </div>
+          </div>
+
+          {/* Meal Pricing Info */}
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg flex items-start gap-3">
+            <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-blue-800">Meal Pricing</p>
+              <p className="text-xs text-blue-700">Meal prices (breakfast, lunch, dinner, guest meal) are managed by the Financial Staff daily based on actual kitchen expenses. This ensures accurate billing based on real costs.</p>
             </div>
           </div>
         </div>

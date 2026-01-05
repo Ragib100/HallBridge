@@ -2,78 +2,64 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
-// Stats data
-const statsData = [
-  { 
-    title: "Total Students", 
-    value: "450", 
-    change: "+12 this month", 
-    changeType: "positive",
-    icon: "users",
-    bgColor: "bg-blue-100",
-    iconColor: "text-blue-600"
-  },
-  { 
-    title: "Occupied Rooms", 
-    value: "112/120", 
-    change: "93% occupancy", 
-    changeType: "neutral",
-    icon: "room",
-    bgColor: "bg-green-100",
-    iconColor: "text-green-600"
-  },
-  { 
-    title: "Currently Outside", 
-    value: "42", 
-    change: "5 late returns", 
-    changeType: "warning",
-    icon: "location",
-    bgColor: "bg-red-100",
-    iconColor: "text-red-500"
-  },
-  { 
-    title: "Pending Requests", 
-    value: "18", 
-    change: "Needs attention", 
-    changeType: "warning",
-    icon: "clock",
-    bgColor: "bg-yellow-100",
-    iconColor: "text-yellow-600"
-  },
+// New students joined this month
+const newStudentsThisMonth = [
+  { id: "1", name: "Rahim Ahmed", studentId: "202514001", department: "CSE", joinedDate: "Jan 2, 2026", avatar: "/logos/profile.png" },
+  { id: "2", name: "Karim Khan", studentId: "202514002", department: "EEE", joinedDate: "Jan 3, 2026", avatar: "/logos/profile.png" },
+  { id: "3", name: "Fahim Hasan", studentId: "202514003", department: "ME", joinedDate: "Jan 3, 2026", avatar: "/logos/profile.png" },
+  { id: "4", name: "Anik Roy", studentId: "202514004", department: "CSE", joinedDate: "Jan 4, 2026", avatar: "/logos/profile.png" },
+  { id: "5", name: "Tanvir Islam", studentId: "202514005", department: "CE", joinedDate: "Jan 4, 2026", avatar: "/logos/profile.png" },
+  { id: "6", name: "Sakib Hassan", studentId: "202514006", department: "EEE", joinedDate: "Jan 5, 2026", avatar: "/logos/profile.png" },
+  { id: "7", name: "Imran Ahmed", studentId: "202514007", department: "ME", joinedDate: "Jan 5, 2026", avatar: "/logos/profile.png" },
+  { id: "8", name: "Rafiq Uddin", studentId: "202514008", department: "CSE", joinedDate: "Jan 5, 2026", avatar: "/logos/profile.png" },
+  { id: "9", name: "Jamil Hossain", studentId: "202514009", department: "EEE", joinedDate: "Jan 5, 2026", avatar: "/logos/profile.png" },
+  { id: "10", name: "Nasir Ahmed", studentId: "202514010", department: "CE", joinedDate: "Jan 5, 2026", avatar: "/logos/profile.png" },
+  { id: "11", name: "Saiful Islam", studentId: "202514011", department: "ME", joinedDate: "Jan 5, 2026", avatar: "/logos/profile.png" },
+  { id: "12", name: "Habib Rahman", studentId: "202514012", department: "CSE", joinedDate: "Jan 5, 2026", avatar: "/logos/profile.png" },
 ];
 
-// Pending items
+// Students currently outside
+const studentsOutside = [
+  { id: "1", name: "David Johnson", room: "201", leftAt: "Jan 4, 9:00 AM", expectedReturn: "Jan 5, 6:00 PM", status: "on-time", reason: "Home Visit" },
+  { id: "2", name: "Michael Charter", room: "202", leftAt: "Jan 3, 2:00 PM", expectedReturn: "Jan 5, 10:00 AM", status: "late", reason: "Medical", avatar: "/logos/profile.png" },
+  { id: "3", name: "Mark Wilson", room: "203", leftAt: "Jan 4, 8:00 AM", expectedReturn: "Jan 4, 8:00 PM", status: "late", reason: "Academic Trip", avatar: "/logos/profile.png" },
+  { id: "4", name: "Ethan Lowe", room: "204", leftAt: "Jan 5, 7:00 AM", expectedReturn: "Jan 5, 9:00 PM", status: "on-time", reason: "Personal", avatar: "/logos/profile.png" },
+  { id: "5", name: "James Brown", room: "205", leftAt: "Jan 2, 10:00 AM", expectedReturn: "Jan 4, 6:00 PM", status: "late", reason: "Family Event", avatar: "/logos/profile.png" },
+  { id: "6", name: "Robert Smith", room: "206", leftAt: "Jan 3, 3:00 PM", expectedReturn: "Jan 4, 9:00 PM", status: "late", reason: "Home Visit", avatar: "/logos/profile.png" },
+  { id: "7", name: "Alex Turner", room: "301", leftAt: "Jan 5, 8:00 AM", expectedReturn: "Jan 5, 8:00 PM", status: "on-time", reason: "Shopping", avatar: "/logos/profile.png" },
+];
+
+// Pending items that admin can handle
 const pendingItems = [
-  { type: "Gate Pass", count: 5, urgent: 2 },
-  { type: "Room Allocation", count: 8, urgent: 0 },
-  { type: "Maintenance", count: 3, urgent: 1 },
-  { type: "New Registrations", count: 2, urgent: 2 },
+  { type: "New Registrations", count: 4, urgent: 2, link: "/dashboard/admin/users" },
+  { type: "Room Allocation", count: 8, urgent: 3, link: "/dashboard/admin/rooms" },
+  { type: "Payment Approvals", count: 5, urgent: 0, link: "/dashboard/admin/financials" },
 ];
 
-// Recent activities
+// Recent activities - admin relevant
 const recentActivities = [
   { action: "New student registered", name: "Rahim Ahmed", time: "5 min ago", type: "registration" },
-  { action: "Gate pass approved", name: "Karim Khan", time: "15 min ago", type: "gatepass" },
-  { action: "Maintenance completed", name: "Room 302", time: "1 hour ago", type: "maintenance" },
-  { action: "Fee payment received", name: "Fahim Hasan", time: "2 hours ago", type: "payment" },
-  { action: "Late entry recorded", name: "Anik Roy", time: "3 hours ago", type: "alert" },
+  { action: "Room allocated", name: "Room 302 → Karim Khan", time: "15 min ago", type: "room" },
+  { action: "Staff account created", name: "Abdul Karim", time: "1 hour ago", type: "staff" },
+  { action: "Fee payment received", name: "Fahim Hasan - ৳4,500", time: "2 hours ago", type: "payment" },
+  { action: "Student archived", name: "Tanvir Islam (Graduated)", time: "3 hours ago", type: "archive" },
 ];
 
-// Alerts
+// Alerts - admin level only
 const alerts = [
-  { message: "Room 302 - AC not working", priority: "high", time: "10 min ago" },
-  { message: "Water supply issue - 3rd Floor", priority: "high", time: "30 min ago" },
-  { message: "Guest meal request pending", priority: "medium", time: "1 hour ago" },
-  { message: "Monthly report due tomorrow", priority: "low", time: "2 hours ago" },
+  { message: "4 new registration requests pending", priority: "high", time: "New", link: "/dashboard/admin/users" },
+  { message: "Monthly report due tomorrow", priority: "medium", time: "1 day left", link: "/dashboard/admin/financials" },
+  { message: "5 students have late returns", priority: "high", time: "Now", link: "#" },
+  { message: "Staff salary pending for this month", priority: "medium", time: "Due in 5 days", link: "/dashboard/admin/financials" },
 ];
 
-// Tomorrow's meal count
+// Tomorrow's meal count (read-only for admin)
 const mealStats = {
   breakfast: 385,
   lunch: 420,
   dinner: 410,
-  guestMeals: 8,
 };
 
 function StatsIcon({ icon, className }: { icon: string; className?: string }) {
@@ -121,14 +107,14 @@ function getActivityIcon(type: string) {
   switch (type) {
     case "registration":
       return <div className="w-2 h-2 rounded-full bg-green-500" />;
-    case "gatepass":
+    case "room":
       return <div className="w-2 h-2 rounded-full bg-blue-500" />;
-    case "maintenance":
-      return <div className="w-2 h-2 rounded-full bg-orange-500" />;
+    case "staff":
+      return <div className="w-2 h-2 rounded-full bg-purple-500" />;
     case "payment":
       return <div className="w-2 h-2 rounded-full bg-emerald-500" />;
-    case "alert":
-      return <div className="w-2 h-2 rounded-full bg-red-500" />;
+    case "archive":
+      return <div className="w-2 h-2 rounded-full bg-gray-500" />;
     default:
       return <div className="w-2 h-2 rounded-full bg-gray-500" />;
   }
@@ -136,30 +122,81 @@ function getActivityIcon(type: string) {
 
 export default function AdminOverviewPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("today");
+  const [showNewStudentsModal, setShowNewStudentsModal] = useState(false);
+  const [showOutsideStudentsModal, setShowOutsideStudentsModal] = useState(false);
+  
+  const lateReturnCount = studentsOutside.filter(s => s.status === "late").length;
+  const outsideCount = studentsOutside.length;
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsData.map((stat, index) => (
-          <div key={index} className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 ${stat.bgColor} rounded-xl flex items-center justify-center`}>
-                <StatsIcon icon={stat.icon} className={`w-6 h-6 ${stat.iconColor}`} />
-              </div>
-              <div className="flex-1">
-                <p className="text-gray-500 text-sm">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                <p className={`text-xs ${
-                  stat.changeType === "positive" ? "text-green-500" : 
-                  stat.changeType === "warning" ? "text-orange-500" : "text-gray-500"
-                }`}>
-                  {stat.change}
-                </p>
-              </div>
+        {/* Total Students Card */}
+        <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <StatsIcon icon="users" className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-500 text-sm">Total Students</p>
+              <p className="text-2xl font-bold text-gray-800">450</p>
+              <button 
+                onClick={() => setShowNewStudentsModal(true)}
+                className="text-xs text-green-500 hover:text-green-700 hover:underline cursor-pointer"
+              >
+                +12 this month →
+              </button>
             </div>
           </div>
-        ))}
+        </div>
+
+        {/* Occupied Rooms Card */}
+        <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+              <StatsIcon icon="room" className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-500 text-sm">Occupied Rooms</p>
+              <p className="text-2xl font-bold text-gray-800">112/120</p>
+              <p className="text-xs text-gray-500">93% occupancy</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Currently Outside Card */}
+        <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+              <StatsIcon icon="location" className="w-6 h-6 text-red-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-500 text-sm">Currently Outside</p>
+              <p className="text-2xl font-bold text-gray-800">{outsideCount}</p>
+              <button 
+                onClick={() => setShowOutsideStudentsModal(true)}
+                className="text-xs text-orange-500 hover:text-orange-700 hover:underline cursor-pointer"
+              >
+                {lateReturnCount} late returns →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Pending Requests Card */}
+        <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+              <StatsIcon icon="clock" className="w-6 h-6 text-yellow-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-500 text-sm">Pending Requests</p>
+              <p className="text-2xl font-bold text-gray-800">17</p>
+              <p className="text-xs text-orange-500">Needs attention</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Content Grid */}
@@ -168,11 +205,15 @@ export default function AdminOverviewPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-800">Pending Actions</h2>
-            <span className="text-xs text-gray-500">Requires attention</span>
+            <span className="text-xs text-gray-500">Admin tasks</span>
           </div>
           <div className="space-y-3">
             {pendingItems.map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+              <Link 
+                key={index} 
+                href={item.link}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              >
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-gray-700">{item.type}</span>
                   {item.urgent > 0 && (
@@ -187,7 +228,7 @@ export default function AdminOverviewPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
           <Link href="/dashboard/admin/users" className="block mt-4 text-center text-sm text-[#2D6A4F] font-medium hover:underline">
@@ -235,7 +276,11 @@ export default function AdminOverviewPage() {
           </div>
           <div className="space-y-3">
             {alerts.map((alert, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
+              <Link 
+                key={index} 
+                href={alert.link}
+                className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+              >
                 <div className={`px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(alert.priority)}`}>
                   {alert.priority}
                 </div>
@@ -243,7 +288,7 @@ export default function AdminOverviewPage() {
                   <p className="text-sm text-gray-700">{alert.message}</p>
                   <p className="text-xs text-gray-400 mt-1">{alert.time}</p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -251,11 +296,11 @@ export default function AdminOverviewPage() {
 
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Tomorrow's Meal Count */}
+        {/* Tomorrow's Meal Count - Read Only for Admin */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-800">Tomorrow&apos;s Meals</h2>
-            <span className="text-xs text-gray-500">Auto-updated at 11 PM</span>
+            <span className="text-xs text-gray-500">Managed by Mess Staff</span>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-amber-50 rounded-lg p-3 text-center">
@@ -271,10 +316,7 @@ export default function AdminOverviewPage() {
               <p className="text-xs text-indigo-600">Dinner</p>
             </div>
           </div>
-          <div className="mt-4 p-3 bg-green-50 rounded-lg flex items-center justify-between">
-            <span className="text-sm text-green-700">Guest Meals Requested</span>
-            <span className="font-bold text-green-800">+{mealStats.guestMeals}</span>
-          </div>
+          <p className="text-xs text-gray-400 text-center mt-4">Auto-updated at 11 PM</p>
         </div>
 
         {/* Quick Actions */}
@@ -374,6 +416,137 @@ export default function AdminOverviewPage() {
           </div>
         </div>
       </div>
+
+      {/* New Students This Month Modal */}
+      {showNewStudentsModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">New Students This Month</h2>
+                <p className="text-sm text-gray-500">January 2026 - {newStudentsThisMonth.length} new students</p>
+              </div>
+              <button 
+                onClick={() => setShowNewStudentsModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[60vh]">
+              <table className="w-full">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Student</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">ID</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Department</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Joined</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {newStudentsThisMonth.map((student) => (
+                    <tr key={student.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <Image
+                            src={student.avatar}
+                            alt={student.name}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <span className="text-sm font-medium text-gray-800">{student.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600 font-mono">{student.studentId}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                          {student.department}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{student.joinedDate}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowNewStudentsModal(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Students Outside Modal */}
+      {showOutsideStudentsModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-3xl shadow-xl max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">Students Currently Outside</h2>
+                <p className="text-sm text-gray-500">{outsideCount} outside, <span className="text-red-500 font-medium">{lateReturnCount} late returns</span></p>
+              </div>
+              <button 
+                onClick={() => setShowOutsideStudentsModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[60vh]">
+              <table className="w-full">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Student</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Room</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Left At</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Expected Return</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Reason</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {studentsOutside.map((student) => (
+                    <tr key={student.id} className={`hover:bg-gray-50 ${student.status === "late" ? "bg-red-50" : ""}`}>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800">{student.name}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{student.room}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{student.leftAt}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{student.expectedReturn}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{student.reason}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          student.status === "late" 
+                            ? "bg-red-100 text-red-700" 
+                            : "bg-green-100 text-green-700"
+                        }`}>
+                          {student.status === "late" ? "Late Return" : "On Time"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowOutsideStudentsModal(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

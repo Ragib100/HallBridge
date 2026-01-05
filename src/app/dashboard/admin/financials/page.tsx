@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 
 type TimeRange = "this-month" | "last-month" | "this-year" | "custom";
-type TabType = "overview" | "collections" | "expenses" | "defaulters";
+type TabType = "overview" | "collections" | "expenses" | "salaries" | "defaulters";
 
 interface Transaction {
   id: string;
@@ -26,6 +26,24 @@ interface Defaulter {
   monthsOverdue: number;
   avatar: string;
 }
+
+interface StaffSalary {
+  id: string;
+  name: string;
+  role: string;
+  salary: number;
+  status: "paid" | "pending";
+  paidDate?: string;
+  avatar: string;
+}
+
+const staffSalaries: StaffSalary[] = [
+  { id: "1", name: "Abdul Karim", role: "Mess Manager", salary: 18000, status: "paid", paidDate: "Jan 3, 2026", avatar: "/logos/profile.png" },
+  { id: "2", name: "Rafiq Ahmed", role: "Security Guard", salary: 12000, status: "pending", avatar: "/logos/profile.png" },
+  { id: "3", name: "Shahid Hossain", role: "Maintenance Staff", salary: 15000, status: "pending", avatar: "/logos/profile.png" },
+  { id: "4", name: "Jamal Uddin", role: "Laundry Manager", salary: 12000, status: "paid", paidDate: "Jan 3, 2026", avatar: "/logos/profile.png" },
+  { id: "5", name: "Hassan Ali", role: "Financial Staff", salary: 15000, status: "pending", avatar: "/logos/profile.png" },
+];
 
 const transactions: Transaction[] = [
   { id: "1", date: "Jan 5, 2026", description: "Monthly Rent", category: "Rent", amount: 135000, type: "income" },
@@ -84,6 +102,7 @@ export default function FinancialsPage() {
     { id: "overview" as TabType, label: "Overview" },
     { id: "collections" as TabType, label: "Collections" },
     { id: "expenses" as TabType, label: "Expenses" },
+    { id: "salaries" as TabType, label: "Staff Salaries" },
     { id: "defaulters" as TabType, label: "Defaulters" },
   ];
 
@@ -437,6 +456,98 @@ export default function FinancialsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right font-bold text-red-600">-৳{tx.amount.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Staff Salaries Tab */}
+      {activeTab === "salaries" && (
+        <div className="space-y-6">
+          {/* Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl p-5 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Total Staff</p>
+              <p className="text-3xl font-bold text-gray-800">{staffSalaries.length}</p>
+            </div>
+            <div className="bg-white rounded-xl p-5 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Total Monthly Salary</p>
+              <p className="text-3xl font-bold text-gray-800">৳{staffSalaries.reduce((sum, s) => sum + s.salary, 0).toLocaleString()}</p>
+            </div>
+            <div className="bg-white rounded-xl p-5 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Paid This Month</p>
+              <p className="text-3xl font-bold text-green-600">৳{staffSalaries.filter(s => s.status === "paid").reduce((sum, s) => sum + s.salary, 0).toLocaleString()}</p>
+            </div>
+            <div className="bg-white rounded-xl p-5 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Pending Salaries</p>
+              <p className="text-3xl font-bold text-red-600">৳{staffSalaries.filter(s => s.status === "pending").reduce((sum, s) => sum + s.salary, 0).toLocaleString()}</p>
+            </div>
+          </div>
+
+          {/* Staff Salary List */}
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="font-bold text-gray-800">Staff Salary Status - January 2026</h2>
+              <button className="px-3 py-1.5 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245840]">
+                Pay All Pending
+              </button>
+            </div>
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-500">Staff Member</th>
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-500">Role</th>
+                  <th className="text-right px-6 py-3 text-sm font-medium text-gray-500">Salary</th>
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-500">Status</th>
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-500">Paid Date</th>
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {staffSalaries.map((staff) => (
+                  <tr key={staff.id} className={`hover:bg-gray-50 ${staff.status === "pending" ? "bg-yellow-50" : ""}`}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <Image
+                          src={staff.avatar}
+                          alt={staff.name}
+                          width={36}
+                          height={36}
+                          className="w-9 h-9 rounded-full"
+                        />
+                        <span className="text-sm font-medium text-gray-800">{staff.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium">
+                        {staff.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right font-bold text-gray-800">৳{staff.salary.toLocaleString()}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        staff.status === "paid" 
+                          ? "bg-green-100 text-green-700" 
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}>
+                        {staff.status === "paid" ? "Paid" : "Pending"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {staff.paidDate || "-"}
+                    </td>
+                    <td className="px-6 py-4">
+                      {staff.status === "pending" ? (
+                        <button className="px-3 py-1.5 bg-[#2D6A4F] text-white text-sm rounded-md hover:bg-[#245840] transition-colors">
+                          Mark as Paid
+                        </button>
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

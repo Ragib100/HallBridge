@@ -70,7 +70,7 @@ export default function UserManagementPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   const tabs = [
-    { id: "pending" as TabType, label: "Pending Approvals", count: pendingStudents.length },
+    { id: "pending" as TabType, label: "New Registration Requests", count: pendingStudents.length },
     { id: "active" as TabType, label: "Active Students", count: activeStudents.length },
     { id: "staff" as TabType, label: "Staff Accounts", count: staffMembers.length },
     { id: "archived" as TabType, label: "Archived", count: archivedStudents.length },
@@ -530,7 +530,7 @@ export default function UserManagementPage() {
                   <option value="security">Security Guard</option>
                   <option value="maintenance">Maintenance Staff</option>
                   <option value="laundry">Laundry Manager</option>
-                  <option value="admin">Administrator</option>
+                  <option value="financial">Financial Staff</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-4">
