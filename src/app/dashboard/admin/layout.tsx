@@ -12,6 +12,31 @@ const navItems = [
   { name: "System Settings", path: "/dashboard/admin/settings", icon: "settings" },
 ];
 
+function getPageTitle(pathname: string): { title: string; subtitle: string } {
+  if (pathname === "/dashboard/admin") {
+    return { title: "Dashboard", subtitle: "Welcome back, here's your overview" };
+  } else if (pathname.includes("/users")) {
+    return { title: "User Management", subtitle: "Manage students and staff accounts" };
+  } else if (pathname.includes("/rooms")) {
+    return { title: "Room Allocation", subtitle: "Manage room assignments and requests" };
+  } else if (pathname.includes("/financials")) {
+    return { title: "Financials", subtitle: "Track collections, expenses & reports" };
+  } else if (pathname.includes("/settings")) {
+    return { title: "System Settings", subtitle: "Configure system preferences" };
+  }
+  return { title: "Admin Panel", subtitle: "Hall management system" };
+}
+
+function formatDate(): string {
+  const options: Intl.DateTimeFormatOptions = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  };
+  return new Date().toLocaleDateString('en-US', options);
+}
+
 function NavIcon({ icon, className }: { icon: string; className?: string }) {
   switch (icon) {
     case "grid":
@@ -52,6 +77,7 @@ function NavIcon({ icon, className }: { icon: string; className?: string }) {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const pageInfo = getPageTitle(pathname);
 
   const isActive = (path: string) => {
     if (path === "/dashboard/admin") {
@@ -138,15 +164,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Header */}
         <header className="bg-white px-8 py-4 flex items-center justify-between border-b border-gray-100">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Hello Saif</h1>
-            <p className="text-gray-500 text-sm">December 20, 2025</p>
+            <h1 className="text-2xl font-bold text-gray-800">{pageInfo.title}</h1>
+            <p className="text-gray-500 text-sm">{formatDate()}</p>
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative">
+            <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
             <div className="relative">
               <input
