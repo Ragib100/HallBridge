@@ -90,9 +90,25 @@ export default function UserManagementPage() {
     return matchesSearch && matchesYear && matchesDept;
   });
 
-  const filteredPendingStudents = pendingStudents.filter(student => 
+  const filteredPendingStudents = pendingStudents.filter(student => {
+    const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         student.studentId.includes(searchQuery) ||
+                         student.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesYear = selectedYear === "all" || student.year === selectedYear;
+    const matchesDept = selectedDepartment === "all" || student.department === selectedDepartment;
+    return matchesSearch && matchesYear && matchesDept;
+  });
+
+  const filteredStaff = staffMembers.filter(staff => 
+    staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    staff.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    staff.role.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredArchivedStudents = archivedStudents.filter(student => 
     student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.studentId.includes(searchQuery)
+    student.studentId.includes(searchQuery) ||
+    student.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -372,7 +388,14 @@ export default function UserManagementPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {staffMembers.map((staff) => (
+              {filteredStaff.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    No staff members found matching your search
+                  </td>
+                </tr>
+              ) : (
+              filteredStaff.map((staff) => (
                 <tr key={staff.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -420,7 +443,8 @@ export default function UserManagementPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>
@@ -441,7 +465,14 @@ export default function UserManagementPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {archivedStudents.map((student) => (
+              {filteredArchivedStudents.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    No archived students found matching your search
+                  </td>
+                </tr>
+              ) : (
+              filteredArchivedStudents.map((student) => (
                 <tr key={student.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -476,7 +507,8 @@ export default function UserManagementPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>
