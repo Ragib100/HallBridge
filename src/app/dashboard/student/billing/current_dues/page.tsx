@@ -26,7 +26,12 @@ export default function CurrentDuesPage() {
         month: 'December 2025', invoice_id: 'INV-2025-12', billinfo: { seatrent: 200, messbill: 150, othercharges: 100 }, amount: 450
     });
 
-    const colors: string[] = ['#649dfa', '#64faf5', '#6af7a3', '#e2f576'];
+    const gradients: string[] = [
+        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+    ];
 
     const handleDownloadInvoice = () => {
         generateInvoicePDF(
@@ -50,9 +55,13 @@ export default function CurrentDuesPage() {
 
             <div className="flex flex-col md:flex-row gap-4 px-2 md:px-4">
                 {Object.entries(billdata.billinfo).map(([key, value], index) => (
-                    <div key={key} className="rounded-lg py-4 md:py-6 items-center justify-center flex flex-col w-full" style={{background: colors[index]}}>
-                        <p className="capitalize text-sm md:text-base">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
-                        <div className="text-2xl md:text-3xl">{getIcon('taka')} {value}</div>
+                    <div 
+                        key={key} 
+                        className="rounded-xl py-6 md:py-8 items-center justify-center flex flex-col w-full shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-1 cursor-pointer" 
+                        style={{background: gradients[index]}}
+                    >
+                        <p className="capitalize text-sm md:text-base text-white font-medium mb-2">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                        <div className="text-3xl md:text-4xl font-bold text-white flex items-center gap-1">{getIcon('taka')} {value}</div>
                     </div>
                 ))}
             </div>

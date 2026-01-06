@@ -37,10 +37,10 @@ export default function StudentLaundryPage() {
 	});
 
 	const cards: CardInfo[] = [
-		{ title: 'Regular Wash (2-3 days)', price: '30/kg', backgroundColor: '#364ff5' },
-		{ title: 'Express Wash (24 hours)', price: '50/kg', backgroundColor: '#f5bc36' },
-		{ title: 'Dry Clean (3-4 days)', price: '80/piece', backgroundColor: '#2ef71b' },
-		{ title: 'Iron Only', price: '5/piece', backgroundColor: '#07f0b2' }
+		{ title: 'Regular Wash (2-3 days)', price: '30/kg', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+		{ title: 'Express Wash (24 hours)', price: '50/kg', backgroundColor: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+		{ title: 'Dry Clean (3-4 days)', price: '80/piece', backgroundColor: 'linear-gradient(135deg, #1e88e5 0%, #0078d4 100%)' },
+		{ title: 'Iron Only', price: '5/piece', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' }
 	];
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -65,11 +65,15 @@ export default function StudentLaundryPage() {
 				<label className="font-bold text-xl md:text-2xl">{getIcon('laundry')} Schedule Laundry Pickup</label>
 			</CardHeader>
 
-			<div className="flex flex-col md:flex-row w-full h-auto gap-4">
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 w-full gap-4 md:gap-6">
 				{cards.map((card) => (
-					<div className="flex flex-col w-full py-4 border items-center justify-center rounded-2xl text-center" style={{ backgroundColor: card.backgroundColor }} key={card.title}>
-						<p className="text-lg md:text-2xl px-2">{card.title}</p>
-						<p className="text-base md:text-lg">{getIcon('taka')} {card.price}</p>
+					<div 
+						className="flex flex-col w-full py-8 px-4 items-center justify-center rounded-xl text-center text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border border-white/20" 
+						style={{ backgroundImage: card.backgroundColor }} 
+						key={card.title}
+					>
+						<p className="text-base md:text-lg font-bold px-2 mb-2 drop-shadow-md">{card.title}</p>
+						<p className="text-2xl md:text-3xl font-extrabold drop-shadow-md">{getIcon('taka')} {card.price}</p>
 					</div>
 				))}
 			</div>

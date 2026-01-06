@@ -3,9 +3,9 @@ import TopNavigation from "@/components/common/top_navigation";
 export default function MealsLayout( { children } : { children: React.ReactNode } ) {
 
     const nav_items = [
-        { name: 'Meal Selection', path: '/dashboard/student/meals/meal_selection' },
-        { name: 'Weekly Menu', path: '/dashboard/student/meals/weekly_menu' },
-        { name: 'Vote for Meals', path: '/dashboard/student/meals/vote_for_meals' },
+        { name: 'Meal Count', path: '/dashboard/staff/mess/meal_count' },
+        { name: 'Weekly Menu', path: '/dashboard/staff/mess/weekly_menu' },
+        { name: 'Voting Result', path: '/dashboard/staff/mess/voting_result' },
     ];
 
     return(

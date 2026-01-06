@@ -5,16 +5,15 @@ import { Select, SelectTrigger, SelectValue , SelectContent, SelectGroup, Select
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { Label } from '@/components/ui/label';
 import { getIcon } from '@/components/common/icons';
 
 export default function StudentGatePassPage() {
 	const [purpose, setPurpose] = useState<string>('');
 	const [destination, setDestination] = useState<string>('');
-	const [outDate, setOutDate] = useState<string>('');
-	const [outTime, setOutTime] = useState<string>('12:00:00');
-	const [returnDate, setReturnDate] = useState<string>('');
-	const [returnTime, setReturnTime] = useState<string>('12:00:00');
+	const [outDate, setOutDate] = useState<string>(new Date().toISOString().split('T')[0]);
+	const [outTime, setOutTime] = useState<string>(new Date(new Date().getTime() + 60 * 60 * 1000).toTimeString().substring(0,5));
+	const [returnDate, setReturnDate] = useState<string>(new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+	const [returnTime, setReturnTime] = useState<string>('12:00');
 	const [contactNumber, setContactNumber] = useState<string>('');
 	const [emergencyContact, setEmergencyContact] = useState<string>('');
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -30,8 +29,6 @@ export default function StudentGatePassPage() {
 	return (
 		<div className="px-4 md:px-8 py-8 max-w-full overflow-x-hidden">
 			
-			<Label className="text-lg py-4">{getIcon('gatepass')} Gate Pass</Label>
-
 			<form
 				onSubmit={handleSubmit}
 				className="px-2 md:px-4 py-4"
@@ -99,7 +96,14 @@ export default function StudentGatePassPage() {
 							type="date"
 							name="returnDate"
 							value={returnDate}
-							onChange={(e)=>{setReturnDate(e.target.value)}}
+							onChange={(e)=>{
+								setReturnDate(e.target.value);
+								if(e.target.value <= outDate){
+									const nextDay = new Date(outDate);
+									nextDay.setDate(nextDay.getDate() + 1);
+									setReturnDate(nextDay.toISOString().split('T')[0]);
+								}
+							}}
 						/>
 					</div>
 					<div className="w-full">

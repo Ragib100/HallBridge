@@ -1,6 +1,3 @@
-'use client';
-
-import { useState } from 'react';
 import VoteForMeal from '@/components/student/vote_for_meal';
 import { Card, CardContent } from '@/components/ui/card';
 

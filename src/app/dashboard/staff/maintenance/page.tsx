@@ -2,6 +2,7 @@
 
 import '../staff.css';
 import { useState } from 'react';
+import { ViewIssueDialog } from '@/components/staff/view_issue';
 
 interface MaintenanceTask {
   id: string;
@@ -67,13 +68,9 @@ export default function MaintenancePage() {
   const filteredTasks = mockTasks.filter(task => task.status === activeTab);
   const pendingCount = mockTasks.filter(t => t.status === 'pending').length;
   const inProgressCount = mockTasks.filter(t => t.status === 'in-progress').length;
-  const completedCount = mockTasks.filter(t => t.status === 'completed').length;
 
   return (
     <div className="staff-page">
-      <div className="staff-header">
-        <h1>Mess Management</h1>
-      </div>
 
       <div className="staff-content">
         <div className="staff-tabs">
@@ -133,17 +130,23 @@ export default function MaintenancePage() {
                   {activeTab === 'pending' && (
                     <>
                       <button className="task-btn primary">Start Task</button>
-                      <button className="task-btn secondary">View Details</button>
+                      <ViewIssueDialog task={task}>
+                        <button className="task-btn secondary">View Details</button>
+                      </ViewIssueDialog>
                     </>
                   )}
                   {activeTab === 'in-progress' && (
                     <>
                       <button className="task-btn success">Mark Complete</button>
-                      <button className="task-btn secondary">View Details</button>
+                      <ViewIssueDialog task={task}>
+                        <button className="task-btn secondary">View Details</button>
+                      </ViewIssueDialog>
                     </>
                   )}
                   {activeTab === 'completed' && (
-                    <button className="task-btn secondary">View Details</button>
+                    <ViewIssueDialog task={task}>
+                      <button className="task-btn secondary">View Details</button>
+                    </ViewIssueDialog>
                   )}
                 </div>
               </div>
