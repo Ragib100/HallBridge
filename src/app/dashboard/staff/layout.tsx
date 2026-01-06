@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 const navItems = [
-  { name: "Dashboard", path: "/dashboard/staff", icon: "dashboard" },
+  { name: "Dashboard", path: "/dashboard/staff/home", icon: "dashboard" },
   { name: "Mess Management", path: "/dashboard/staff/mess", icon: "meals" },
   { name: "Maintenance", path: "/dashboard/staff/maintenance", icon: "maintenance" },
   { name: "Laundry", path: "/dashboard/staff/laundry", icon: "laundry" },
@@ -13,7 +13,7 @@ const navItems = [
 ];
 
 function getPageTitle(pathname: string): { title: string; subtitle: string } {
-  if (pathname === "/dashboard/staff") {
+  if (pathname === "/dashboard/staff/home" || pathname === "/dashboard/staff") {
     return { title: "Dashboard", subtitle: "Welcome back, here's your overview" };
   } else if (pathname.includes("/mess")) {
     return { title: "Mess Management", subtitle: "Manage meals and menu" };
@@ -83,8 +83,8 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
   const pageInfo = getPageTitle(pathname);
 
   const isActive = (path: string) => {
-    if (path === "/dashboard/staff") {
-      return pathname === path;
+    if (path === "/dashboard/staff/home") {
+      return pathname === path || pathname === "/dashboard/staff";
     }
     return pathname.startsWith(path);
   };

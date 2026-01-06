@@ -54,6 +54,8 @@ const meals = [
 ]
 
 export default function GuestMeal() {
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+    
     return (
         <div className="container mx-auto py-8 px-2 md:px-4 max-w-full overflow-x-hidden">
             <div className="mb-8 text-center">
@@ -72,25 +74,34 @@ export default function GuestMeal() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {meals.map((meal) => (
-                            <TableRow
-                                key={meal.day}
-                                className="transition-colors hover:bg-blue-100 bg-white"
-                            >
-                                <TableCell className="font-bold text-blue-700 text-base pl-4">
-                                    {meal.day}
-                                </TableCell>
-                                <TableCell className="text-gray-700">
-                                    <div className="py-1">{meal.breakfast}</div>
-                                </TableCell>
-                                <TableCell className="text-gray-700">
-                                    <div className="py-1">{meal.lunch}</div>
-                                </TableCell>
-                                <TableCell className="text-gray-700">
-                                    <div className="py-1">{meal.dinner}</div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        {meals.map((meal) => {
+                            const isToday = meal.day === today
+                            return (
+                                <TableRow
+                                    key={meal.day}
+                                    className={`transition-colors ${
+                                        isToday 
+                                            ? "bg-yellow-100 hover:bg-yellow-200 border-l-4 border-yellow-500" 
+                                            : "hover:bg-blue-100 bg-white"
+                                    }`}
+                                >
+                                    <TableCell className={`font-bold text-base pl-4 ${
+                                        isToday ? "text-yellow-700" : "text-blue-700"
+                                    }`}>
+                                        {meal.day} {isToday && <span className="text-xs ml-2">(Today)</span>}
+                                    </TableCell>
+                                    <TableCell className="text-gray-700">
+                                        <div className="py-1">{meal.breakfast}</div>
+                                    </TableCell>
+                                    <TableCell className="text-gray-700">
+                                        <div className="py-1">{meal.lunch}</div>
+                                    </TableCell>
+                                    <TableCell className="text-gray-700">
+                                        <div className="py-1">{meal.dinner}</div>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })}
                     </TableBody>
                 </Table>
             </div>

@@ -1,5 +1,3 @@
-'use client';
-
 import TopNavigation from "@/components/common/top_navigation";
 
 export default function MaintenanceLayout( { children } : { children: React.ReactNode } ) {
