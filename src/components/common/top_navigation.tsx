@@ -16,7 +16,6 @@ export default function TopNavigation({ navItems }: TopNavigationProps) {
     const currentPage = usePathname();
     const router = useRouter();
 
-    // Find the current active value based on the pathname
     const activeValue = navItems.find(item => currentPage.startsWith(item.path))?.path || navItems[0]?.path;
 
     const handleTabChange = (value: string) => {
@@ -31,7 +30,7 @@ export default function TopNavigation({ navItems }: TopNavigationProps) {
                         <TabsTrigger
                             key={item.path}
                             value={item.path}
-                            className="rounded-none py-4 font-bold cursor-pointer data-[state=active]:bg-blue-500 data-[state=active]:border data-[state=active]:border-blue-800 data-[state=active]:text-white"
+                            className="rounded-none py-4 font-bold cursor-pointer data-[state=active]:bg-blue-500 data-[state=active]:border data-[state=active]:border-blue-800 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 ease-in-out hover:bg-gray-100"
                         >
                             {item.name}
                         </TabsTrigger>

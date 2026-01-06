@@ -75,7 +75,7 @@ export default function InvoicesPage() {
                             </div>
                         </div>
                         <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
-                            Amount: ${idx === 0 ? `${amount} (Pending)` : `${amount} (Paid)`}
+                            Amount: {getIcon('taka')}{idx === 0 ? `${amount} (Pending)` : `${amount} (Paid)`}
                         </div>
                     </div>
                 ))}

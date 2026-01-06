@@ -32,7 +32,6 @@ export default function HomePage() {
 
 	return (
 		<div className="bg-[#f3f4f6] flex flex-col w-full min-h-screen px-4 md:px-8 py-4 overflow-x-hidden">
-			<header className="flex w-full h-16 items-center px-4 font-bold text-lg">Dashboard</header>
 			<main className="w-full flex-1 overflow-x-hidden">
 				<div className="flex w-full h-16 items-center px-4 font-bold text-lg">
 					{getIcon('wave')} Welcome back
@@ -45,17 +44,17 @@ export default function HomePage() {
 							<span className="font-semibold text-base md:text-lg">Time Until Midnight</span>
 						</div>
 						<div className="flex gap-2 md:gap-3 items-center">
-							<div className="flex flex-col items-center bg-white/20 rounded-lg px-3 md:px-4 py-2 min-w-[60px] md:min-w-[68px]">
+							<div className="flex flex-col items-center bg-white/20 rounded-lg px-3 md:px-4 py-2 min-w-15 md:min-w-17">
 								<span className="text-2xl md:text-3xl font-bold">{String(timeUntilMidnight.hours).padStart(2, '0')}</span>
 								<span className="text-xs font-medium opacity-90">Hours</span>
 							</div>
 							<span className="text-xl md:text-2xl font-bold">:</span>
-							<div className="flex flex-col items-center bg-white/20 rounded-lg px-3 md:px-4 py-2 min-w-[60px] md:min-w-[68px]">
+							<div className="flex flex-col items-center bg-white/20 rounded-lg px-3 md:px-4 py-2 min-w-15 md:min-w-17">
 								<span className="text-2xl md:text-3xl font-bold">{String(timeUntilMidnight.minutes).padStart(2, '0')}</span>
 								<span className="text-xs font-medium opacity-90">Minutes</span>
 							</div>
 							<span className="text-xl md:text-2xl font-bold">:</span>
-							<div className="flex flex-col items-center bg-white/20 rounded-lg px-3 md:px-4 py-2 min-w-[60px] md:min-w-[68px]">
+							<div className="flex flex-col items-center bg-white/20 rounded-lg px-3 md:px-4 py-2 min-w-15 md:min-w-17">
 								<span className="text-2xl md:text-3xl font-bold">{String(timeUntilMidnight.seconds).padStart(2, '0')}</span>
 								<span className="text-xs font-medium opacity-90">Seconds</span>
 							</div>

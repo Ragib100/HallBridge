@@ -1,6 +1,18 @@
 import '@/app/dashboard/staff/staff.css'
 
+interface MealCountPageProps {
+    meatype: 'breakfast' | 'lunch' | 'dinner';
+    count: number;
+}
+
 export default function MealCountPage() {
+
+    const meals : MealCountPageProps[] = [
+        { meatype: 'breakfast', count: 82 },
+        { meatype: 'lunch', count: 85 },
+        { meatype: 'dinner', count: 87 },
+    ];
+
     return (
         <div className="tab-content">
             <div className="meal-count-header">
@@ -12,27 +24,14 @@ export default function MealCountPage() {
             </div>
 
             <div className="meal-cards-grid">
-                <div className="meal-card breakfast">
-                    <div className="meal-card-number">82</div>
-                    <div className="meal-card-label">
-                        <span>🔍</span>
-                        <span>Breakfast</span>
+                {meals.map((meal, index) => (
+                    <div key={index} className={`meal-card ${meal.meatype}`}>
+                        <div className="meal-card-number">{meal.count}</div>
+                        <div className="meal-card-label">
+                            <span>{meal.meatype.charAt(0).toUpperCase() + meal.meatype.slice(1)}</span>
+                        </div>
                     </div>
-                </div>
-                <div className="meal-card lunch">
-                    <div className="meal-card-number">85</div>
-                    <div className="meal-card-label">
-                        <span>🍱</span>
-                        <span>Lunch</span>
-                    </div>
-                </div>
-                <div className="meal-card dinner">
-                    <div className="meal-card-number">87</div>
-                    <div className="meal-card-label">
-                        <span>🍽️</span>
-                        <span>Dinner</span>
-                    </div>
-                </div>
+                ))}
             </div>
 
             <div className="meal-info-footer">
