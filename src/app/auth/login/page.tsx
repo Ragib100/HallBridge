@@ -12,6 +12,8 @@ export default function LoginPage() {
     password: "",
     userType: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -22,16 +24,43 @@ export default function LoginPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual authentication
-    // For now, redirect based on user type
-    if (formData.userType === "student") {
-      router.push("/dashboard/student/home");
-    } else if (formData.userType === "staff") {
-      router.push("/dashboard/staff");
-    } else {
-      router.push("/dashboard/admin");
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data?.message || "Login failed");
+        return;
+      }
+
+      const userType = data?.user?.userType;
+
+      if (userType === "student") {
+        router.push("/dashboard/student/home");
+      } else if (userType === "staff") {
+        router.push("/dashboard/staff");
+      } else {
+        router.push("/dashboard/admin");
+      }
+    } catch (err) {
+      setError("Unable to sign in. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -116,7 +145,6 @@ export default function LoginPage() {
             value={formData.userType}
             onChange={handleInputChange}
             className="px-4 py-2 bg-gray-100 border-0 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:outline-none text-gray-700 cursor-pointer"
-            required
           >
             <option value="" disabled>Select User Type</option>
             <option value="student">Student</option>
@@ -128,10 +156,15 @@ export default function LoginPage() {
         {/* Sign In Button */}
         <button
           type="submit"
+          disabled={isLoading}
           className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium"
         >
-          Sign in
+          {isLoading ? "Signing in..." : "Sign in"}
         </button>
+
+        {error ? (
+          <p className="text-sm text-red-600 text-center">{error}</p>
+        ) : null}
 
         {/* Divider */}
         <div className="flex items-center gap-4 my-6">

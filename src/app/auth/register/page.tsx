@@ -13,6 +13,8 @@ export default function RegisterPage() {
     password: "",
     userType: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -23,11 +25,38 @@ export default function RegisterPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual registration
-    // For now, redirect to login
-    router.push("/auth/login");
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          userType: formData.userType,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data?.message || "Registration failed");
+        return;
+      }
+
+      router.push("/auth/login");
+    } catch (err) {
+      setError("Unable to sign up. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -130,10 +159,15 @@ export default function RegisterPage() {
         {/* Sign Up Button */}
         <button
           type="submit"
+          disabled={isLoading}
           className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium"
         >
-          Sign up
+          {isLoading ? "Signing up..." : "Sign up"}
         </button>
+
+        {error ? (
+          <p className="text-sm text-red-600 text-center">{error}</p>
+        ) : null}
 
         {/* Sign In Link */}
         <p className="text-center text-gray-500 mt-6">
