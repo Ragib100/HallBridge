@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 const navItems = [
   { name: "Dashboard", path: "/dashboard/staff/home", icon: "dashboard" },
@@ -81,6 +82,14 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const pageInfo = getPageTitle(pathname);
+  const { user, loading } = useCurrentUser();
+
+  const displayName = loading ? "Loading..." : user?.fullName || "Unknown User";
+  const displayRole = loading
+    ? "Loading..."
+    : user?.userType
+      ? `${user.userType.charAt(0).toUpperCase()}${user.userType.slice(1)}`
+      : "User";
 
   const isActive = (path: string) => {
     if (path === "/dashboard/staff/home") {
@@ -164,8 +173,8 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
               className="w-10 h-10 rounded-full object-cover"
             />
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-white text-sm font-medium truncate">Abdul Karim</p>
-              <p className="text-gray-500 text-xs truncate">Mess Manager</p>
+              <p className="text-white text-sm font-medium truncate">{displayName}</p>
+              <p className="text-gray-500 text-xs truncate">{displayRole}</p>
             </div>
           </button>
         </div>

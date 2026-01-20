@@ -1,24 +1,49 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import ProfilePage, { ProfileData } from "@/components/common/profile_page";
+import { Spinner } from "@/components/ui/spinner";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export default function StudentProfilePage() {
-  // This would typically come from an API/authentication context
+  const router = useRouter();
+  const { user, loading, error } = useCurrentUser();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth/login");
+    }
+  }, [loading, user, router]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Spinner className="w-6 h-6 text-[#2D6A4F]" />
+      </div>
+    );
+  }
+
+  if (error || !user) {
+    return (
+      <p className="text-sm text-red-600 text-center">Unable to load profile.</p>
+    );
+  }
+
+  const joinedDate = user.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      })
+    : "Not Set";
+
   const studentData: ProfileData = {
-    name: "Rahul Khan",
-    email: "rahul.khan@university.edu",
-    phone: "+880 1234-567890",
+    name: user.fullName,
+    email: user.email,
+    phone: "",
     avatar: "/logos/profile.png",
-    role: "student",
-    joinedDate: "January 2022",
-    studentId: "STU-2022-0145",
-    department: "Computer Science & Engineering",
-    batch: "2022",
-    year: "3rd Year",
-    roomNumber: "B-301",
-    bloodGroup: "B+",
-    emergencyContact: "+880 1987-654321",
-    address: "123 Main Street, Dhaka, Bangladesh"
+    role: user.userType,
+    joinedDate,
   };
 
   const handleSave = (data: ProfileData) => {

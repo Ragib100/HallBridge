@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: "Login successful",
       user: {
         id: user._id,
@@ -41,6 +41,18 @@ export async function POST(req: Request) {
         userType: user.userType,
       },
     });
+
+    response.cookies.set({
+      name: "hb_session",
+      value: user._id.toString(),
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
   } catch (error) {
     return NextResponse.json(
       { message: "Something went wrong" },

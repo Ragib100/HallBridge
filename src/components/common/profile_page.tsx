@@ -41,6 +41,9 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>(initialData);
 
+  const displayValue = (value?: string, fallback = "Not Set") =>
+    value && value.trim().length > 0 ? value : fallback;
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setProfileData({
       ...profileData,
@@ -63,11 +66,14 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
   const getRoleLabel = () => {
     switch (profileData.role) {
       case "admin":
-        return profileData.adminRole || "Administrator";
+        return displayValue(profileData.adminRole, "Administrator");
       case "staff":
-        return profileData.staffRole || "Staff";
+        return displayValue(profileData.staffRole, "Staff");
       case "student":
-        return `${profileData.department} - ${profileData.year}`;
+        if (profileData.department && profileData.year) {
+          return `${profileData.department} - ${profileData.year}`;
+        }
+        return "Student";
       default:
         return "";
     }
@@ -109,8 +115,8 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
             )}
           </div>
           <div className="flex-1 text-center md:text-left">
-            <h2 className="text-2xl font-bold text-gray-800">{profileData.name}</h2>
-            <p className="text-gray-500">{profileData.email}</p>
+            <h2 className="text-2xl font-bold text-gray-800">{displayValue(profileData.name, "Unknown User")}</h2>
+            <p className="text-gray-500">{displayValue(profileData.email)}</p>
             <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
               <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor()}`}>
                 {profileData.role.charAt(0).toUpperCase() + profileData.role.slice(1)}
@@ -166,7 +172,7 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               ) : (
-                <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.name}</p>
+                <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.name, "Unknown")}</p>
               )}
             </div>
 
@@ -181,7 +187,7 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               ) : (
-                <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.email}</p>
+                <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.email)}</p>
               )}
             </div>
 
@@ -196,7 +202,7 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               ) : (
-                <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.phone}</p>
+                <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.phone)}</p>
               )}
             </div>
 
@@ -212,7 +218,7 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none resize-none"
                   />
                 ) : (
-                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.address}</p>
+                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.address)}</p>
                 )}
               </div>
             )}
@@ -232,7 +238,7 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Student ID</label>
-                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800 font-mono">{profileData.studentId}</p>
+                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800 font-mono">{displayValue(profileData.studentId)}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Room Number</label>
@@ -243,18 +249,18 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.department}</p>
+                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.department)}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
-                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.year}</p>
+                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.year)}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Batch</label>
-                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.batch}</p>
+                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.batch)}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Blood Group</label>
@@ -303,15 +309,15 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Staff ID</label>
-                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800 font-mono">{profileData.staffId}</p>
+                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800 font-mono">{displayValue(profileData.staffId)}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Role/Position</label>
-                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.staffRole}</p>
+                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.staffRole)}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Joined Date</label>
-                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.joinedDate}</p>
+                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.joinedDate)}</p>
                 </div>
               </>
             )}
@@ -321,11 +327,11 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Admin Role</label>
-                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.adminRole}</p>
+                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.adminRole, "Administrator")}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Joined Date</label>
-                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.joinedDate}</p>
+                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.joinedDate)}</p>
                 </div>
               </>
             )}
