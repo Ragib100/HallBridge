@@ -5,11 +5,11 @@ import User from "@/models/User";
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const { email, password, userType } = await req.json();
 
-    if (!email || !password) {
+    if (!email || !password || !userType) {
       return NextResponse.json(
-        { message: "Email and password are required" },
+        { message: "Email, password, and user type are required" },
         { status: 400 }
       );
     }
@@ -19,28 +19,31 @@ export async function POST(req: Request) {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return NextResponse.json(
-        { message: "Invalid email or password" },
+        { message: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    const isMatch = await bcrypt.compare(password, user.passwordHash) && user.userType === userType;
     if (!isMatch) {
       return NextResponse.json(
-        { message: "Invalid email or password" },
+        { message: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    const response = NextResponse.json({
-      message: "Login successful",
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        userType: user.userType,
+    const response = NextResponse.json(
+      {
+        message: "Login successful",
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          userType: user.userType,
+        },
       },
-    });
+      { status: 200 }
+    );
 
     response.cookies.set({
       name: "hb_session",

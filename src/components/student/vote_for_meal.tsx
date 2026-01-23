@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "../ui/card";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";

@@ -5,24 +5,89 @@ import { getIcon } from "../common/icons";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export default function TomorrowMeals() {
+    const { user } = useCurrentUser();
     const [breakfast, setBreakfast] = useState<boolean>(false);
     const [lunch, setLunch] = useState<boolean>(false);
     const [dinner, setDinner] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
     
     useEffect(() => {
-        // console.log({breakfast, lunch, dinner});
-    }, [breakfast, lunch, dinner]);
+        const fetchMeal = async() => {
+            if(!user?.id) return;
+
+            // console.log("User ID:", user.id);
+
+            try {
+                const url = `/api/student/meals/meal-selection/tomorrow-meal?studentId=${user.id}`;
+                // console.log('Fetching meal selection from:', url);
+
+                const response = await fetch(url,{
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    }
+                })
+
+                // console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Error fetching meal selection:', errorData?.message || 'Unknown error');
+                    return;
+                }
+                
+                const data = await response.json();
+                // console.log('Fetched meal selection data:', data);
+
+                setBreakfast(data.meal.breakfast);
+                setLunch(data.meal.lunch);
+                setDinner(data.meal.dinner);
+            }
+            catch (error) {
+                console.error('Error fetching meal selection:', error);
+            }
+        };
+
+        fetchMeal();
+    }, [user?.id]);
     
     const handleSave = async () => {
         setIsSaving(true);
+
+        if(!user) {
+            console.error('No user logged in');
+            // console.log('Cannot save meal selection without user ID');
+            setIsSaving(false);
+            return;
+        }
+
         try {
-            // Simulate API call - replace with your actual save logic
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            console.log('Saved:', { breakfast, lunch, dinner });
-            // Add your save logic here
+            const url = `/api/student/meals/meal-selection/tomorrow-meal?studentId=${user.id}`;
+            // console.log('Saving meal selection to:', url);
+
+            const response = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    breakfast: breakfast,
+                    lunch: lunch,
+                    dinner: dinner
+                })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                console.error('Error saving meal selection:', data?.message || 'Unknown error');
+                return;
+            }
+
+            const data = await response.json();
+            // console.log('Save response data:', data);
         } catch (error) {
             console.error('Error saving:', error);
         } finally {

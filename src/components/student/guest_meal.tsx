@@ -12,6 +12,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 interface GuestMealFormData {
 	name: string;
@@ -34,17 +35,39 @@ export default function GuestMeal() {
 		dinner: false,
 	});
 
+	const { user } = useCurrentUser();
 	const [is_submitting, setIsSubmitting] = useState<boolean>(false);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsSubmitting(true);
+
+		if(!user) {
+			console.error("No user logged in.");
+			setIsSubmitting(false);
+			return;
+		}
 		
 		try {
-			console.log("Form submitted:", formData);
-			// Add your form submission logic here
-			// Simulate API call
-			await new Promise(resolve => setTimeout(resolve, 2000));
+			
+			const url = `/api/student/meals/meal-selection/guest-meal?studentId=${user.id}`;
+			const response = await fetch(url,{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify(formData)
+			})
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				console.error("Submission error:", errorData?.message || "Unknown error");
+				return;
+			}
+
+			const data = await response.json();
+			console.log("Guest meal submitted successfully:", data);
+
 		} catch (error) {
 			console.error("Submission error:", error);
 		} finally {

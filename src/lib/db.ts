@@ -16,6 +16,8 @@ if (!MONGODB_URI) {
   throw new Error("Missing MONGODB_URI in environment variables");
 }
 
+const MONGO_URI: string = MONGODB_URI;
+
 const cached: MongooseCache = globalThis.mongooseCache ?? {
   conn: null,
   promise: null,
@@ -29,7 +31,7 @@ export default async function connectDB() {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
+    cached.promise = mongoose.connect(MONGO_URI, {
       dbName: "HallBridge",
     });
   }
