@@ -8,7 +8,8 @@ const mealSchema = new Schema(
         lunch: { type: Boolean, default: false },
         dinner: { type: Boolean, default: false },
         isLocked: { type: Boolean, default: false },
-        lockedAt: { type: Date } 
+        lockedAt: { type: Date },
+        rating_submitted: { type: Boolean, default: false },
     },
     { timestamps: true }
 )

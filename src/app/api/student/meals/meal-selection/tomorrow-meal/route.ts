@@ -43,15 +43,18 @@ export async function PUT(req: Request) {
                 { message: "Meal selection deadline has passed (11:00 PM). You cannot modify tomorrow's meals." },
                 { status: 403 }
             );
-        }        
+        }
 
         const updatedMeal = await Meal.findOneAndUpdate(
             { studentId, date: tomorrowDate },
-            { 
+            {
+                studentId, 
+                date: tomorrowDate,
                 breakfast, 
                 lunch, 
                 dinner,
-                isLocked: false
+                isLocked: false,
+                rating_submitted: false
             },
             { new: true, upsert: true }
         );
@@ -61,7 +64,7 @@ export async function PUT(req: Request) {
                 message: "Meal selection updated successfully",
                 meal: updatedMeal,
             },
-            { status: 200 }
+            { status: 201 }
         );
     }
     catch (error) {
@@ -105,7 +108,8 @@ export async function GET(req: Request) {
                         breakfast: false,
                         lunch: false,
                         dinner: false,
-                        isLocked: false
+                        isLocked: false,
+                        rating_submitted: false
                     },
                 },
                 { status: 200 }
