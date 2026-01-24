@@ -52,7 +52,7 @@ export default function GuestMeal() {
 			
 			const url = `/api/student/meals/meal-selection/guest-meal?studentId=${user.id}`;
 			const response = await fetch(url,{
-				method: "POST",
+				method: "PUT",
 				headers: {
 					"Content-Type": "application/json"
 				},

@@ -7,6 +7,7 @@ const mealSchema = new Schema(
         id: { type: String, required: true },
         department: { type: String, required: true },
         phone: { type: String, required: true },
+        date: { type: Date, required: true },
         breakfast: { type: Boolean, default: false },
         lunch: { type: Boolean, default: false },
         dinner: { type: Boolean, default: false },

@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Meal from "@/models/Meal";
 
+function getTomorrowDate(): Date {
+    const tomorrow = new Date();
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    tomorrow.setUTCHours(0, 0, 0, 0);
+    return tomorrow;
+}
+
 export async function PUT(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
@@ -24,9 +31,28 @@ export async function PUT(req: Request) {
 
         await connectDB();
 
+        const tomorrowDate = getTomorrowDate();
+
+        const existingMeal = await Meal.findOne({ 
+            studentId, 
+            date: tomorrowDate 
+        });
+
+        if (existingMeal?.isLocked) {
+            return NextResponse.json(
+                { message: "Meal selection deadline has passed (11:00 PM). You cannot modify tomorrow's meals." },
+                { status: 403 }
+            );
+        }        
+
         const updatedMeal = await Meal.findOneAndUpdate(
-            { studentId },
-            { breakfast, lunch, dinner },
+            { studentId, date: tomorrowDate },
+            { 
+                breakfast, 
+                lunch, 
+                dinner,
+                isLocked: false
+            },
             { new: true, upsert: true }
         );
 
@@ -61,12 +87,28 @@ export async function GET(req: Request) {
 
         await connectDB();
 
-        const meal = await Meal.findOne({ studentId });
+        const tomorrowDate = getTomorrowDate();
+
+        const meal = await Meal.findOne({ 
+            studentId, 
+            date: tomorrowDate 
+        }); 
 
         if (!meal) {
+            // Return default meal selection (all false) for tomorrow
             return NextResponse.json(
-                { message: "No meal selection found for the student" },
-                { status: 404 }
+                {
+                    message: "No meal selection found, returning defaults",
+                    meal: {
+                        studentId,
+                        date: tomorrowDate,
+                        breakfast: false,
+                        lunch: false,
+                        dinner: false,
+                        isLocked: false
+                    },
+                },
+                { status: 200 }
             );
         }
 
