@@ -1,0 +1,1379 @@
+================================================================================
+HALLBRIDGE - MONGODB COLLECTIONS SCHEMA (REVISED)
+================================================================================
+Project Review Date: January 24, 2026
+Database: HallBridge
+Total Collections: 20
+
+This document contains the complete MongoDB database schema for the HallBridge 
+Digital Hall Management System, designed to handle Student, Staff, and Admin
+operations for university residential hall management.
+
+================================================================================
+COLLECTION 1: users
+================================================================================
+Purpose: Central collection for all user accounts (students, staff, admin)
+
+Fields:
+{
+  _id: ObjectId (Auto-generated),
+  fullName: String (required, trimmed),
+  email: String (required, unique, lowercase),
+  passwordHash: String (required),
+  userType: String (required, enum: ["student", "staff", "admin"]),
+  
+  // Student-specific fields (null/undefined for staff/admin)
+  studentId: String (unique, sparse index - e.g., "202314001"),
+  department: String (enum: ["CSE", "EEE", "ME", "CE", "ARCHI", "EWCE", "PME", "AE", "NAME", "IPE", "NSE", "BME", "URP"]),
+  yearOfStudy: String (enum: ["1st", "2nd", "3rd", "4th"]),
+  roomNumber: String (e.g., "201", "302"),
+  guardianPhone: String,
+  bloodGroup: String (enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]),
+  hallName: String,
+  
+  // Staff-specific fields (null/undefined for students/admin)
+  role: String (enum: ["Mess Manager", "Security Guard", "Maintenance Staff", "Laundry Manager", "Financial Staff"]),
+  phoneNumber: String,
+  salary: Number,
+  joiningDate: Date,
+  
+  // Common fields
+  avatar: String (URL, default: "/logos/profile.png"),
+  status: String (enum: ["pending", "active", "inactive", "archived"], default: "pending"),
+  pendingSince: Date (when status is pending),
+  createdAt: Date (auto-generated),
+  updatedAt: Date (auto-generated)
+}
+
+Indexes:
+- email (unique)
+- studentId (unique, sparse)
+- userType
+- status
+- department (for filtering)
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  fullName: "David Johnson",
+  email: "david.johnson@university.edu",
+  passwordHash: "$2b$10$...",
+  userType: "student",
+  studentId: "202214001",
+  department: "CSE",
+  yearOfStudy: "2nd",
+  roomNumber: "201",
+  guardianPhone: "+8801712345678",
+  bloodGroup: "B+",
+  hallName: "Hall Name",
+  avatar: "/logos/profile.png",
+  status: "active",
+  createdAt: ISODate("2022-01-15T10:30:00Z"),
+  updatedAt: ISODate("2026-01-20T08:15:00Z")
+}
+
+================================================================================
+COLLECTION 2: meals
+================================================================================
+Purpose: Daily meal selections for students (breakfast, lunch, dinner toggle)
+
+Fields:
+{
+  _id: ObjectId,
+  studentId: ObjectId (ref: "users", required),
+  date: Date (required - the specific date for meal selection),
+  breakfast: Boolean (default: false),
+  lunch: Boolean (default: false),
+  dinner: Boolean (default: false),
+  isLocked: Boolean (default: false - locked at 11 PM cutoff),
+  lockedAt: Date (timestamp when locked),
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- studentId + date (compound unique index - one record per student per day)
+- date (for daily meal count queries)
+- isLocked
+- studentId
+
+Business Rules:
+- Meal selection deadline: 11:00 PM for next day
+- After deadline, isLocked becomes true
+- Staff can view total count of active meals per day
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  studentId: ObjectId("..."),
+  date: ISODate("2026-01-25T00:00:00Z"),
+  breakfast: true,
+  lunch: true,
+  dinner: false,
+  isLocked: false,
+  createdAt: ISODate("2026-01-24T18:30:00Z"),
+  updatedAt: ISODate("2026-01-24T20:15:00Z")
+}
+
+================================================================================
+COLLECTION 3: guestmeals
+================================================================================
+Purpose: Guest meal requests from students for visitors
+
+Fields:
+{
+  _id: ObjectId,
+  studentId: ObjectId (ref: "users", required - student requesting),
+  guestName: String (required - guest's name),
+  guestId: String (required - guest's student ID or ID number),
+  department: String (required),
+  phone: String (required - guest's contact),
+  date: Date (required - date for guest meal),
+  breakfast: Boolean (default: false),
+  lunch: Boolean (default: false),
+  dinner: Boolean (default: false),
+  status: String (enum: ["pending", "approved", "rejected"], default: "pending"),
+  cost: Number (calculated based on meals selected),
+  
+  // Admin actions
+  approvedBy: ObjectId (ref: "users"),
+  approvedAt: Date,
+  rejectionReason: String,
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- studentId + date (compound index)
+- date
+- status
+
+Pricing (from system settings):
+- Breakfast: 50 BDT
+- Lunch: 80 BDT
+- Dinner: 70 BDT
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  studentId: ObjectId("..."),
+  guestName: "Ahmed Hassan",
+  guestId: "202114089",
+  department: "EEE",
+  phone: "+8801812345678",
+  date: ISODate("2026-01-25T00:00:00Z"),
+  breakfast: false,
+  lunch: true,
+  dinner: true,
+  status: "approved",
+  cost: 150,
+  approvedBy: ObjectId("..."),
+  approvedAt: ISODate("2026-01-24T10:30:00Z"),
+  createdAt: ISODate("2026-01-24T09:00:00Z"),
+  updatedAt: ISODate("2026-01-24T10:30:00Z")
+}
+
+================================================================================
+COLLECTION 4: weeklymenus
+================================================================================
+Purpose: Store weekly meal menu schedules
+
+Fields:
+{
+  _id: ObjectId,
+  weekStartDate: Date (required - Monday of the week),
+  weekEndDate: Date (required - Sunday of the week),
+  meals: [
+    {
+      day: String (enum: ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]),
+      breakfast: String (menu items for breakfast),
+      lunch: String (menu items for lunch),
+      dinner: String (menu items for dinner)
+    }
+  ],
+  status: String (enum: ["draft", "active", "archived"], default: "draft"),
+  createdBy: ObjectId (ref: "users" - staff/admin),
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- weekStartDate (unique for active status)
+- status
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  weekStartDate: ISODate("2026-01-20T00:00:00Z"),
+  weekEndDate: ISODate("2026-01-26T00:00:00Z"),
+  meals: [
+    {
+      day: "Monday",
+      breakfast: "Paratha, Egg, Tea",
+      lunch: "Rice, Dal, Chicken Curry, Vegetables",
+      dinner: "Rice, Fish Curry, Dal"
+    },
+    {
+      day: "Tuesday",
+      breakfast: "Bread, Butter, Banana, Tea",
+      lunch: "Khichuri, Beef, Salad",
+      dinner: "Rice, Mixed Vegetables, Dal"
+    }
+  ],
+  status: "active",
+  createdBy: ObjectId("..."),
+  createdAt: ISODate("2026-01-18T14:00:00Z"),
+  updatedAt: ISODate("2026-01-20T08:00:00Z")
+}
+
+================================================================================
+COLLECTION 5: votemeals (mealratings)
+================================================================================
+Purpose: Student voting/rating for meals and menu items
+
+Fields:
+{
+  _id: ObjectId,
+  studentId: ObjectId (ref: "users", required),
+  day: String (required - day of the week or date),
+  meal: String (required - meal item name),
+  rating: Number (required, min: 0, max: 5),
+  comments: String (optional feedback),
+  date: Date (when the vote was cast),
+  mealType: String (enum: ["breakfast", "lunch", "dinner"]),
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- studentId + day + meal (compound unique index)
+- date
+- mealType
+- rating (for aggregation queries)
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  studentId: ObjectId("..."),
+  day: "Monday",
+  meal: "Chicken Curry",
+  rating: 4,
+  comments: "Good taste, portion size was adequate",
+  date: ISODate("2026-01-20T13:30:00Z"),
+  mealType: "lunch",
+  createdAt: ISODate("2026-01-20T13:30:00Z"),
+  updatedAt: ISODate("2026-01-20T13:30:00Z")
+}
+
+================================================================================
+COLLECTION 6: gatepasses
+================================================================================
+Purpose: Digital gate pass system for student movement tracking
+
+Fields:
+{
+  _id: ObjectId,
+  passId: String (unique, auto-generated: "GP-2026-0001"),
+  studentId: ObjectId (ref: "users", required),
+  
+  purpose: String (enum: ["home", "medical", "personal", "family", "academic", "other"], required),
+  destination: String (required),
+  
+  outDate: Date (required - date of leaving),
+  outTime: String (required - time of leaving, e.g., "10:00 AM"),
+  returnDate: Date (required - expected return date),
+  returnTime: String (required - expected return time),
+  
+  contactNumber: String (required),
+  emergencyContact: String (required),
+  
+  status: String (enum: ["pending", "approved", "rejected", "checked-out", "checked-in", "late"], default: "pending"),
+  
+  // Check-in/out tracking
+  actualOutTime: Date,
+  actualReturnTime: Date,
+  checkedOutBy: ObjectId (ref: "users" - security staff),
+  checkedInBy: ObjectId (ref: "users" - security staff),
+  
+  // Admin actions
+  approvedBy: ObjectId (ref: "users"),
+  approvedAt: Date,
+  rejectionReason: String,
+  
+  qrCode: String (QR code string for scanning),
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- passId (unique)
+- studentId + createdAt (compound index)
+- status
+- outDate
+- returnDate
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  passId: "GP-2026-0145",
+  studentId: ObjectId("..."),
+  purpose: "home",
+  destination: "Dhaka, Bangladesh",
+  outDate: ISODate("2026-01-25T00:00:00Z"),
+  outTime: "08:00 AM",
+  returnDate: ISODate("2026-01-27T00:00:00Z"),
+  returnTime: "06:00 PM",
+  contactNumber: "+8801712345678",
+  emergencyContact: "+8801812345679",
+  status: "approved",
+  approvedBy: ObjectId("..."),
+  approvedAt: ISODate("2026-01-24T15:30:00Z"),
+  qrCode: "GP202600145ENCODED",
+  createdAt: ISODate("2026-01-24T14:00:00Z"),
+  updatedAt: ISODate("2026-01-24T15:30:00Z")
+}
+
+================================================================================
+COLLECTION 7: rooms
+================================================================================
+Purpose: Room information and allocation management
+
+Fields:
+{
+  _id: ObjectId,
+  roomNumber: String (required, unique, e.g., "201", "302"),
+  floor: Number (required, e.g., 1, 2, 3, 4),
+  capacity: Number (required - max number of students),
+  status: String (enum: ["occupied", "vacant", "partial", "maintenance"], required),
+  amenities: [String] (e.g., ["AC", "Attached Bath", "Balcony", "Fan"]),
+  
+  // Current residents
+  members: [
+    {
+      studentId: ObjectId (ref: "users"),
+      name: String,
+      allocatedAt: Date,
+      seatNumber: Number (1, 2, 3, 4)
+    }
+  ],
+  
+  // Maintenance tracking
+  lastMaintenanceDate: Date,
+  nextMaintenanceDate: Date,
+  maintenanceNotes: String,
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- roomNumber (unique)
+- floor
+- status
+- capacity
+
+Business Rules:
+- Status "occupied": members.length === capacity
+- Status "partial": 0 < members.length < capacity
+- Status "vacant": members.length === 0
+- Status "maintenance": room unavailable for allocation
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  roomNumber: "201",
+  floor: 2,
+  capacity: 4,
+  status: "occupied",
+  amenities: ["AC", "Attached Bath", "Balcony"],
+  members: [
+    {
+      studentId: ObjectId("..."),
+      name: "David Johnson",
+      allocatedAt: ISODate("2025-07-01T00:00:00Z"),
+      seatNumber: 1
+    },
+    {
+      studentId: ObjectId("..."),
+      name: "Michael Charter",
+      allocatedAt: ISODate("2025-07-01T00:00:00Z"),
+      seatNumber: 2
+    },
+    {
+      studentId: ObjectId("..."),
+      name: "Mark Wilson",
+      allocatedAt: ISODate("2025-07-01T00:00:00Z"),
+      seatNumber: 3
+    },
+    {
+      studentId: ObjectId("..."),
+      name: "Ethan Lowe",
+      allocatedAt: ISODate("2025-07-01T00:00:00Z"),
+      seatNumber: 4
+    }
+  ],
+  lastMaintenanceDate: ISODate("2025-12-15T00:00:00Z"),
+  nextMaintenanceDate: ISODate("2026-06-15T00:00:00Z"),
+  createdAt: ISODate("2020-01-01T00:00:00Z"),
+  updatedAt: ISODate("2026-01-20T10:00:00Z")
+}
+
+================================================================================
+COLLECTION 8: roomallocationrequests
+================================================================================
+Purpose: Room allocation and transfer requests from students
+
+Fields:
+{
+  _id: ObjectId,
+  studentId: ObjectId (ref: "users", required),
+  requestType: String (enum: ["new-allocation", "room-change", "roommate-request"], required),
+  
+  preferredRoom: String (optional - requested room number),
+  preferredRoommates: [ObjectId] (ref: "users" - list of preferred roommates),
+  
+  department: String,
+  year: String,
+  reason: String (reason for request),
+  
+  status: String (enum: ["pending", "approved", "rejected"], default: "pending"),
+  
+  // Admin actions
+  processedBy: ObjectId (ref: "users"),
+  processedAt: Date,
+  rejectionReason: String,
+  allocatedRoom: String (room number if approved),
+  
+  requestDate: Date,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- studentId
+- status
+- requestType
+- requestDate
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  studentId: ObjectId("..."),
+  requestType: "new-allocation",
+  preferredRoom: "204",
+  preferredRoommates: [ObjectId("..."), ObjectId("...")],
+  department: "CSE",
+  year: "1st",
+  reason: "Want to stay with batchmates",
+  status: "pending",
+  requestDate: ISODate("2026-01-03T00:00:00Z"),
+  createdAt: ISODate("2026-01-03T09:30:00Z"),
+  updatedAt: ISODate("2026-01-03T09:30:00Z")
+}
+
+================================================================================
+COLLECTION 9: maintenancerequests
+================================================================================
+Purpose: Maintenance issue reports and tracking
+
+Fields:
+{
+  _id: ObjectId,
+  requestId: String (unique, auto-generated: "MT-2026-0001"),
+  studentId: ObjectId (ref: "users", required),
+  
+  category: String (enum: ["electrical", "plumbing", "furniture", "ac-heating", "doors-windows", "internet", "other"], required),
+  priority: String (enum: ["urgent", "high", "normal", "low"], required),
+  
+  location: String (required - room number or specific location),
+  description: String (required - detailed issue description),
+  contactNumber: String (required),
+  preferredTime: String (optional),
+  
+  images: [String] (URLs to uploaded images),
+  
+  status: String (enum: ["pending", "in-progress", "completed", "cancelled"], default: "pending"),
+  
+  // Assignment
+  assignedTo: ObjectId (ref: "users" - maintenance staff),
+  assignedAt: Date,
+  estimatedCompletionDate: Date,
+  
+  // Completion
+  completedAt: Date,
+  completionNotes: String,
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- requestId (unique)
+- studentId
+- status
+- priority
+- category
+- createdAt
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  requestId: "MT-2026-0078",
+  studentId: ObjectId("..."),
+  category: "electrical",
+  priority: "high",
+  location: "Room 201",
+  description: "Ceiling fan not working, making unusual noise",
+  contactNumber: "+8801712345678",
+  preferredTime: "Morning (9 AM - 12 PM)",
+  images: ["/uploads/maintenance/img_001.jpg"],
+  status: "in-progress",
+  assignedTo: ObjectId("..."),
+  assignedAt: ISODate("2026-01-24T10:00:00Z"),
+  estimatedCompletionDate: ISODate("2026-01-25T00:00:00Z"),
+  createdAt: ISODate("2026-01-24T08:30:00Z"),
+  updatedAt: ISODate("2026-01-24T10:00:00Z")
+}
+
+================================================================================
+COLLECTION 10: laundryrequests
+================================================================================
+Purpose: Laundry service requests and tracking
+
+Fields:
+{
+  _id: ObjectId,
+  laundryId: String (unique, auto-generated: "#L-0001"),
+  studentId: ObjectId (ref: "users", required),
+  roomNumber: String (required),
+  
+  pickupDate: Date (required),
+  pickupTime: String (required - e.g., "10:00 AM"),
+  serviceType: String (enum: ["regular", "express", "dry-clean", "iron-only"], required),
+  itemCount: Number (required),
+  estimatedWeight: Number (in kg, optional),
+  specialInstructions: String,
+  
+  status: String (enum: ["pending", "picked-up", "in-washing", "ready", "completed"], default: "pending"),
+  
+  // Cost calculation
+  costPerUnit: Number,
+  totalCost: Number,
+  
+  // Tracking
+  pickedUpAt: Date,
+  readyAt: Date,
+  deliveredAt: Date,
+  handledBy: ObjectId (ref: "users" - laundry staff),
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- laundryId (unique)
+- studentId
+- status
+- pickupDate
+
+Pricing (from system settings):
+- Regular: 30 BDT per item
+- Express: 50 BDT per item
+- Dry-clean: 100 BDT per item
+- Iron-only: 10 BDT per item
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  laundryId: "#L-0234",
+  studentId: ObjectId("..."),
+  roomNumber: "201",
+  pickupDate: ISODate("2026-01-25T00:00:00Z"),
+  pickupTime: "10:00 AM",
+  serviceType: "regular",
+  itemCount: 8,
+  estimatedWeight: 3.5,
+  specialInstructions: "Please handle white shirts carefully",
+  status: "picked-up",
+  costPerUnit: 30,
+  totalCost: 240,
+  pickedUpAt: ISODate("2026-01-25T10:15:00Z"),
+  handledBy: ObjectId("..."),
+  createdAt: ISODate("2026-01-24T20:00:00Z"),
+  updatedAt: ISODate("2026-01-25T10:15:00Z")
+}
+
+================================================================================
+COLLECTION 11: invoices
+================================================================================
+Purpose: Monthly billing invoices for students
+
+Fields:
+{
+  _id: ObjectId,
+  invoiceId: String (unique, auto-generated: "INV-2026-01-0001"),
+  studentId: ObjectId (ref: "users", required),
+  
+  month: String (required - e.g., "January 2026"),
+  year: Number (required - 2026),
+  billingPeriodStart: Date,
+  billingPeriodEnd: Date,
+  
+  // Bill breakdown
+  billInfo: {
+    seatRent: Number (seat rent - fixed monthly charge),
+    messBill: Number (calculated from active meal days),
+    laundryCharges: Number,
+    guestMealCharges: Number,
+    maintenanceCharges: Number,
+    otherCharges: Number,
+    wifiBill: Number,
+    
+    // Deductions
+    scholarshipDiscount: Number,
+    otherDiscounts: Number
+  },
+  
+  totalAmount: Number (required - sum of all charges minus discounts),
+  
+  // Payment tracking
+  status: String (enum: ["pending", "paid", "overdue", "cancelled"], default: "pending"),
+  dueDate: Date (required),
+  paidAt: Date,
+  paymentMethod: String (enum: ["Bkash", "Nagad", "Rocket", "Card"]),
+  transactionId: String,
+  
+  // Late payment
+  lateFee: Number (if overdue),
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- invoiceId (unique)
+- studentId + month + year (compound index)
+- status
+- dueDate
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  invoiceId: "INV-2025-12-0123",
+  studentId: ObjectId("..."),
+  month: "December 2025",
+  year: 2025,
+  billingPeriodStart: ISODate("2025-12-01T00:00:00Z"),
+  billingPeriodEnd: ISODate("2025-12-31T00:00:00Z"),
+  billInfo: {
+    seatRent: 200,
+    messBill: 150,
+    laundryCharges: 0,
+    guestMealCharges: 0,
+    maintenanceCharges: 0,
+    otherCharges: 100,
+    wifiBill: 0,
+    scholarshipDiscount: 0,
+    otherDiscounts: 0
+  },
+  totalAmount: 450,
+  status: "pending",
+  dueDate: ISODate("2025-12-31T00:00:00Z"),
+  createdAt: ISODate("2025-12-01T00:00:00Z"),
+  updatedAt: ISODate("2026-01-24T10:00:00Z")
+}
+
+================================================================================
+COLLECTION 12: expenses
+================================================================================
+Purpose: Operational expenses logged by staff
+
+Fields:
+{
+  _id: ObjectId,
+  expenseId: String (unique, auto-generated: "EXP-2026-0001"),
+  
+  category: String (enum: ["market", "utilities", "salaries", "maintenance", "kitchen-supplies", "other"], required),
+  title: String (required),
+  description: String,
+  
+  amount: Number (required),
+  date: Date (required),
+  
+  // For market expenses
+  items: [
+    {
+      itemName: String,
+      quantity: Number,
+      unit: String (e.g., "kg", "pieces", "liters"),
+      price: Number
+    }
+  ],
+  
+  // Tracking
+  loggedBy: ObjectId (ref: "users", required - staff member),
+  approvedBy: ObjectId (ref: "users" - admin),
+  status: String (enum: ["pending", "approved", "rejected"], default: "pending"),
+  
+  // Documents
+  receipt: String (URL to receipt image),
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- expenseId (unique)
+- category
+- date
+- status
+- loggedBy
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  expenseId: "EXP-2026-0045",
+  category: "market",
+  title: "Weekly grocery shopping",
+  description: "Vegetables and rice for the week",
+  amount: 5500,
+  date: ISODate("2026-01-24T00:00:00Z"),
+  items: [
+    {
+      itemName: "Rice",
+      quantity: 50,
+      unit: "kg",
+      price: 3000
+    },
+    {
+      itemName: "Potatoes",
+      quantity: 20,
+      unit: "kg",
+      price: 800
+    },
+    {
+      itemName: "Onions",
+      quantity: 15,
+      unit: "kg",
+      price: 900
+    }
+  ],
+  loggedBy: ObjectId("..."),
+  approvedBy: ObjectId("..."),
+  status: "approved",
+  receipt: "/uploads/receipts/rec_045.jpg",
+  createdAt: ISODate("2026-01-24T15:00:00Z"),
+  updatedAt: ISODate("2026-01-24T16:30:00Z")
+}
+
+================================================================================
+COLLECTION 13: staffsalaries
+================================================================================
+Purpose: Staff salary payment tracking
+
+Fields:
+{
+  _id: ObjectId,
+  staffId: ObjectId (ref: "users", required),
+  
+  month: String (required - e.g., "January 2026"),
+  year: Number (required - 2026),
+  
+  baseSalary: Number (required),
+  bonuses: Number (default: 0),
+  deductions: Number (default: 0),
+  totalAmount: Number (required - baseSalary + bonuses - deductions),
+  
+  status: String (enum: ["pending", "paid"], default: "pending"),
+  paidDate: Date,
+  paymentMethod: String (e.g., "Bank Transfer", "Cash"),
+  
+  processedBy: ObjectId (ref: "users" - admin),
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- staffId + month + year (compound unique index)
+- status
+- staffId
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  staffId: ObjectId("..."),
+  month: "January 2026",
+  year: 2026,
+  baseSalary: 25000,
+  bonuses: 2000,
+  deductions: 0,
+  totalAmount: 27000,
+  status: "paid",
+  paidDate: ISODate("2026-01-31T00:00:00Z"),
+  paymentMethod: "Bank Transfer",
+  processedBy: ObjectId("..."),
+  createdAt: ISODate("2026-01-01T00:00:00Z"),
+  updatedAt: ISODate("2026-01-31T14:00:00Z")
+}
+
+================================================================================
+COLLECTION 14: notices
+================================================================================
+Purpose: Announcements and notices for students/staff
+
+Fields:
+{
+  _id: ObjectId,
+  title: String (required),
+  content: String (required),
+  category: String (enum: ["general", "urgent", "event", "maintenance", "academic"], required),
+  
+  // Targeting
+  targetAudience: [String] (e.g., ["student", "staff", "admin"] or ["all"]),
+  specificRooms: [String] (room numbers if targeted),
+  specificStudents: [ObjectId] (ref: "users"),
+  
+  priority: String (enum: ["low", "normal", "high", "urgent"], default: "normal"),
+  
+  // Scheduling
+  publishDate: Date (required),
+  expiryDate: Date,
+  isPinned: Boolean (default: false),
+  
+  // Media
+  attachments: [String] (URLs),
+  
+  // Tracking
+  views: [
+    {
+      userId: ObjectId (ref: "users"),
+      viewedAt: Date
+    }
+  ],
+  
+  createdBy: ObjectId (ref: "users", required),
+  status: String (enum: ["draft", "published", "archived"], default: "draft"),
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- publishDate
+- expiryDate
+- status
+- category
+- priority
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  title: "Weekly Menu Updated",
+  content: "The weekly menu for Jan 27 - Feb 2 has been published. Please check the Meals section.",
+  category: "general",
+  targetAudience: ["student"],
+  priority: "normal",
+  publishDate: ISODate("2026-01-24T00:00:00Z"),
+  expiryDate: ISODate("2026-01-31T00:00:00Z"),
+  isPinned: true,
+  attachments: [],
+  views: [],
+  createdBy: ObjectId("..."),
+  status: "published",
+  createdAt: ISODate("2026-01-23T15:00:00Z"),
+  updatedAt: ISODate("2026-01-24T08:00:00Z")
+}
+
+================================================================================
+COLLECTION 15: facilitiesbookings
+================================================================================
+Purpose: Facility booking requests (common room, gym, sports ground)
+
+Fields:
+{
+  _id: ObjectId,
+  bookingId: String (unique, auto-generated: "FB-2026-0001"),
+  studentId: ObjectId (ref: "users", required),
+  
+  facilityType: String (enum: ["common-room", "gym", "sports-ground", "study-room", "auditorium"], required),
+  
+  bookingDate: Date (required),
+  startTime: String (required - e.g., "10:00 AM"),
+  endTime: String (required - e.g., "12:00 PM"),
+  
+  purpose: String,
+  numberOfParticipants: Number,
+  
+  status: String (enum: ["pending", "approved", "rejected", "completed", "cancelled"], default: "pending"),
+  
+  // Admin actions
+  approvedBy: ObjectId (ref: "users"),
+  approvedAt: Date,
+  rejectionReason: String,
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- bookingId (unique)
+- studentId
+- facilityType + bookingDate (compound index)
+- status
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  bookingId: "FB-2026-0023",
+  studentId: ObjectId("..."),
+  facilityType: "common-room",
+  bookingDate: ISODate("2026-01-28T00:00:00Z"),
+  startTime: "06:00 PM",
+  endTime: "09:00 PM",
+  purpose: "Departmental meeting",
+  numberOfParticipants: 25,
+  status: "approved",
+  approvedBy: ObjectId("..."),
+  approvedAt: ISODate("2026-01-24T11:00:00Z"),
+  createdAt: ISODate("2026-01-23T18:00:00Z"),
+  updatedAt: ISODate("2026-01-24T11:00:00Z")
+}
+
+================================================================================
+COLLECTION 16: lostandfound
+================================================================================
+Purpose: Lost and found item reports
+
+Fields:
+{
+  _id: ObjectId,
+  reportId: String (unique, auto-generated: "LF-2026-0001"),
+  reportedBy: ObjectId (ref: "users", required),
+  
+  type: String (enum: ["lost", "found"], required),
+  
+  itemName: String (required),
+  description: String (required),
+  category: String (enum: ["electronics", "documents", "clothing", "accessories", "books", "other"]),
+  
+  location: String (where it was lost/found),
+  date: Date (required - when lost/found),
+  
+  images: [String] (URLs),
+  
+  status: String (enum: ["open", "claimed", "closed"], default: "open"),
+  
+  // If claimed
+  claimedBy: ObjectId (ref: "users"),
+  claimedAt: Date,
+  verificationDetails: String,
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- reportId (unique)
+- type
+- status
+- category
+- date
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  reportId: "LF-2026-0012",
+  reportedBy: ObjectId("..."),
+  type: "lost",
+  itemName: "Black Samsung Galaxy S23",
+  description: "Black phone with cracked screen protector, blue case",
+  category: "electronics",
+  location: "Common Room",
+  date: ISODate("2026-01-23T00:00:00Z"),
+  images: [],
+  status: "open",
+  createdAt: ISODate("2026-01-23T19:00:00Z"),
+  updatedAt: ISODate("2026-01-23T19:00:00Z")
+}
+
+================================================================================
+COLLECTION 17: emergencysos
+================================================================================
+Purpose: Emergency SOS alerts from students
+
+Fields:
+{
+  _id: ObjectId,
+  sosId: String (unique, auto-generated: "SOS-2026-0001"),
+  studentId: ObjectId (ref: "users", required),
+  
+  location: String (room number or location),
+  emergencyType: String (enum: ["medical", "security", "fire", "other"], required),
+  description: String,
+  
+  status: String (enum: ["active", "responding", "resolved"], default: "active"),
+  
+  // Response tracking
+  respondedBy: [
+    {
+      userId: ObjectId (ref: "users"),
+      respondedAt: Date,
+      action: String
+    }
+  ],
+  
+  resolvedAt: Date,
+  resolutionNotes: String,
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- sosId (unique)
+- studentId
+- status
+- createdAt (desc)
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  sosId: "SOS-2026-0003",
+  studentId: ObjectId("..."),
+  location: "Room 201",
+  emergencyType: "medical",
+  description: "Student feeling dizzy and nauseous",
+  status: "resolved",
+  respondedBy: [
+    {
+      userId: ObjectId("..."),
+      respondedAt: ISODate("2026-01-24T02:15:00Z"),
+      action: "Called campus medical team"
+    }
+  ],
+  resolvedAt: ISODate("2026-01-24T03:30:00Z"),
+  resolutionNotes: "Student taken to hospital, stable condition",
+  createdAt: ISODate("2026-01-24T02:10:00Z"),
+  updatedAt: ISODate("2026-01-24T03:30:00Z")
+}
+
+================================================================================
+COLLECTION 18: auditlogs
+================================================================================
+Purpose: Track all important actions for accountability
+
+Fields:
+{
+  _id: ObjectId,
+  userId: ObjectId (ref: "users", required),
+  userType: String (required - student/staff/admin),
+  
+  action: String (required - e.g., "created", "updated", "deleted", "approved"),
+  entityType: String (required - e.g., "invoice", "gatepass", "maintenance"),
+  entityId: String,
+  
+  description: String (required),
+  
+  // Changes tracking
+  before: Object (state before change - flexible schema),
+  after: Object (state after change - flexible schema),
+  
+  ipAddress: String,
+  userAgent: String,
+  
+  createdAt: Date
+}
+
+Indexes:
+- userId
+- entityType
+- action
+- createdAt (desc)
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  userId: ObjectId("..."),
+  userType: "admin",
+  action: "approved",
+  entityType: "gatepass",
+  entityId: "GP-2026-0145",
+  description: "Approved gate pass for student David Johnson",
+  before: { status: "pending" },
+  after: { status: "approved", approvedBy: ObjectId("..."), approvedAt: ISODate("...") },
+  ipAddress: "192.168.1.100",
+  userAgent: "Mozilla/5.0...",
+  createdAt: ISODate("2026-01-24T15:30:00Z")
+}
+
+================================================================================
+COLLECTION 19: notifications
+================================================================================
+Purpose: User notifications
+
+Fields:
+{
+  _id: ObjectId,
+  userId: ObjectId (ref: "users", required),
+  
+  type: String (enum: ["meal", "payment", "gatepass", "maintenance", "notice", "system"], required),
+  title: String (required),
+  message: String (required),
+  
+  priority: String (enum: ["low", "normal", "high"], default: "normal"),
+  
+  // Related entity
+  relatedEntity: {
+    type: String (e.g., "invoice", "gatepass"),
+    id: String
+  },
+  
+  isRead: Boolean (default: false),
+  readAt: Date,
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- userId + isRead (compound index)
+- createdAt (desc)
+- type
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  userId: ObjectId("..."),
+  type: "payment",
+  title: "Invoice Due Reminder",
+  message: "Your invoice INV-2025-12 is due on Dec 31, 2025. Amount: 450 BDT",
+  priority: "high",
+  relatedEntity: {
+    type: "invoice",
+    id: "INV-2025-12-0123"
+  },
+  isRead: false,
+  createdAt: ISODate("2026-01-24T10:00:00Z"),
+  updatedAt: ISODate("2026-01-24T10:00:00Z")
+}
+
+================================================================================
+COLLECTION 20: systemsettings
+================================================================================
+Purpose: System-wide configuration and pricing
+
+Fields:
+{
+  _id: ObjectId,
+  key: String (unique, required),
+  value: Mixed (can be string, number, object, array),
+  description: String,
+  category: String (enum: ["pricing", "operations", "notifications", "security"]),
+  
+  modifiedBy: ObjectId (ref: "users"),
+  modifiedAt: Date,
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Indexes:
+- key (unique)
+- category
+
+Example Settings:
+{
+  key: "meal_cutoff_time",
+  value: "23:00",
+  description: "Meal selection deadline time",
+  category: "operations"
+}
+
+{
+  key: "monthly_rent",
+  value: 3000,
+  description: "Monthly room rent in BDT",
+  category: "pricing"
+}
+
+{
+  key: "meal_rate_breakfast",
+  value: 50,
+  description: "Rate per breakfast in BDT",
+  category: "pricing"
+}
+
+{
+  key: "meal_rate_lunch",
+  value: 80,
+  description: "Rate per lunch in BDT",
+  category: "pricing"
+}
+
+{
+  key: "meal_rate_dinner",
+  value: 70,
+  description: "Rate per dinner in BDT",
+  category: "pricing"
+}
+
+{
+  key: "laundry_rate_regular",
+  value: 30,
+  description: "Regular laundry rate per item in BDT",
+  category: "pricing"
+}
+
+{
+  key: "laundry_rate_express",
+  value: 50,
+  description: "Express laundry rate per item in BDT",
+  category: "pricing"
+}
+
+{
+  key: "wifi_charge",
+  value: 100,
+  description: "Monthly WiFi charge in BDT",
+  category: "pricing"
+}
+
+{
+  key: "late_fee_percentage",
+  value: 5,
+  description: "Late fee percentage on overdue invoices",
+  category: "pricing"
+}
+
+Sample Data:
+{
+  _id: ObjectId("..."),
+  key: "monthly_rent",
+  value: 3000,
+  description: "Monthly room rent in BDT",
+  category: "pricing",
+  modifiedBy: ObjectId("..."),
+  modifiedAt: ISODate("2025-06-15T10:00:00Z"),
+  createdAt: ISODate("2020-01-01T00:00:00Z"),
+  updatedAt: ISODate("2025-06-15T10:00:00Z")
+}
+
+================================================================================
+RELATIONSHIPS & DATA FLOW
+================================================================================
+
+Central Entity: users
+├── meals (one-to-many)
+├── guestmeals (one-to-many)
+├── votemeals (one-to-many)
+├── gatepasses (one-to-many)
+├── maintenancerequests (one-to-many)
+├── laundryrequests (one-to-many)
+├── invoices (one-to-many)
+├── roomallocationrequests (one-to-many)
+├── expenses (one-to-many as logger)
+├── staffsalaries (one-to-many for staff)
+├── notices (one-to-many as creator)
+├── facilitiesbookings (one-to-many)
+├── lostandfound (one-to-many)
+├── emergencysos (one-to-many)
+├── notifications (one-to-many)
+└── auditlogs (one-to-many)
+
+rooms
+├── users (many-to-many via members array)
+└── roomallocationrequests (one-to-many)
+
+weeklymenus
+└── Created by users (many-to-one)
+
+================================================================================
+KEY MODIFICATIONS FROM EXISTING MODELS
+================================================================================
+
+1. User Model: NEEDS EXPANSION
+   - Add: studentId, department, yearOfStudy, roomNumber, guardianPhone, bloodGroup
+   - Add: hallName, role, phoneNumber, salary, joiningDate
+   - Add: avatar, status, pendingSince
+
+2. Meal Model: NEEDS DATE FIELD
+   - Add: date (required - for specific day selection)
+   - Add: isLocked, lockedAt (for 11 PM cutoff)
+
+3. GuestMeal Model: NEEDS ENHANCEMENT
+   - Rename: id -> guestId
+   - Add: date, status, cost, approvedBy, approvedAt, rejectionReason
+
+4. VoteMeal Model: OK (already matches votemeals collection)
+
+================================================================================
+INDEXES STRATEGY
+================================================================================
+
+High Priority:
+1. Compound indexes for frequent query patterns
+   - meals: studentId + date
+   - invoices: studentId + month + year
+   - gatepasses: studentId + createdAt
+   - notifications: userId + isRead
+
+2. Status-based queries
+   - All collections with status field
+
+3. Date-range queries
+   - createdAt, date fields (desc order)
+
+Performance Optimization:
+- Use sparse indexes for optional fields (studentId in users)
+- TTL index on notifications (auto-delete after 6 months)
+- Text indexes for search (notices content, lost & found descriptions)
+
+================================================================================
+DATA RETENTION POLICY
+================================================================================
+
+Recommended:
+- Daily backups: All collections
+- Audit logs: Keep for 2 years
+- Old invoices: Archive after 5 years
+- Notifications: Auto-delete after 6 months (TTL index)
+- Gate pass records: Keep for 1 year
+- Meal selection data: Archive after 6 months
+- Archived users: Separate after graduation
+
+================================================================================
+BUSINESS RULES SUMMARY
+================================================================================
+
+1. Meals:
+   - Deadline: 11 PM for next day
+   - After deadline: isLocked = true
+
+2. Invoices:
+   - Generated: 1st of every month
+   - Due date: Last day of month
+   - Late fee: 5% after due date
+
+3. Gate Passes:
+   - Requires admin approval
+   - QR code generated on approval
+   - Status transitions: pending -> approved -> checked-out -> checked-in
+
+4. Rooms:
+   - Auto-update status based on occupancy
+   - occupied: members.length === capacity
+   - partial: 0 < members.length < capacity
+   - vacant: members.length === 0
+
+5. Maintenance:
+   - Priority levels affect response time
+   - Urgent: Within 2 hours
+   - High: Within 24 hours
+   - Normal: Within 2-3 days
+
+================================================================================
+END OF SCHEMA DOCUMENT
+================================================================================
