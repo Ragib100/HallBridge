@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type TabType = "general" | "pricing" | "operations" | "notifications";
 
@@ -21,11 +21,16 @@ const pricingItems: PricingItem[] = [
 ];
 
 export default function SettingsPage() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [changes, setChanges] = useState<Record<string, any>>({});
   const [activeTab, setActiveTab] = useState<TabType>("general");
   const [hallName, setHallName] = useState("Shahid Zia Hall");
   const [hallAddress, setHallAddress] = useState("University of Engineering & Technology");
   const [adminEmail, setAdminEmail] = useState("admin@hallbridge.com");
   const [adminPhone, setAdminPhone] = useState("+880 1712-345678");
+  const [emergencyContact, setEmergencyContact] = useState("");
   
   // Operations
   const [mealCutoffTime, setMealCutoffTime] = useState("22:00");
@@ -36,6 +41,10 @@ export default function SettingsPage() {
   const [laundryDeliveryDays, setLaundryDeliveryDays] = useState("2");
   const [checkInTime, setCheckInTime] = useState("22:00");
   const [lateEntryFine, setLateEntryFine] = useState("50");
+  const [maxLaundryItems, setMaxLaundryItems] = useState("20");
+  const [billGenerationDate, setBillGenerationDate] = useState("1");
+  const [paymentDueDays, setPaymentDueDays] = useState("15");
+  const [lateFeePercent, setLateFeePercent] = useState("5");
   
   // Notifications
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -49,16 +58,148 @@ export default function SettingsPage() {
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // helpers
+  const markChange = (key: string, value: any) => {
+    setChanges((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // load settings from API
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/settings");
+        if (!res.ok) throw new Error("Failed to load settings");
+        const data = await res.json();
+
+        setHallName(data.hall_name ?? hallName);
+        setHallAddress(data.institution_address ?? hallAddress);
+        setAdminEmail(data.admin_email ?? adminEmail);
+        setAdminPhone(data.admin_phone ?? adminPhone);
+        setEmergencyContact(data.emergency_contact ?? emergencyContact);
+
+        setMealCutoffTime(data.meal_cutoff_time ?? mealCutoffTime);
+        setGatePassDuration(data.gate_pass_duration ?? gatePassDuration);
+        setGatePassUnit(data.gate_pass_unit ?? gatePassUnit);
+        setMaxGatePassDays(data.max_gate_pass_days ?? maxGatePassDays);
+        setLaundryPickupDay(data.laundry_pickup_day ?? laundryPickupDay);
+        setLaundryDeliveryDays(data.laundry_delivery_days ?? laundryDeliveryDays);
+        setCheckInTime(data.check_in_time ?? checkInTime);
+        setLateEntryFine(data.late_entry_fine ?? lateEntryFine);
+        setMaxLaundryItems(data.max_laundry_items ?? maxLaundryItems);
+        setBillGenerationDate(data.bill_generation_date ?? billGenerationDate);
+        setPaymentDueDays(data.payment_due_days ?? paymentDueDays);
+        setLateFeePercent(data.late_fee_percentage ?? lateFeePercent);
+
+        setEmailNotifications(data.email_notifications ?? emailNotifications);
+        setSmsNotifications(data.sms_notifications ?? smsNotifications);
+        setPaymentReminders(data.payment_reminders ?? paymentReminders);
+        setMealReminders(data.meal_reminders ?? mealReminders);
+        setMaintenanceAlerts(data.maintenance_alerts ?? maintenanceAlerts);
+
+        setPrices((prev) => prev.map((p) => {
+          if (p.id === "1") return { ...p, price: data.monthly_rent ?? p.price };
+          if (p.id === "2") return { ...p, price: data.laundry_service_weekly ?? p.price };
+          if (p.id === "3") return { ...p, price: data.maintenance_fee ?? p.price };
+          if (p.id === "4") return { ...p, price: data.wifi_bill ?? p.price };
+          return p;
+        }));
+
+        setChanges({});
+      } catch (err) {
+        console.error(err);
+        setError("Settings load failed");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
   const handlePriceChange = (id: string, newPrice: number) => {
+    const keyMap: Record<string, string> = {
+      "1": "monthly_rent",
+      "2": "laundry_service_weekly",
+      "3": "maintenance_fee",
+      "4": "wifi_bill",
+    };
     setPrices(prices.map(item => 
       item.id === id ? { ...item, price: newPrice } : item
     ));
+    const key = keyMap[id];
+    if (key) markChange(key, newPrice);
   };
 
-  const handleSave = () => {
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+  const handleSave = async () => {
+    const updates = [
+      { key: "hall_name", value: hallName },
+      { key: "institution_address", value: hallAddress },
+      { key: "admin_email", value: adminEmail },
+      { key: "admin_phone", value: adminPhone },
+      { key: "emergency_contact", value: emergencyContact },
+      { key: "meal_cutoff_time", value: mealCutoffTime },
+      { key: "gate_pass_duration", value: gatePassDuration },
+      { key: "gate_pass_unit", value: gatePassUnit },
+      { key: "max_gate_pass_days", value: maxGatePassDays },
+      { key: "laundry_pickup_day", value: laundryPickupDay },
+      { key: "laundry_delivery_days", value: laundryDeliveryDays },
+      { key: "check_in_time", value: checkInTime },
+      { key: "late_entry_fine", value: lateEntryFine },
+      { key: "max_laundry_items", value: maxLaundryItems },
+      { key: "bill_generation_date", value: billGenerationDate },
+      { key: "payment_due_days", value: paymentDueDays },
+      { key: "late_fee_percentage", value: lateFeePercent },
+      { key: "email_notifications", value: emailNotifications },
+      { key: "sms_notifications", value: smsNotifications },
+      { key: "payment_reminders", value: paymentReminders },
+      { key: "meal_reminders", value: mealReminders },
+      { key: "maintenance_alerts", value: maintenanceAlerts },
+      { key: "monthly_rent", value: prices.find(p => p.id === "1")?.price ?? 3000 },
+      { key: "laundry_service_weekly", value: prices.find(p => p.id === "2")?.price ?? 400 },
+      { key: "maintenance_fee", value: prices.find(p => p.id === "3")?.price ?? 100 },
+      { key: "wifi_bill", value: prices.find(p => p.id === "4")?.price ?? 100 },
+    ].filter((item) => Object.prototype.hasOwnProperty.call(changes, item.key));
+
+    // If no tracked changes, nothing to do
+    if (updates.length === 0) {
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 1500);
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+
+      if (!res.ok) throw new Error("Save failed");
+
+      setShowSuccess(true);
+      setChanges({});
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (err) {
+      console.error(err);
+      setError("Save failed");
+      setTimeout(() => setError(null), 2500);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-[#2D6A4F] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-gray-600">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   const tabs = [
     { id: "general" as TabType, label: "General", icon: "info" },
@@ -115,6 +256,14 @@ export default function SettingsPage() {
             <span className="text-sm font-medium">Settings saved successfully!</span>
           </div>
         )}
+        {error && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span className="text-sm font-medium">{error}</span>
+          </div>
+        )}
       </div>
 
       {/* Tab Navigation */}
@@ -147,7 +296,7 @@ export default function SettingsPage() {
                 <input
                   type="text"
                   value={hallName}
-                  onChange={(e) => setHallName(e.target.value)}
+                  onChange={(e) => { setHallName(e.target.value); markChange("hall_name", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               </div>
@@ -156,7 +305,7 @@ export default function SettingsPage() {
                 <input
                   type="text"
                   value={hallAddress}
-                  onChange={(e) => setHallAddress(e.target.value)}
+                  onChange={(e) => { setHallAddress(e.target.value); markChange("institution_address", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               </div>
@@ -182,7 +331,7 @@ export default function SettingsPage() {
                 <input
                   type="email"
                   value={adminEmail}
-                  onChange={(e) => setAdminEmail(e.target.value)}
+                  onChange={(e) => { setAdminEmail(e.target.value); markChange("admin_email", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               </div>
@@ -191,7 +340,7 @@ export default function SettingsPage() {
                 <input
                   type="tel"
                   value={adminPhone}
-                  onChange={(e) => setAdminPhone(e.target.value)}
+                  onChange={(e) => { setAdminPhone(e.target.value); markChange("admin_phone", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               </div>
@@ -199,6 +348,8 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
                 <input
                   type="tel"
+                  value={emergencyContact}
+                  onChange={(e) => { setEmergencyContact(e.target.value); markChange("emergency_contact", e.target.value); }}
                   placeholder="Enter emergency contact number"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
@@ -348,7 +499,7 @@ export default function SettingsPage() {
                 <input
                   type="time"
                   value={mealCutoffTime}
-                  onChange={(e) => setMealCutoffTime(e.target.value)}
+                  onChange={(e) => { setMealCutoffTime(e.target.value); markChange("meal_cutoff_time", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
                 <p className="text-xs text-gray-400 mt-1">Students must select meals before this time</p>
@@ -387,12 +538,12 @@ export default function SettingsPage() {
                   <input
                     type="number"
                     value={gatePassDuration}
-                    onChange={(e) => setGatePassDuration(e.target.value)}
+                    onChange={(e) => { setGatePassDuration(e.target.value); markChange("gate_pass_duration", e.target.value); }}
                     className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                   />
                   <select
                     value={gatePassUnit}
-                    onChange={(e) => setGatePassUnit(e.target.value)}
+                    onChange={(e) => { setGatePassUnit(e.target.value); markChange("gate_pass_unit", e.target.value); }}
                     className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white"
                   >
                     <option value="hours">Hours</option>
@@ -407,7 +558,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   value={maxGatePassDays}
-                  onChange={(e) => setMaxGatePassDays(e.target.value)}
+                  onChange={(e) => { setMaxGatePassDays(e.target.value); markChange("max_gate_pass_days", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               </div>
@@ -417,7 +568,7 @@ export default function SettingsPage() {
                   <input
                     type="time"
                     value={checkInTime}
-                    onChange={(e) => setCheckInTime(e.target.value)}
+                    onChange={(e) => { setCheckInTime(e.target.value); markChange("check_in_time", e.target.value); }}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                   />
                 </div>
@@ -426,7 +577,7 @@ export default function SettingsPage() {
                   <input
                     type="number"
                     value={lateEntryFine}
-                    onChange={(e) => setLateEntryFine(e.target.value)}
+                    onChange={(e) => { setLateEntryFine(e.target.value); markChange("late_entry_fine", e.target.value); }}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                   />
                 </div>
@@ -444,7 +595,7 @@ export default function SettingsPage() {
                 </label>
                 <select
                   value={laundryPickupDay}
-                  onChange={(e) => setLaundryPickupDay(e.target.value)}
+                  onChange={(e) => { setLaundryPickupDay(e.target.value); markChange("laundry_pickup_day", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white"
                 >
                   <option value="Monday">Monday</option>
@@ -462,7 +613,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   value={laundryDeliveryDays}
-                  onChange={(e) => setLaundryDeliveryDays(e.target.value)}
+                  onChange={(e) => { setLaundryDeliveryDays(e.target.value); markChange("laundry_delivery_days", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               </div>
@@ -472,7 +623,8 @@ export default function SettingsPage() {
                 </label>
                 <input
                   type="number"
-                  defaultValue="20"
+                  value={maxLaundryItems}
+                  onChange={(e) => { setMaxLaundryItems(e.target.value); markChange("max_laundry_items", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               </div>
@@ -487,7 +639,11 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Bill Generation Date
                 </label>
-                <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white">
+                <select
+                  value={billGenerationDate}
+                  onChange={(e) => { setBillGenerationDate(e.target.value); markChange("bill_generation_date", e.target.value); }}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white"
+                >
                   <option value="1">1st of every month</option>
                   <option value="15">15th of every month</option>
                   <option value="last">Last day of month</option>
@@ -499,7 +655,8 @@ export default function SettingsPage() {
                 </label>
                 <input
                   type="number"
-                  defaultValue="15"
+                  value={paymentDueDays}
+                  onChange={(e) => { setPaymentDueDays(e.target.value); markChange("payment_due_days", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
                 <p className="text-xs text-gray-400 mt-1">Days after bill generation</p>
@@ -510,7 +667,8 @@ export default function SettingsPage() {
                 </label>
                 <input
                   type="number"
-                  defaultValue="5"
+                  value={lateFeePercent}
+                  onChange={(e) => { setLateFeePercent(e.target.value); markChange("late_fee_percentage", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               </div>
@@ -539,7 +697,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setEmailNotifications(!emailNotifications)}
+                  onClick={() => { setEmailNotifications(!emailNotifications); markChange("email_notifications", !emailNotifications); }}
                   className={`w-12 h-6 rounded-full transition-colors relative ${
                     emailNotifications ? "bg-[#2D6A4F]" : "bg-gray-300"
                   }`}
@@ -565,7 +723,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setSmsNotifications(!smsNotifications)}
+                  onClick={() => { setSmsNotifications(!smsNotifications); markChange("sms_notifications", !smsNotifications); }}
                   className={`w-12 h-6 rounded-full transition-colors relative ${
                     smsNotifications ? "bg-[#2D6A4F]" : "bg-gray-300"
                   }`}
@@ -590,7 +748,7 @@ export default function SettingsPage() {
                   <p className="text-xs text-gray-500">Notify students about pending payments</p>
                 </div>
                 <button
-                  onClick={() => setPaymentReminders(!paymentReminders)}
+                  onClick={() => { setPaymentReminders(!paymentReminders); markChange("payment_reminders", !paymentReminders); }}
                   className={`w-12 h-6 rounded-full transition-colors relative ${
                     paymentReminders ? "bg-[#2D6A4F]" : "bg-gray-300"
                   }`}
@@ -609,7 +767,7 @@ export default function SettingsPage() {
                   <p className="text-xs text-gray-500">Remind students to select meals</p>
                 </div>
                 <button
-                  onClick={() => setMealReminders(!mealReminders)}
+                  onClick={() => { setMealReminders(!mealReminders); markChange("meal_reminders", !mealReminders); }}
                   className={`w-12 h-6 rounded-full transition-colors relative ${
                     mealReminders ? "bg-[#2D6A4F]" : "bg-gray-300"
                   }`}
@@ -628,7 +786,7 @@ export default function SettingsPage() {
                   <p className="text-xs text-gray-500">Notify about maintenance updates</p>
                 </div>
                 <button
-                  onClick={() => setMaintenanceAlerts(!maintenanceAlerts)}
+                  onClick={() => { setMaintenanceAlerts(!maintenanceAlerts); markChange("maintenance_alerts", !maintenanceAlerts); }}
                   className={`w-12 h-6 rounded-full transition-colors relative ${
                     maintenanceAlerts ? "bg-[#2D6A4F]" : "bg-gray-300"
                   }`}
@@ -652,9 +810,10 @@ export default function SettingsPage() {
         </button>
         <button 
           onClick={handleSave}
-          className="px-8 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#1e4a37] transition-colors"
+          disabled={saving}
+          className="px-8 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#1e4a37] transition-colors disabled:opacity-60"
         >
-          Save Changes
+          {saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
     </div>
