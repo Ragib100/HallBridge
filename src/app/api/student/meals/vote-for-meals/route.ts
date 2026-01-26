@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
+import Meal, { MealDocument} from "@/models/Meal";
+import WeeklyMeal, { WeeklyMealDocument } from "@/models/WeeklyMeal";
 import VoteMeal from "@/models/VoteMeal";
-import Meal from "@/models/Meal";
 import mongoose from "mongoose";
-
-function getCurrentDate(): Date {
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    return today;
-}
+import { getCurrentDateBD, getDayFromDateBD } from "@/lib/dates";
 
 export async function POST(req: Request) {
     const session = await mongoose.startSession();
@@ -17,16 +13,15 @@ export async function POST(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
         const studentId = searchParams.get("studentId");
-        const { day, meal, rating, comments, mealType } = await req.json();
+        const {mealTime, rating, comments } = await req.json();
+
+        // console.log({studentId, mealTime, rating, comments});
 
         if (
             !studentId ||
-            !day ||
-            !meal ||
             typeof rating !== "number" ||
             rating < 0 || rating > 5 ||
-            !mealType ||
-            !['breakfast', 'lunch', 'dinner'].includes(mealType)
+            (mealTime !== "breakfast" && mealTime !== "lunch" && mealTime !== "dinner")
         ) {
             return NextResponse.json(
                 { message: "Invalid vote meal data" },
@@ -36,16 +31,13 @@ export async function POST(req: Request) {
 
         await connectDB();
 
-        const currentDate = getCurrentDate();
+        const currentDate = getCurrentDateBD();
 
         const voteMeal = new VoteMeal({
             studentId,
-            day,
-            meal,
             rating,
             comments,
             date: currentDate,
-            mealType
         });
 
         const savedVoteMeal = await voteMeal.save({ session });
@@ -60,7 +52,7 @@ export async function POST(req: Request) {
 
         const mealUpdate = await Meal.findOneAndUpdate(
             { studentId, date: currentDate },
-            { rating_submitted: true },
+            { [`${mealTime}_rating`]: savedVoteMeal._id },
             { session, new: true }
         );
 
@@ -95,32 +87,81 @@ export async function POST(req: Request) {
     }
 }
 
-// export async function GET(req: Request) {
-//     try {
-//         const { searchParams } = new URL(req.url);
-//         const studentId = searchParams.get("studentId");
-//         const mealType = searchParams.get("mealType");
+export async function GET(req: Request) {
 
-//         if (!studentId || !mealType || !['breakfast', 'lunch', 'dinner'].includes(mealType)) {
-//             return NextResponse.json(
-//                 { message: "Invalid parameters" },
-//                 { status: 400 }
-//             );
-//         }
+    const { searchParams } = new URL(req.url);
+    const studentId = searchParams.get("studentId");
 
-//         await connectDB();
+    await connectDB();
 
-//         const currentDate = getCurrentDate();
+    try {
+        if (!studentId) {
+            return NextResponse.json(
+                { message: "Student ID is required" },
+                { status: 400 }
+            );
+        }
 
-//         const existingMeal = await Meal.findOne({ studentId, date: currentDate });
+        const currentDate = getCurrentDateBD();
+        const meal = await Meal.findOne({ studentId, date: currentDate }).lean<MealDocument>();
 
-//         if (!existingMeal) {
-//             return NextResponse.json(
-//                 { message: "Meal record not found" },
-//                 { status: 404 }
-//             );
-//         }
+        if (!meal) {
+            return NextResponse.json(
+                { message: "Meal record not found for today" },
+                { status: 404 }
+            );
+        }
 
-//         const breakfast = existingMeal.breakfast;
-//         const lunch = existingMeal.lunch;
-//         const dinner = existingMeal.dinner;
+        const currentDay = getDayFromDateBD(currentDate);
+
+        const menu = await WeeklyMeal.findOne({ day: currentDay }).lean<WeeklyMealDocument>();
+
+        if (!menu) {
+            return NextResponse.json(
+                { message: `${currentDay} Menu not found for today` },
+                { status: 404 }
+            );
+        }
+
+        const mealsForToday = [];
+
+        // console.log(menu);
+        // console.log(meal);
+
+        if (meal.breakfast_rating==null && meal.breakfast) {
+            mealsForToday.push({
+                mealTime: 'breakfast',
+                menuItems: menu.breakfast.split(',').map(item => item.trim()),
+                isSubmitted: false
+            });
+        }
+
+        if (meal.lunch_rating==null && meal.lunch) {
+            mealsForToday.push({
+                mealTime: 'lunch',
+                menuItems: menu.lunch.split(',').map(item => item.trim()),
+                isSubmitted: false
+            });
+        }
+
+        if (meal.dinner_rating==null && meal.dinner) {
+            mealsForToday.push({
+                mealTime: 'dinner',
+                menuItems: menu.dinner.split(',').map(item => item.trim()),
+                isSubmitted: false
+            });
+        }
+
+        return NextResponse.json(
+            { mealsForToday },
+            { status: 200 }
+        );
+    }
+    catch (error) {
+        console.error("Error fetching meal info for voting:", error);
+        return NextResponse.json(
+            { message: "Internal server error" },
+            { status: 500 }
+        );
+    }
+}

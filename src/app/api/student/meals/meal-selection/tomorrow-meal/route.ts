@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Meal from "@/models/Meal";
-
-function getTomorrowDate(): Date {
-    const tomorrow = new Date();
-    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-    tomorrow.setUTCHours(0, 0, 0, 0);
-    return tomorrow;
-}
+import { getCurrentDateBD, getNextDateBD } from "@/lib/dates";
 
 export async function PUT(req: Request) {
     try {
@@ -31,11 +25,11 @@ export async function PUT(req: Request) {
 
         await connectDB();
 
-        const tomorrowDate = getTomorrowDate();
+        const tomorrowDate = getNextDateBD();
 
-        const existingMeal = await Meal.findOne({ 
-            studentId, 
-            date: tomorrowDate 
+        const existingMeal = await Meal.findOne({
+            studentId,
+            date: tomorrowDate
         });
 
         if (existingMeal?.isLocked) {
@@ -48,13 +42,15 @@ export async function PUT(req: Request) {
         const updatedMeal = await Meal.findOneAndUpdate(
             { studentId, date: tomorrowDate },
             {
-                studentId, 
+                studentId,
                 date: tomorrowDate,
-                breakfast, 
-                lunch, 
+                breakfast,
+                lunch,
                 dinner,
                 isLocked: false,
-                rating_submitted: false
+                breakfast_rating: null,
+                lunch_rating: null,
+                dinner_rating: null
             },
             { new: true, upsert: true }
         );
@@ -90,30 +86,49 @@ export async function GET(req: Request) {
 
         await connectDB();
 
-        const tomorrowDate = getTomorrowDate();
+        const tomorrowDate = getNextDateBD();
+        // console.log("Tomorrow's Date (UTC):", tomorrowDate);
 
-        const meal = await Meal.findOne({ 
-            studentId, 
-            date: tomorrowDate 
-        }); 
+        const meal = await Meal.findOne({
+            studentId,
+            date: tomorrowDate
+        });
 
         if (!meal) {
-            // Return default meal selection (all false) for tomorrow
+
+            const currentDate = getCurrentDateBD();
+            const todayMeal = await Meal.findOne({
+                studentId,
+                date: currentDate
+            });
+
+            if (!todayMeal) {
+                return NextResponse.json(
+                    {
+                        message: "No meal selection found, returning defaults",
+                        meal: {
+                            studentId,
+                            date: tomorrowDate,
+                            breakfast: false,
+                            lunch: false,
+                            dinner: false,
+                            isLocked: false,
+                            breakfast_rating: null,
+                            lunch_rating: null,
+                            dinner_rating: null
+                        },
+                    },
+                    { status: 200 }
+                );
+            }
+
             return NextResponse.json(
                 {
-                    message: "No meal selection found, returning defaults",
-                    meal: {
-                        studentId,
-                        date: tomorrowDate,
-                        breakfast: false,
-                        lunch: false,
-                        dinner: false,
-                        isLocked: false,
-                        rating_submitted: false
-                    },
+                    message: "No meal selection found for tomorrow, returning today's selection as default",
+                    todayMeal
                 },
                 { status: 200 }
-            );
+            )
         }
 
         return NextResponse.json(

@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import GuestMeal from "@/models/GuestMeal";
-
-function getTomorrowDate(): Date {
-    const tomorrow = new Date();
-    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-    tomorrow.setUTCHours(0, 0, 0, 0);
-    return tomorrow;
-}
+import { getNextDateBD } from "@/lib/dates";
 
 export async function PUT(req: Request) {
     try {
@@ -29,7 +23,7 @@ export async function PUT(req: Request) {
 
         await connectDB();
 
-        const tomorrowDate = getTomorrowDate();
+        const tomorrowDate = getNextDateBD();
 
         if (breakfast || lunch || dinner) {
             const guestMeal = new GuestMeal({

@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { MealDocument } from "@/models/Meal";
 
 export default function TomorrowMeals() {
     const { user } = useCurrentUser();
@@ -13,10 +14,10 @@ export default function TomorrowMeals() {
     const [lunch, setLunch] = useState<boolean>(false);
     const [dinner, setDinner] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
-    
+
     useEffect(() => {
-        const fetchMeal = async() => {
-            if(!user?.id) return;
+        const fetchMeal = async () => {
+            if (!user?.id) return;
 
             // console.log("User ID:", user.id);
 
@@ -24,7 +25,7 @@ export default function TomorrowMeals() {
                 const url = `/api/student/meals/meal-selection/tomorrow-meal?studentId=${user.id}`;
                 // console.log('Fetching meal selection from:', url);
 
-                const response = await fetch(url,{
+                const response = await fetch(url, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -38,13 +39,19 @@ export default function TomorrowMeals() {
                     console.error('Error fetching meal selection:', errorData?.message || 'Unknown error');
                     return;
                 }
-                
-                const data = await response.json();
-                // console.log('Fetched meal selection data:', data);
 
-                setBreakfast(data.meal.breakfast);
-                setLunch(data.meal.lunch);
-                setDinner(data.meal.dinner);
+                const data = await response.json() as { meal?: MealDocument };
+
+                if (!data.meal) {
+                    console.warn("No meal selection found for this student yet. Initializing defaults.");
+                    setBreakfast(false);
+                    setLunch(false);
+                    setDinner(false);
+                } else {
+                    setBreakfast(data.meal.breakfast);
+                    setLunch(data.meal.lunch);
+                    setDinner(data.meal.dinner);
+                }
             }
             catch (error) {
                 console.error('Error fetching meal selection:', error);
@@ -53,21 +60,19 @@ export default function TomorrowMeals() {
 
         fetchMeal();
     }, [user?.id]);
-    
+
     const handleSave = async () => {
         setIsSaving(true);
 
-        if(!user) {
+        if (!user?.id) {
             console.error('No user logged in');
-            // console.log('Cannot save meal selection without user ID');
             setIsSaving(false);
             return;
         }
 
         try {
             const url = `/api/student/meals/meal-selection/tomorrow-meal?studentId=${user.id}`;
-            // console.log('Saving meal selection to:', url);
-
+            
             const response = await fetch(url, {
                 method: "PUT",
                 headers: {
@@ -81,40 +86,40 @@ export default function TomorrowMeals() {
             });
 
             if (!response.ok) {
-                const data = await response.json();
+                const data = await response.json() as { message?: string };
                 console.error('Error saving meal selection:', data?.message || 'Unknown error');
                 return;
             }
 
-            const data = await response.json();
-            // console.log('Save response data:', data);
+            // const data = await response.json() as { meal: MealDocument };
+            console.log('Saved meal successfully');
         } catch (error) {
             console.error('Error saving:', error);
         } finally {
             setIsSaving(false);
         }
     };
-    
+
     return (
         <div className="flex bg-white m-5 flex-col px-4 py-8 rounded-lg shadow-md justify-between">
             <div className="font-bold text-lg">
                 {getIcon("meals")} Tomorrow's Meals
             </div>
             <div>
-                <Toggle value={breakfast} onChange={setBreakfast} mealtype="Breakfast"/>
+                <Toggle value={breakfast} onChange={setBreakfast} mealtype="Breakfast" />
                 <Toggle value={lunch} onChange={setLunch} mealtype="Lunch" />
                 <Toggle value={dinner} onChange={setDinner} mealtype="Dinner" />
             </div>
 
             <div className="flex items-end justify-end mt-4">
                 <Button
-                    onClick={handleSave} 
+                    onClick={handleSave}
                     disabled={isSaving}
                     className="flex w-[50%] h-full border border-blue-800 bg-blue-500 text-white hover:bg-blue-600 cursor-pointer rounded-lg"
                 >
                     {isSaving ? (
                         <>
-                            <Spinner/>
+                            <Spinner />
                             Saving...
                         </>
                     ) : (

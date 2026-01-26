@@ -9,7 +9,9 @@ const mealSchema = new Schema(
         dinner: { type: Boolean, default: false },
         isLocked: { type: Boolean, default: false },
         lockedAt: { type: Date },
-        rating_submitted: { type: Boolean, default: false },
+        breakfast_rating: { type: String, default: null },
+        lunch_rating: { type: String, default: null },
+        dinner_rating: { type: String, default: null },
     },
     { timestamps: true }
 )

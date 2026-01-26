@@ -1,3 +1,5 @@
+"use client"
+
 import {
     Table,
     TableBody,
@@ -7,55 +9,59 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { getIcon } from "@/components/common/icons"
+import { useState, useEffect } from "react";
+import { getCurrentDateBD, getDayFromDateBD } from "@/lib/dates";
 
-const meals = [
-    {
-        day: "Saturday",
-        breakfast: "luchi, dal",
-        lunch: "rice, chicken curry, dal",
-        dinner: "rice, vegetable curry, egg, dal",
-    },
-    {
-        day: "Sunday",
-        breakfast: "khichuri, egg",
-        lunch: "rice, fish curry, dal",
-        dinner: "polao, chicken roast",
-    },
-    {
-        day: "Monday",
-        breakfast: "paratha, vegetable curry",
-        lunch: "rice, chicken curry, dal",
-        dinner: "rice, fish vorta, egg, dal",
-    },
-    {
-        day: "Tuesday",
-        breakfast: "paratha, vegetable curry",
-        lunch: "khichuri, beef curry",
-        dinner: "rice, vegetable curry, egg, dal",
-    },
-    {
-        day: "Wednesday",
-        breakfast: "khichuri, egg",
-        lunch: "rice, chicken curry, dal",
-        dinner: "polao, egg curry",
-    },
-    {
-        day: "Thursday",
-        breakfast: "bread, omelette",
-        lunch: "rice, fish curry, dal",
-        dinner: "paratha, chicken curry",
-    },
-    {
-        day: "Friday",
-        breakfast: "khichuri, egg",
-        lunch: "rice, beef curry, dal",
-        dinner: "rice, vegetable curry, egg, dal",
-    },
-]
+interface WeeklyMenu {
+    day: string;
+    breakfast: string;
+    lunch: string;
+    dinner: string;
+}
 
-export default function GuestMeal() {
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
-    
+export default function WeeklyMenu() {
+
+    const getToday = () => {
+        const today = getCurrentDateBD();
+        // console.log("Today's Date (UTC):", today);
+        // console.log("Today's Day :", getDayFromDateBD(today));
+        return getDayFromDateBD(today);
+    }
+
+    const today = getToday();
+
+    const [meals, setMeals] = useState<WeeklyMenu[]>([]);
+
+    useEffect(() => {
+        const fetchWeeklyMenu = async () => {
+            const url = `/api/common/weekly-menu`;
+
+            try {
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error fetching weekly menu:", errorData?.message || "Unknown error");
+                    return;
+                }
+
+                const data = await response.json();
+                setMeals(data.weeklyMenu);
+                // console.log("Fetched weekly menu data:", data.weeklyMenu);
+            }
+            catch (error) {
+                console.error("Error fetching weekly menu:", error);
+                return;
+            }
+        };
+
+        fetchWeeklyMenu();
+    }, []);
     return (
         <div className="container mx-auto py-8 px-2 md:px-4 max-w-full overflow-x-hidden">
             <div className="mb-8 text-center">
@@ -79,15 +85,13 @@ export default function GuestMeal() {
                             return (
                                 <TableRow
                                     key={meal.day}
-                                    className={`transition-colors ${
-                                        isToday 
-                                            ? "bg-yellow-100 hover:bg-yellow-200 border-l-4 border-yellow-500" 
+                                    className={`transition-colors ${isToday
+                                            ? "bg-yellow-100 hover:bg-yellow-200 border-l-4 border-yellow-500"
                                             : "hover:bg-blue-100 bg-white"
-                                    }`}
+                                        }`}
                                 >
-                                    <TableCell className={`font-bold text-base pl-4 ${
-                                        isToday ? "text-yellow-700" : "text-blue-700"
-                                    }`}>
+                                    <TableCell className={`font-bold text-base pl-4 ${isToday ? "text-yellow-700" : "text-blue-700"
+                                        }`}>
                                         {meal.day} {isToday && <span className="text-xs ml-2">(Today)</span>}
                                     </TableCell>
                                     <TableCell className="text-gray-700">

@@ -13,16 +13,22 @@ interface mealinfo{
     isSubmitted: boolean;
 }
 
-export default function VoteForMeal( {mealinfo}: {mealinfo: mealinfo} ) {
+interface VoteForMealProps {
+    mealinfo: mealinfo;
+    onSubmit: (mealTime: 'breakfast' | 'lunch' | 'dinner') => void;
+}
+
+export default function VoteForMeal( {mealinfo, onSubmit}: VoteForMealProps ) {
     
     const [rating, setRating] = useState<number>(0);
     const [comments, setComments] = useState<string>("");
     const { user } = useCurrentUser();
 
     const handleSubmitReview = async () => {
+        // console.log(user);
         try {
             if(!user) {
-                console.error("No user logged in.");
+                // console.error("No user logged in.");
                 return;
             }
             const url = `/api/student/meals/vote-for-meals?studentId=${user.id}`;
@@ -32,13 +38,19 @@ export default function VoteForMeal( {mealinfo}: {mealinfo: mealinfo} ) {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    day: new Date().toISOString().split('T')[0],
-                    meal: mealinfo.menuItems,
+                    mealTime: mealinfo.mealTime,
                     rating,
-                    comments,
-                    mealType: mealinfo.mealTime
+                    comments
                 })
             });
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Error submitting meal review:", errorData?.message || "Unknown error");
+                return;
+            }
+            // console.log("Meal review submitted successfully.");
+
+            onSubmit(mealinfo.mealTime);
         }
         catch (error) {
             console.error("Error submitting meal review:", error);
@@ -48,9 +60,9 @@ export default function VoteForMeal( {mealinfo}: {mealinfo: mealinfo} ) {
     return (
         <Card className="rounded-lg">
             <CardHeader>
-                <CardTitle className="font-medium text-muted-foreground">Menu Items:</CardTitle>
+                <CardTitle className="font-medium text-muted-foreground">Menu Items: </CardTitle>
                 <CardDescription>
-                    {mealinfo.mealTime.charAt(0).toUpperCase() + mealinfo.mealTime.slice(1)}: {mealinfo.menuItems.join(', ')}
+                    <span className="font-bold">{mealinfo.mealTime.charAt(0).toUpperCase() + mealinfo.mealTime.slice(1)}:</span> {mealinfo.menuItems.join(', ')}
                 </CardDescription>
                 
                 <CardTitle className="font-medium text-muted-foreground mt-4">Rate this meal</CardTitle>
