@@ -174,7 +174,7 @@ export default function FinancialsPage() {
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="bg-gradient-to-br from-[#2D6A4F] to-[#1e4a37] rounded-xl p-5 text-white">
+            <div className="bg-linear-to-br from-[#2D6A4F] to-[#1e4a37] rounded-xl p-5 text-white">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/80 text-sm">Total Revenue</span>
                 <svg className="w-5 h-5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -184,7 +184,7 @@ export default function FinancialsPage() {
               <p className="text-2xl font-bold">৳{totalRevenue.toLocaleString()}</p>
               <p className="text-xs text-white/60 mt-1">+12% from last month</p>
             </div>
-            <div className="bg-gradient-to-br from-[#E91E63] to-[#C2185B] rounded-xl p-5 text-white">
+            <div className="bg-linear-to-br from-[#E91E63] to-[#C2185B] rounded-xl p-5 text-white">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/80 text-sm">Total Expenses</span>
                 <svg className="w-5 h-5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -194,7 +194,7 @@ export default function FinancialsPage() {
               <p className="text-2xl font-bold">৳{totalExpenses.toLocaleString()}</p>
               <p className="text-xs text-white/60 mt-1">+5% from last month</p>
             </div>
-            <div className="bg-gradient-to-br from-[#40E0D0] to-[#00BCD4] rounded-xl p-5 text-white">
+            <div className="bg-linear-to-br from-[#40E0D0] to-[#00BCD4] rounded-xl p-5 text-white">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/80 text-sm">Net Income</span>
                 <svg className="w-5 h-5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -204,7 +204,7 @@ export default function FinancialsPage() {
               <p className="text-2xl font-bold">৳{netIncome.toLocaleString()}</p>
               <p className="text-xs text-white/60 mt-1">Healthy balance</p>
             </div>
-            <div className="bg-gradient-to-br from-[#FF6B6B] to-[#ee5a5a] rounded-xl p-5 text-white">
+            <div className="bg-linear-to-br from-[#FF6B6B] to-[#ee5a5a] rounded-xl p-5 text-white">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/80 text-sm">Pending Dues</span>
                 <svg className="w-5 h-5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">

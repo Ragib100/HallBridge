@@ -3,9 +3,15 @@ import mongoose, { Schema, type InferSchemaType} from "mongoose";
 const mealSchema = new Schema(
     {
         studentId: { type: mongoose.Types.ObjectId, required: true, ref: "User" },
+        date: { type: Date, required: true },
         breakfast: { type: Boolean, default: false },
         lunch: { type: Boolean, default: false },
         dinner: { type: Boolean, default: false },
+        isLocked: { type: Boolean, default: false },
+        lockedAt: { type: Date },
+        breakfast_rating: { type: String, default: null },
+        lunch_rating: { type: String, default: null },
+        dinner_rating: { type: String, default: null },
     },
     { timestamps: true }
 )

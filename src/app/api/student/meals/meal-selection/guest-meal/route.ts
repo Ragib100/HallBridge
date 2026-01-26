@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import GuestMeal from "@/models/GuestMeal";
+import { getNextDateBD } from "@/lib/dates";
 
-export async function POST(req: Request) {
+export async function PUT(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
         const studentId = searchParams.get("studentId");
@@ -22,26 +23,42 @@ export async function POST(req: Request) {
 
         await connectDB();
 
-        const newGuestMeal = new GuestMeal({
-            studentId,
-            name,
-            id,
-            department,
-            phone,
-            breakfast,
-            lunch,
-            dinner
-        });
+        const tomorrowDate = getNextDateBD();
 
-        await newGuestMeal.save();
+        if (breakfast || lunch || dinner) {
+            const guestMeal = new GuestMeal({
+                studentId,
+                name,
+                id,
+                department,
+                phone,
+                date: tomorrowDate,
+                breakfast,
+                lunch,
+                dinner
+            });
+
+            const savedGuestMeal = await GuestMeal.findOneAndReplace(
+                { studentId, date: tomorrowDate, id },guestMeal,
+                { new: true, upsert: true }
+            );
+
+            return NextResponse.json(
+                {
+                    message: "Guest meal selection saved successfully",
+                    guestMeal: savedGuestMeal,
+                },
+                { status: 201 }
+            );
+        }
+
+        await GuestMeal.findOneAndDelete({ studentId, date: tomorrowDate, id, department });
 
         return NextResponse.json(
-            {
-                message: "Guest meal selection saved successfully",
-                guestMeal: newGuestMeal,
-            },
-            { status: 201 }
+            { message: "Guest meal selection deleted successfully" },
+            { status: 200 }
         );
+
     }
     catch (error) {
         return NextResponse.json(

@@ -1,5 +1,9 @@
+"use client"
+
 import VoteForMeal from '@/components/student/vote_for_meal';
 import { Card, CardContent } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 interface MealData {
     mealTime: 'breakfast' | 'lunch' | 'dinner';
@@ -9,23 +13,45 @@ interface MealData {
 
 export default function VoteForMealsPage() {
 
-    const todaysMeals: MealData[] = [
-        {
-            mealTime: 'breakfast',
-            menuItems: ['Paratha', 'Egg Curry', 'Tea/Coffee', 'Banana'],
-            isSubmitted: false,
-        },
-        {
-            mealTime: 'lunch',
-            menuItems: ['Rice', 'Dal', 'Chicken Curry', 'Mixed Vegetable', 'Salad'],
-            isSubmitted: false,
-        },
-        {
-            mealTime: 'dinner',
-            menuItems: ['Roti', 'Fish Curry', 'Aloo Bhaji', 'Dal', 'Sweet Dish'],
-            isSubmitted: false,
-        },
-    ];
+    const [todaysMeals, setTodaysMeals] = useState<MealData[]>([]);
+    const { user } = useCurrentUser();
+
+    useEffect(() => {
+        const mealInfo = async () => {
+            if(!user) return;
+            const url = `/api/student/meals/vote-for-meals?studentId=${user.id}`;
+            try {
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.log("Error fetching today's meal info:", errorData?.message || "Unknown error");
+                    return;
+                }
+
+                const data = await response.json();
+                setTodaysMeals(data.mealsForToday);
+            }
+            catch (error) {
+                console.error("Error fetching today's meal info:", error);
+            }
+        }
+
+        mealInfo();
+    },[user]);
+
+    const handleMealSubmitted = (mealTime: 'breakfast' | 'lunch' | 'dinner') => {
+        setTodaysMeals(prev =>
+            prev.map(meal =>
+                meal.mealTime === mealTime ? { ...meal, isSubmitted: true } : meal
+            )
+        );
+    }
 
     const allMealsSubmitted = todaysMeals.every(meal => meal.isSubmitted);
 
@@ -36,7 +62,7 @@ export default function VoteForMealsPage() {
             
             {todaysMeals.map((meal, index) => (
                 !meal.isSubmitted && (
-                    <VoteForMeal key={index} mealinfo={meal} />
+                    <VoteForMeal key={index} mealinfo={meal} onSubmit={handleMealSubmitted}/>
                 )
             ))}
 
