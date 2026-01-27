@@ -8,7 +8,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 
 export default function AdminProfilePage() {
   const router = useRouter();
-  const { user, loading, error } = useCurrentUser();
+  const { user, loading, error, refetch } = useCurrentUser();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,16 +40,32 @@ export default function AdminProfilePage() {
   const adminData: ProfileData = {
     name: user.fullName,
     email: user.email,
-    phone: "",
+    phone: user.phone || "",
     avatar: "/logos/profile.png",
     role: user.userType,
     joinedDate,
     adminRole: "Administrator",
   };
 
-  const handleSave = (data: ProfileData) => {
-    console.log("Profile updated:", data);
-    // TODO: Implement API call to save profile
+  const handleSave = async (data: ProfileData): Promise<boolean> => {
+    try {
+      const response = await fetch("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: data.name,
+          phone: data.phone,
+        }),
+      });
+
+      if (response.ok) {
+        await refetch();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
   };
 
   return <ProfilePage initialData={adminData} onSave={handleSave} />;

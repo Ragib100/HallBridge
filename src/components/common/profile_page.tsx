@@ -13,7 +13,7 @@ export interface ProfileData {
   avatar: string;
   role: UserRole;
   joinedDate: string;
-  
+
   // Student specific
   studentId?: string;
   department?: string;
@@ -23,44 +23,70 @@ export interface ProfileData {
   bloodGroup?: string;
   emergencyContact?: string;
   address?: string;
-  
+
   // Staff specific
   staffId?: string;
   staffRole?: string;
-  
+
   // Admin specific
   adminRole?: string;
 }
 
 interface ProfilePageProps {
   initialData: ProfileData;
-  onSave?: (data: ProfileData) => void;
+  onSave?: (data: ProfileData) => Promise<boolean>;
 }
 
 export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>(initialData);
 
   const displayValue = (value?: string, fallback = "Not Set") =>
     value && value.trim().length > 0 ? value : fallback;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     setProfileData({
       ...profileData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
+    setSaveError(null);
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    if (onSave) {
-      onSave(profileData);
+  const handleSave = async () => {
+    if (!onSave) {
+      setIsEditing(false);
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+
+    try {
+      const success = await onSave(profileData);
+      if (success) {
+        setIsEditing(false);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        setSaveError("Failed to update profile. Please try again.");
+      }
+    } catch {
+      setSaveError("An error occurred. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setProfileData(initialData);
+    setSaveError(null);
   };
 
   const getRoleLabel = () => {
@@ -135,9 +161,10 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                 </button>
                 <button
                   onClick={handleSave}
-                  className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium"
+                  disabled={isSaving}
+                  className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Save Changes
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </button>
               </>
             ) : (
@@ -145,14 +172,36 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                 onClick={() => setIsEditing(true)}
                 className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium flex items-center gap-2"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
                 </svg>
                 Edit Profile
               </button>
             )}
           </div>
         </div>
+
+        {/* Success/Error Messages */}
+        {saveSuccess && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+            Profile updated successfully!
+          </div>
+        )}
+        {saveError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {saveError}
+          </div>
+        )}
       </div>
 
       {/* Profile Details */}
@@ -172,23 +221,22 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               ) : (
-                <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.name, "Unknown")}</p>
+                <p className="p-3 bg-gray-50 rounded-lg text-gray-800">
+                  {displayValue(profileData.name, "Unknown")}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-              {isEditing ? (
-                <input
-                  type="email"
-                  name="email"
-                  value={profileData.email}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
-                />
-              ) : (
-                <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.email)}</p>
-              )}
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+                {isEditing && (
+                  <span className="text-xs text-gray-500 ml-2">(cannot be changed)</span>
+                )}
+              </label>
+              <p className="p-3 bg-gray-50 rounded-lg text-gray-800">
+                {displayValue(profileData.email)}
+              </p>
             </div>
 
             <div>
