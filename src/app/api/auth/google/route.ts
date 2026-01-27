@@ -12,11 +12,18 @@ export async function GET(req: Request) {
     );
   }
 
-  const origin = new URL(req.url).origin;
+  const url = new URL(req.url);
+  const isSignup = url.searchParams.get("signup") === "true";
+  const origin = url.origin;
   const redirectUri =
     process.env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/google/callback`;
 
-  const state = crypto.randomBytes(16).toString("hex");
+  // Generate state with signup flag embedded
+  const stateData = {
+    nonce: crypto.randomBytes(16).toString("hex"),
+    signup: isSignup,
+  };
+  const state = Buffer.from(JSON.stringify(stateData)).toString("base64url");
 
   const cookieStore = await cookies();
   cookieStore.set({

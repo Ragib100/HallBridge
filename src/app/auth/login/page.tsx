@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
@@ -14,9 +14,18 @@ export default function LoginPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const oauthError = searchParams.get("error");
+    const message = searchParams.get("message");
+
+    // Handle success messages
+    if (message === "google_signup_success") {
+      setSuccessMessage("Account created successfully! Please wait for admin approval.");
+      return;
+    }
+
     if (!oauthError) return;
 
     if (oauthError === "google_account_not_found") {
@@ -31,6 +40,11 @@ export default function LoginPage() {
 
     if (oauthError === "google_missing_email") {
       setError("Unable to read your Google email. Please try again.");
+      return;
+    }
+
+    if (oauthError === "google_account_pending") {
+      setError("Your account is pending approval. Please wait for admin approval.");
       return;
     }
 
@@ -169,6 +183,10 @@ export default function LoginPage() {
           {isLoading ? "Signing in..." : "Sign in"}
         </button>
 
+        {successMessage ? (
+          <p className="text-sm text-green-600 text-center bg-green-50 p-3 rounded-lg">{successMessage}</p>
+        ) : null}
+
         {error ? (
           <p className="text-sm text-red-600 text-center">{error}</p>
         ) : null}
@@ -221,5 +239,13 @@ export default function LoginPage() {
         </p>
       </form>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="w-full max-w-sm mx-auto p-4 text-center">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -15,7 +15,7 @@ const userSchema = new Schema(
   {
     fullName: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, required: false }, // Not required for Google-only accounts
     userType: {
       type: String,
       required: true,
@@ -31,6 +31,8 @@ const userSchema = new Schema(
     },
     phone: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
+    // Google OAuth
+    googleId: { type: String, sparse: true }, // Store Google email for reference
   },
   { timestamps: true }
 );

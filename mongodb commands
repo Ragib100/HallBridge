@@ -1,0 +1,10 @@
+sudo systemctl start mongodb
+sudo systemctl enable mongodb
+systemctl status mongodb
+sudo systemctl stop mongodb
+mongosh
+show dbs
+use test
+db.test.insertOne({ name: "hello" })
+db.test.find()
+exit
