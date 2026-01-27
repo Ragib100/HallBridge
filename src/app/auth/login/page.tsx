@@ -60,7 +60,6 @@ export default function LoginPage() {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
-          userType: formData.userType
         }),
       });
 

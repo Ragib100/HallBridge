@@ -5,11 +5,11 @@ import User from "@/models/User";
 
 export async function POST(req: Request) {
   try {
-    const { email, password, userType } = await req.json();
+    const { email, password } = await req.json();
 
-    if (!email || !password || !userType) {
+    if (!email || !password) {
       return NextResponse.json(
-        { message: "Email, password, and user type are required" },
+        { message: "Email and password are required" },
         { status: 400 }
       );
     }
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash) && user.userType === userType;
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       return NextResponse.json(
         { message: "Invalid credentials" },
