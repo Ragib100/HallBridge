@@ -2,17 +2,40 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const oauthError = searchParams.get("error");
+    if (!oauthError) return;
+
+    if (oauthError === "google_account_not_found") {
+      setError("No account found for this Google email. Please sign up first.");
+      return;
+    }
+
+    if (oauthError === "google_oauth_failed") {
+      setError("Google sign-in failed. Please try again.");
+      return;
+    }
+
+    if (oauthError === "google_missing_email") {
+      setError("Unable to read your Google email. Please try again.");
+      return;
+    }
+
+    setError("Google sign-in failed. Please try again.");
+  }, [searchParams]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -160,6 +183,9 @@ export default function LoginPage() {
         {/* Google Button */}
         <button
           type="button"
+          onClick={() => {
+            window.location.href = "/api/auth/google";
+          }}
           className="w-full py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-3"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
