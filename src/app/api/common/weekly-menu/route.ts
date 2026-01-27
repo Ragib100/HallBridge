@@ -81,3 +81,36 @@ export async function GET(req: Request) {
     }
 }
 
+export async function PUT(req: Request) {
+    try {
+        const { day, breakfast, lunch, dinner } = await req.json()
+
+        if (!day) {
+            return NextResponse.json(
+                { message: "Day is required" },
+                { status: 400 }
+            )
+        }
+
+        await connectDB()
+
+        const updatedMeal = await WeeklyMenu.findOneAndUpdate(
+            { day },
+            { breakfast, lunch, dinner },
+            { new: true, upsert: true }
+        )
+
+        return NextResponse.json(
+            { message: "Meal updated successfully", meal: updatedMeal },
+            { status: 200 }
+        )
+    }
+    catch (error) {
+        console.error("Error updating weekly menu:", error)
+        return NextResponse.json(
+            { message: "Internal Server Error" },
+            { status: 500 }
+        )
+    }
+}
+

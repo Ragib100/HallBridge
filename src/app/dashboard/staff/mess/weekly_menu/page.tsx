@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
     Table,
     TableBody,
@@ -14,75 +14,78 @@ import { Input } from "@/components/ui/input"
 import { getIcon } from "@/components/common/icons"
 
 interface Meal {
+    _id?: string
     day: string
     breakfast: string
     lunch: string
     dinner: string
 }
 
-const initialMeals: Meal[] = [
-    {
-        day: "Saturday",
-        breakfast: "luchi, dal",
-        lunch: "rice, chicken curry, dal",
-        dinner: "rice, vegetable curry, egg, dal",
-    },
-    {
-        day: "Sunday",
-        breakfast: "khichuri, egg",
-        lunch: "rice, fish curry, dal",
-        dinner: "polao, chicken roast",
-    },
-    {
-        day: "Monday",
-        breakfast: "paratha, vegetable curry",
-        lunch: "rice, chicken curry, dal",
-        dinner: "rice, fish vorta, egg, dal",
-    },
-    {
-        day: "Tuesday",
-        breakfast: "paratha, vegetable curry",
-        lunch: "khichuri, beef curry",
-        dinner: "rice, vegetable curry, egg, dal",
-    },
-    {
-        day: "Wednesday",
-        breakfast: "khichuri, egg",
-        lunch: "rice, chicken curry, dal",
-        dinner: "polao, egg curry",
-    },
-    {
-        day: "Thursday",
-        breakfast: "bread, omelette",
-        lunch: "rice, fish curry, dal",
-        dinner: "paratha, chicken curry",
-    },
-    {
-        day: "Friday",
-        breakfast: "khichuri, egg",
-        lunch: "rice, beef curry, dal",
-        dinner: "rice, vegetable curry, egg, dal",
-    },
-]
+const dayOrder = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
 export default function GuestMeal() {
-    const [meals, setMeals] = useState<Meal[]>(initialMeals)
+    const [meals, setMeals] = useState<Meal[]>([])
+    const [loading, setLoading] = useState(true)
     const [editingDay, setEditingDay] = useState<string | null>(null)
     const [editedMeal, setEditedMeal] = useState<Meal | null>(null)
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+
+    // Fetch meals from database on page load
+    useEffect(() => {
+        const fetchMeals = async () => {
+            try {
+                const response = await fetch('/api/common/weekly-menu')
+                const data = await response.json()
+                if (data.weeklyMenu) {
+                    const sortedMeals = data.weeklyMenu.sort((a: Meal, b: Meal) => 
+                        dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day)
+                    )
+                    setMeals(sortedMeals)
+                }
+            } catch (error) {
+                console.error('Error fetching meals:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchMeals()
+    }, [])
 
     const handleEdit = (meal: Meal) => {
         setEditingDay(meal.day)
         setEditedMeal({ ...meal })
     }
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (editedMeal) {
-            setMeals(meals.map(meal => 
-                meal.day === editedMeal.day ? editedMeal : meal
-            ))
-            setEditingDay(null)
-            setEditedMeal(null)
+            try {
+                const response = await fetch('/api/common/weekly-menu', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        day: editedMeal.day,
+                        breakfast: editedMeal.breakfast,
+                        lunch: editedMeal.lunch,
+                        dinner: editedMeal.dinner,
+                    }),
+                })
+
+                const data = await response.json()
+                
+                if (response.ok) {
+                    setMeals(meals.map(meal => 
+                        meal.day === editedMeal.day ? editedMeal : meal
+                    ))
+                    setEditingDay(null)
+                    setEditedMeal(null)
+                    alert('Saved to database!')
+                } else {
+                    alert('Failed to save: ' + (data.message || 'Unknown error'))
+                }
+            } catch (error) {
+                console.error('Error:', error)
+                alert('Network error - but changes may have saved. Refresh the page to check.')
+            }
         }
     }
 
@@ -95,6 +98,14 @@ export default function GuestMeal() {
         if (editedMeal) {
             setEditedMeal({ ...editedMeal, [field]: value })
         }
+    }
+
+    if (loading) {
+        return (
+            <div className="container mx-auto py-8 px-2 md:px-4 max-w-full">
+                <div className="text-center text-gray-600">Loading weekly menu from database...</div>
+            </div>
+        )
     }
     
     return (
