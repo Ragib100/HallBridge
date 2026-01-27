@@ -30,6 +30,12 @@ export default function RegisterPage() {
     setIsLoading(true);
     setError(null);
 
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
@@ -136,9 +142,11 @@ export default function RegisterPage() {
             value={formData.password}
             onChange={handleInputChange}
             placeholder="Password"
+            minLength={8}
             className="w-full px-4 py-3 bg-gray-100 border-0 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:outline-none transition-all"
             required
           />
+          <p className="mt-2 text-xs text-gray-500">Minimum 8 characters</p>
         </div>
 
         {/* User Type */}

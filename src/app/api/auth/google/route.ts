@@ -1,0 +1,45 @@
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import crypto from "crypto";
+
+export async function GET(req: Request) {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+
+  if (!clientId) {
+    return NextResponse.json(
+      { message: "Google OAuth is not configured" },
+      { status: 500 }
+    );
+  }
+
+  const origin = new URL(req.url).origin;
+  const redirectUri =
+    process.env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/google/callback`;
+
+  const state = crypto.randomBytes(16).toString("hex");
+
+  const cookieStore = await cookies();
+  cookieStore.set({
+    name: "hb_oauth_state",
+    value: state,
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 10,
+  });
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: "openid email profile",
+    prompt: "select_account",
+    access_type: "offline",
+    state,
+  });
+
+  return NextResponse.redirect(
+    `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+  );
+}

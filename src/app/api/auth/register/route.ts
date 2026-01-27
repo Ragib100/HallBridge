@@ -14,6 +14,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (typeof password !== "string" || password.length < 8) {
+      return NextResponse.json(
+        { message: "Password must be at least 8 characters long" },
+        { status: 400 }
+      );
+    }
+
     if (!["student", "staff", "admin"].includes(userType)) {
       return NextResponse.json(
         { message: "Invalid user type" },
