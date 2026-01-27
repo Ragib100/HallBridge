@@ -103,29 +103,45 @@ export async function GET(req: Request) {
             });
 
             if (!todayMeal) {
+                const todayDefaultMeal = new Meal({
+                    studentId,
+                    date: tomorrowDate,
+                    breakfast: false,
+                    lunch: false,
+                    dinner: false,
+                    isLocked: false,
+                    breakfast_rating: null,
+                    lunch_rating: null,
+                    dinner_rating: null
+                });
+                await todayDefaultMeal.save();
+
                 return NextResponse.json(
                     {
-                        message: "No meal selection found, returning defaults",
-                        meal: {
-                            studentId,
-                            date: tomorrowDate,
-                            breakfast: false,
-                            lunch: false,
-                            dinner: false,
-                            isLocked: false,
-                            breakfast_rating: null,
-                            lunch_rating: null,
-                            dinner_rating: null
-                        },
+                        message: "No meal selection found for tomorrow or today, returning default selection for tomorrow",
+                        meal: todayDefaultMeal
                     },
                     { status: 200 }
-                );
+                )
             }
+
+            const newMeal = new Meal({
+                studentId,
+                date: tomorrowDate,
+                breakfast: todayMeal.breakfast,
+                lunch: todayMeal.lunch,
+                dinner: todayMeal.dinner,
+                isLocked: false,
+                breakfast_rating: null,
+                lunch_rating: null,
+                dinner_rating: null
+            });
+            await newMeal.save();
 
             return NextResponse.json(
                 {
                     message: "No meal selection found for tomorrow, returning today's selection as default",
-                    todayMeal
+                    meal: newMeal
                 },
                 { status: 200 }
             )
