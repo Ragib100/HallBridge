@@ -3,11 +3,30 @@
 // =====================
 export type UserRole = "student" | "staff" | "admin";
 
+// Staff role types for role-based dashboard access
+export type StaffRole =
+  | "mess_manager"
+  | "financial_staff"
+  | "maintenance_staff"
+  | "laundry_manager"
+  | "security_guard";
+
+export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
+  mess_manager: "Mess Manager",
+  financial_staff: "Financial Staff",
+  maintenance_staff: "Maintenance Staff",
+  laundry_manager: "Laundry Manager",
+  security_guard: "Security Guard",
+};
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  staffRole?: StaffRole;
+  phone?: string;
+  isActive?: boolean;
   avatar?: string;
   roomNumber?: string;
   phoneNumber?: string;

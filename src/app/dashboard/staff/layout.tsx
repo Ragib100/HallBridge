@@ -4,14 +4,64 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import type { StaffRole } from "@/types";
+import { STAFF_ROLE_LABELS } from "@/types";
 
-const navItems = [
-  { name: "Dashboard", path: "/dashboard/staff/home", icon: "dashboard" },
-  { name: "Mess Management", path: "/dashboard/staff/mess", icon: "meals" },
-  { name: "Maintenance", path: "/dashboard/staff/maintenance", icon: "maintenance" },
-  { name: "Laundry", path: "/dashboard/staff/laundry", icon: "laundry" },
-  { name: "Expenses", path: "/dashboard/staff/expenses", icon: "expenses" },
+// Define which nav items each staff role can access
+type NavItem = {
+  name: string;
+  path: string;
+  icon: string;
+  roles: StaffRole[]; // Which staff roles can see this item
+};
+
+const allNavItems: NavItem[] = [
+  { 
+    name: "Dashboard", 
+    path: "/dashboard/staff/home", 
+    icon: "dashboard",
+    roles: ["mess_manager", "financial_staff", "maintenance_staff", "laundry_manager", "security_guard"]
+  },
+  { 
+    name: "Mess Management", 
+    path: "/dashboard/staff/mess", 
+    icon: "meals",
+    roles: ["mess_manager"]
+  },
+  { 
+    name: "Maintenance", 
+    path: "/dashboard/staff/maintenance", 
+    icon: "maintenance",
+    roles: ["maintenance_staff"]
+  },
+  { 
+    name: "Laundry", 
+    path: "/dashboard/staff/laundry", 
+    icon: "laundry",
+    roles: ["laundry_manager"]
+  },
+  { 
+    name: "Expenses", 
+    path: "/dashboard/staff/expenses", 
+    icon: "expenses",
+    roles: ["financial_staff"]
+  },
+  { 
+    name: "Security", 
+    path: "/dashboard/staff/security", 
+    icon: "security",
+    roles: ["security_guard"]
+  },
 ];
+
+// Get navigation items for a specific staff role
+function getNavItemsForRole(staffRole?: StaffRole): NavItem[] {
+  if (!staffRole) {
+    // If no role, show only dashboard (fallback)
+    return allNavItems.filter(item => item.path === "/dashboard/staff/home");
+  }
+  return allNavItems.filter(item => item.roles.includes(staffRole));
+}
 
 function getPageTitle(pathname: string): { title: string; subtitle: string } {
   if (pathname === "/dashboard/staff/home" || pathname === "/dashboard/staff") {
@@ -24,6 +74,8 @@ function getPageTitle(pathname: string): { title: string; subtitle: string } {
     return { title: "Laundry", subtitle: "Manage laundry services" };
   } else if (pathname.includes("/expenses")) {
     return { title: "Expenses", subtitle: "Track and manage expenses" };
+  } else if (pathname.includes("/security")) {
+    return { title: "Security", subtitle: "Gate pass verification and access control" };
   } else if (pathname.includes("/profile")) {
     return { title: "Profile", subtitle: "Manage your account information" };
   }
@@ -73,6 +125,12 @@ function NavIcon({ icon, className }: { icon: string; className?: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
       );
+    case "security":
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -84,12 +142,17 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
   const pageInfo = getPageTitle(pathname);
   const { user, loading } = useCurrentUser();
 
+  // Get navigation items based on staff role
+  const navItems = getNavItemsForRole(user?.staffRole);
+
   const displayName = loading ? "Loading..." : user?.fullName || "Unknown User";
   const displayRole = loading
     ? "Loading..."
-    : user?.userType
-      ? `${user.userType.charAt(0).toUpperCase()}${user.userType.slice(1)}`
-      : "User";
+    : user?.staffRole
+      ? STAFF_ROLE_LABELS[user.staffRole]
+      : user?.userType
+        ? `${user.userType.charAt(0).toUpperCase()}${user.userType.slice(1)}`
+        : "Staff";
 
   const isActive = (path: string) => {
     if (path === "/dashboard/staff/home") {

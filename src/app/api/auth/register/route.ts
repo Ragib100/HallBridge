@@ -21,7 +21,15 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!["student", "staff", "admin"].includes(userType)) {
+    // Only students can self-register. Staff accounts must be created by admin.
+    if (userType === "staff") {
+      return NextResponse.json(
+        { message: "Staff accounts can only be created by administrators" },
+        { status: 403 }
+      );
+    }
+
+    if (!["student", "admin"].includes(userType)) {
       return NextResponse.json(
         { message: "Invalid user type" },
         { status: 400 }

@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { StaffRole } from "@/types";
 
 export type CurrentUser = {
   id: string;
   fullName: string;
   email: string;
   userType: "student" | "staff" | "admin";
+  staffRole?: StaffRole;
+  phone?: string;
+  isActive?: boolean;
   createdAt?: string;
 };
 

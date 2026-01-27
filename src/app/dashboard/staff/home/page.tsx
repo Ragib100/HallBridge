@@ -5,6 +5,8 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getIcon } from '@/components/common/icons';
+import { useCurrentUser } from '@/hooks/use-current-user';
+import { STAFF_ROLE_LABELS, type StaffRole } from '@/types';
 
 interface CardInfo {
     title: string;
@@ -13,65 +15,141 @@ interface CardInfo {
     backgroundColor: string;
 }
 
-export default function StaffHomePage() {
+// Role-specific dashboard configurations
+const roleConfigs: Record<StaffRole, {
+    greeting: string;
+    quickAccessCards: { title: string; description: string; icon: string; gradient: string; link: string }[];
+    statsCards: CardInfo[];
+}> = {
+    mess_manager: {
+        greeting: "Mess Manager",
+        quickAccessCards: [
+            { title: 'Weekly Menu', description: 'Update this week\'s menu', icon: '📋', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', link: '/dashboard/staff/mess' },
+            { title: 'Meal Count', description: 'Today\'s meal statistics', icon: '🍽️', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', link: '/dashboard/staff/mess' },
+            { title: 'Guest Meals', description: 'Pending guest meal requests', icon: '👥', gradient: 'linear-gradient(135deg, #1e88e5 0%, #0078d4 100%)', link: '/dashboard/staff/mess' },
+            { title: 'Vote Results', description: 'View meal voting results', icon: '📊', gradient: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)', link: '/dashboard/staff/mess' },
+        ],
+        statsCards: [
+            { title: 'Today\'s Breakfast', value: 85, icon: '🍳', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+            { title: 'Today\'s Lunch', value: 102, icon: '🍲', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
+            { title: 'Today\'s Dinner', value: 95, icon: '🍛', backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' },
+        ],
+    },
+    financial_staff: {
+        greeting: "Financial Staff",
+        quickAccessCards: [
+            { title: 'Daily Expenses', description: 'Log today\'s expenses', icon: '💰', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', link: '/dashboard/staff/expenses' },
+            { title: 'Meal Pricing', description: 'Update daily meal costs', icon: '🧾', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', link: '/dashboard/staff/expenses' },
+            { title: 'Student Bills', description: 'Pending student bills', icon: '📄', gradient: 'linear-gradient(135deg, #1e88e5 0%, #0078d4 100%)', link: '/dashboard/staff/expenses' },
+            { title: 'Reports', description: 'Financial reports', icon: '📊', gradient: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)', link: '/dashboard/staff/expenses' },
+        ],
+        statsCards: [
+            { title: 'Today\'s Expenses', value: 15200, icon: '💸', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+            { title: 'Pending Bills', value: 23, icon: '📋', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
+            { title: 'Monthly Revenue', value: 245000, icon: '💵', backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' },
+        ],
+    },
+    maintenance_staff: {
+        greeting: "Maintenance Staff",
+        quickAccessCards: [
+            { title: 'Open Requests', description: 'View pending requests', icon: '🔧', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', link: '/dashboard/staff/maintenance' },
+            { title: 'In Progress', description: 'Ongoing repairs', icon: '⚙️', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', link: '/dashboard/staff/maintenance' },
+            { title: 'Completed Today', description: 'Today\'s completed tasks', icon: '✅', gradient: 'linear-gradient(135deg, #1e88e5 0%, #0078d4 100%)', link: '/dashboard/staff/maintenance' },
+            { title: 'Urgent', description: 'Priority requests', icon: '🚨', gradient: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)', link: '/dashboard/staff/maintenance' },
+        ],
+        statsCards: [
+            { title: 'Pending Requests', value: 12, icon: '📝', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+            { title: 'In Progress', value: 5, icon: '🔨', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
+            { title: 'Completed Today', value: 8, icon: '✔️', backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' },
+        ],
+    },
+    laundry_manager: {
+        greeting: "Laundry Manager",
+        quickAccessCards: [
+            { title: 'Pickup Schedule', description: 'Today\'s pickups', icon: '📅', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', link: '/dashboard/staff/laundry' },
+            { title: 'In Progress', description: 'Items being washed', icon: '🧺', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', link: '/dashboard/staff/laundry' },
+            { title: 'Ready for Delivery', description: 'Items to deliver', icon: '👕', gradient: 'linear-gradient(135deg, #1e88e5 0%, #0078d4 100%)', link: '/dashboard/staff/laundry' },
+            { title: 'Delivery Schedule', description: 'Upcoming deliveries', icon: '🚚', gradient: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)', link: '/dashboard/staff/laundry' },
+        ],
+        statsCards: [
+            { title: 'Today\'s Pickups', value: 15, icon: '📦', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+            { title: 'In Progress', value: 28, icon: '🔄', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
+            { title: 'Ready for Delivery', value: 12, icon: '✅', backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' },
+        ],
+    },
+    security_guard: {
+        greeting: "Security Guard",
+        quickAccessCards: [
+            { title: 'Active Passes', description: 'Currently active gate passes', icon: '🎫', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', link: '/dashboard/staff/security' },
+            { title: 'Verify Pass', description: 'Scan or verify passes', icon: '✅', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', link: '/dashboard/staff/security' },
+            { title: 'Entry/Exit Log', description: 'Today\'s movement log', icon: '📋', gradient: 'linear-gradient(135deg, #1e88e5 0%, #0078d4 100%)', link: '/dashboard/staff/security' },
+            { title: 'Late Returns', description: 'Overdue students', icon: '⚠️', gradient: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)', link: '/dashboard/staff/security' },
+        ],
+        statsCards: [
+            { title: 'Students Out', value: 23, icon: '🚶', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+            { title: 'Today\'s Entries', value: 45, icon: '↓', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
+            { title: 'Late Returns', value: 2, icon: '⏰', backgroundColor: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)' },
+        ],
+    },
+};
 
-    const [cards, setCards] = useState<CardInfo[]>([
+// Default config for unknown roles
+const defaultConfig = {
+    greeting: "Operations Staff",
+    quickAccessCards: [
+        { title: 'Mess Management', description: 'Manage meals, menus & expenses', icon: '🍽️', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', link: '/dashboard/staff/mess' },
+        { title: 'Maintenance', description: 'Handle repair requests', icon: '🔧', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', link: '/dashboard/staff/maintenance' },
+        { title: 'Laundry Service', description: 'Track laundry status', icon: '👕', gradient: 'linear-gradient(135deg, #1e88e5 0%, #0078d4 100%)', link: '/dashboard/staff/laundry' },
+        { title: 'Expenses', description: 'Log daily expenses', icon: '💰', gradient: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)', link: '/dashboard/staff/expenses' },
+    ],
+    statsCards: [
         { title: 'Total Students', value: 120, icon: getIcon("student"), backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
         { title: 'Total Rooms', value: 50, icon: getIcon("room"), backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
-        { title: 'Students Inside', value: 97, icon: getIcon("pin"), backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' }
-    ]);
+        { title: 'Students Inside', value: 97, icon: getIcon("pin"), backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' },
+    ],
+};
 
-    const quickAccessCards = [
-        {
-            title: 'Mess Management',
-            description: 'Manage meals, menus & expenses',
-            icon: '🍽️',
-            gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            link: '/dashboard/staff/mess'
-        },
-        {
-            title: 'Maintenance',
-            description: 'Handle repair requests',
-            icon: '🔧',
-            gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-            link: '/dashboard/staff/maintenance'
-        },
-        {
-            title: 'Laundry Service',
-            description: 'Track laundry status',
-            icon: '👕',
-            gradient: 'linear-gradient(135deg, #1e88e5 0%, #0078d4 100%)',
-            link: '/dashboard/staff/laundry'
-        },
-        {
-            title: 'Expenses',
-            description: 'Log daily expenses',
-            icon: '💰',
-            gradient: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)',
-            link: '/dashboard/staff/expenses'
-        }
-    ];
+export default function StaffHomePage() {
+    const { user, loading } = useCurrentUser();
+    
+    // Get role-specific config
+    const config = user?.staffRole ? roleConfigs[user.staffRole] : defaultConfig;
+    const displayName = user?.fullName || "Staff";
+    const roleLabel = user?.staffRole ? STAFF_ROLE_LABELS[user.staffRole] : "Staff";
+
+    if (loading) {
+        return (
+            <div className="w-full min-h-screen p-4 md:p-6 lg:p-8 bg-gray-50 flex items-center justify-center">
+                <div className="text-gray-500">Loading...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full min-h-screen p-4 md:p-6 lg:p-8 bg-gray-50">
             {/* Welcome Header */}
             <div className="mb-8">
                 <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
-                    Welcome, Operations Staff 👋
+                    Welcome, {displayName} 👋
                 </h1>
-                <p className="text-gray-600">
-                    {new Date().toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    })}
-                </p>
+                <div className="flex items-center gap-3">
+                    <span className="px-3 py-1 bg-[#2D6A4F] text-white rounded-full text-sm font-medium">
+                        {roleLabel}
+                    </span>
+                    <p className="text-gray-600">
+                        {new Date().toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        })}
+                    </p>
+                </div>
             </div>
 
             {/* Quick Access Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                {quickAccessCards.map((card, index) => (
+                {config.quickAccessCards.map((card, index) => (
                     <Card
                         key={index}
                         className="overflow-hidden border-none shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer"
@@ -96,19 +174,50 @@ export default function StaffHomePage() {
                 ))}
             </div>
 
+            {/* Stats Overview */}
             <Card className="shadow-lg border border-gray-200 mb-8">
-                <CardHeader className="border-b border-gray-200 bg-linear-to-r from-indigo-50 to-purple-50">
+                <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
                     <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        🏛️ Hall Overview
+                        📊 Today's Overview
                     </h2>
                 </CardHeader>
                 <CardContent className="p-6">
-                    <div className="justify-around flex">
-                        {cards.map((card, index) => (
-                            <div key={index} className="w-[30%] text-center p-6 rounded-xl border border-blue-200" style={{ background: card.backgroundColor }}>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {config.statsCards.map((card, index) => (
+                            <div key={index} className="text-center p-6 rounded-xl border border-blue-200" style={{ background: card.backgroundColor }}>
                                 <div className="text-4xl mb-3">{card.icon}</div>
-                                <p className="text-3xl font-bold text-white mb-1">{card.value}</p>
+                                <p className="text-3xl font-bold text-white mb-1">
+                                    {typeof card.value === 'number' && card.value > 1000 
+                                        ? `৳${card.value.toLocaleString()}` 
+                                        : card.value}
+                                </p>
                                 <p className="text-sm text-white font-medium">{card.title}</p>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Recent Activity (placeholder) */}
+            <Card className="shadow-lg border border-gray-200">
+                <CardHeader className="border-b border-gray-200">
+                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        🕐 Recent Activity
+                    </h2>
+                </CardHeader>
+                <CardContent className="p-6">
+                    <div className="space-y-4">
+                        {[
+                            { action: "Updated weekly menu", time: "10 minutes ago", icon: "📋" },
+                            { action: "Processed guest meal request", time: "30 minutes ago", icon: "🍽️" },
+                            { action: "Marked request as completed", time: "1 hour ago", icon: "✅" },
+                        ].map((activity, index) => (
+                            <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                                <span className="text-2xl">{activity.icon}</span>
+                                <div className="flex-1">
+                                    <p className="text-gray-800 font-medium">{activity.action}</p>
+                                    <p className="text-gray-500 text-sm">{activity.time}</p>
+                                </div>
                             </div>
                         ))}
                     </div>

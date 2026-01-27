@@ -14,7 +14,7 @@ export async function GET() {
 
     await connectDB();
 
-    const user = await User.findById(session).select("fullName email userType createdAt");
+    const user = await User.findById(session).select("fullName email userType staffRole phone isActive createdAt");
     if (!user) {
       return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
     }
@@ -25,6 +25,9 @@ export async function GET() {
         fullName: user.fullName,
         email: user.email,
         userType: user.userType,
+        staffRole: user.staffRole,
+        phone: user.phone,
+        isActive: user.isActive,
         createdAt: user.createdAt,
       },
     });

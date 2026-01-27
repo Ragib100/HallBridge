@@ -2,6 +2,7 @@
 
 import '../staff.css';
 import { useState } from 'react';
+import { StaffRoleGuard } from '@/components/staff/role-guard';
 
 interface LaundryItem {
   id: string;
@@ -60,11 +61,8 @@ export default function LaundryPage() {
   const inWashingCount = mockLaundryItems.filter(i => i.status === 'in-washing').length;
 
   return (
+    <StaffRoleGuard allowedRoles={['laundry_manager']}>
     <div className="staff-page">
-      <div className="staff-header">
-        <h1>Mess Management</h1>
-      </div>
-
       <div className="staff-content">
         <div className="staff-tabs">
           <button
@@ -149,5 +147,6 @@ export default function LaundryPage() {
         </div>
       </div>
     </div>
+    </StaffRoleGuard>
   );
 }

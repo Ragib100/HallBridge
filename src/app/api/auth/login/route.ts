@@ -40,6 +40,8 @@ export async function POST(req: Request) {
           fullName: user.fullName,
           email: user.email,
           userType: user.userType,
+          staffRole: user.staffRole,
+          isActive: user.isActive,
         },
       },
       { status: 200 }

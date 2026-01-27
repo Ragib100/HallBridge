@@ -11,7 +11,6 @@ export default function RegisterPage() {
     fullName: "",
     email: "",
     password: "",
-    userType: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +45,7 @@ export default function RegisterPage() {
           fullName: formData.fullName,
           email: formData.email,
           password: formData.password,
-          userType: formData.userType,
+          userType: "student",
         }),
       });
 
@@ -147,21 +146,6 @@ export default function RegisterPage() {
             required
           />
           <p className="mt-2 text-xs text-gray-500">Minimum 8 characters</p>
-        </div>
-
-        {/* User Type */}
-        <div className="flex justify-center">
-          <select
-            name="userType"
-            value={formData.userType}
-            onChange={handleInputChange}
-            className="px-4 py-2 bg-gray-100 border-0 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:outline-none text-gray-700 cursor-pointer"
-            required
-          >
-            <option value="" disabled>Select User Type</option>
-            <option value="student">Student</option>
-            <option value="staff">Staff</option>
-          </select>
         </div>
 
         {/* Sign Up Button */}

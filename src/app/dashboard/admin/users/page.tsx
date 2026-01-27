@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { STAFF_ROLE_LABELS, type StaffRole } from "@/types";
 
 type TabType = "pending" | "active" | "staff" | "archived";
 
@@ -24,11 +25,19 @@ interface Staff {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: StaffRole;
   phone: string;
   status: "active" | "inactive";
   avatar: string;
   joinedDate: string;
+}
+
+interface StaffFormData {
+  fullName: string;
+  email: string;
+  password: string;
+  staffRole: StaffRole | "";
+  phone: string;
 }
 
 const pendingStudents: Student[] = [
@@ -48,10 +57,11 @@ const activeStudents: Student[] = [
 ];
 
 const staffMembers: Staff[] = [
-  { id: "1", name: "Abdul Karim", email: "karim@hallbridge.com", role: "Mess Manager", phone: "+880 1712-345678", status: "active", joinedDate: "Jan 1, 2020", avatar: "/logos/profile.png" },
-  { id: "2", name: "Rafiq Ahmed", email: "rafiq@hallbridge.com", role: "Security Guard", phone: "+880 1812-456789", status: "active", joinedDate: "Mar 15, 2021", avatar: "/logos/profile.png" },
-  { id: "3", name: "Shahid Hossain", email: "shahid@hallbridge.com", role: "Maintenance Staff", phone: "+880 1612-567890", status: "active", joinedDate: "Jun 20, 2022", avatar: "/logos/profile.png" },
-  { id: "4", name: "Jamal Uddin", email: "jamal@hallbridge.com", role: "Laundry Manager", phone: "+880 1912-678901", status: "inactive", joinedDate: "Feb 10, 2023", avatar: "/logos/profile.png" },
+  { id: "1", name: "Abdul Karim", email: "karim@hallbridge.com", role: "mess_manager", phone: "+880 1712-345678", status: "active", joinedDate: "Jan 1, 2020", avatar: "/logos/profile.png" },
+  { id: "2", name: "Rafiq Ahmed", email: "rafiq@hallbridge.com", role: "security_guard", phone: "+880 1812-456789", status: "active", joinedDate: "Mar 15, 2021", avatar: "/logos/profile.png" },
+  { id: "3", name: "Shahid Hossain", email: "shahid@hallbridge.com", role: "maintenance_staff", phone: "+880 1612-567890", status: "active", joinedDate: "Jun 20, 2022", avatar: "/logos/profile.png" },
+  { id: "4", name: "Jamal Uddin", email: "jamal@hallbridge.com", role: "laundry_manager", phone: "+880 1912-678901", status: "inactive", joinedDate: "Feb 10, 2023", avatar: "/logos/profile.png" },
+  { id: "5", name: "Hasan Ali", email: "hasan@hallbridge.com", role: "financial_staff", phone: "+880 1512-789012", status: "active", joinedDate: "Apr 5, 2023", avatar: "/logos/profile.png" },
 ];
 
 const archivedStudents: Student[] = [
@@ -68,17 +78,126 @@ export default function UserManagementPage() {
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
   const [showStudentDetailsModal, setShowStudentDetailsModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [staffList, setStaffList] = useState<Staff[]>(staffMembers);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [staffFormData, setStaffFormData] = useState<StaffFormData>({
+    fullName: "",
+    email: "",
+    password: "",
+    staffRole: "",
+    phone: "",
+  });
 
   const tabs = [
     { id: "pending" as TabType, label: "New Registration Requests", count: pendingStudents.length },
     { id: "active" as TabType, label: "Active Students", count: activeStudents.length },
-    { id: "staff" as TabType, label: "Staff Accounts", count: staffMembers.length },
+    { id: "staff" as TabType, label: "Staff Accounts", count: staffList.length },
     { id: "archived" as TabType, label: "Archived", count: archivedStudents.length },
   ];
 
   const handleViewStudent = (student: Student) => {
     setSelectedStudent(student);
     setShowStudentDetailsModal(true);
+  };
+
+  const handleStaffInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setStaffFormData({
+      ...staffFormData,
+      [e.target.name]: e.target.value,
+    });
+    setFormError(null);
+  };
+
+  const handleAddStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    
+    if (!staffFormData.fullName || !staffFormData.email || !staffFormData.password || !staffFormData.staffRole) {
+      setFormError("Please fill in all required fields");
+      return;
+    }
+
+    if (staffFormData.password.length < 8) {
+      setFormError("Password must be at least 8 characters");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/admin/staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(staffFormData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFormError(data.message || "Failed to add staff member");
+        return;
+      }
+
+      // Add to local list
+      const newStaff: Staff = {
+        id: data.staff.id,
+        name: data.staff.fullName,
+        email: data.staff.email,
+        role: data.staff.staffRole,
+        phone: data.staff.phone || "",
+        status: "active",
+        joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        avatar: "/logos/profile.png",
+      };
+      setStaffList([newStaff, ...staffList]);
+      
+      // Reset form and close modal
+      setStaffFormData({ fullName: "", email: "", password: "", staffRole: "", phone: "" });
+      setShowAddStaffModal(false);
+    } catch (error) {
+      setFormError("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleStaffStatus = async (staffId: string, currentStatus: "active" | "inactive") => {
+    try {
+      const response = await fetch("/api/admin/staff", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: staffId, isActive: currentStatus === "inactive" }),
+      });
+
+      if (response.ok) {
+        setStaffList(prev =>
+          prev.map(s =>
+            s.id === staffId
+              ? { ...s, status: currentStatus === "active" ? "inactive" : "active" }
+              : s
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update staff status:", error);
+    }
+  };
+
+  const handleDeleteStaff = async (staffId: string) => {
+    if (!confirm("Are you sure you want to delete this staff member?")) return;
+
+    try {
+      const response = await fetch(`/api/admin/staff?id=${staffId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setStaffList(prev => prev.filter(s => s.id !== staffId));
+      }
+    } catch (error) {
+      console.error("Failed to delete staff:", error);
+    }
   };
 
   const filteredActiveStudents = activeStudents.filter(student => {
@@ -99,10 +218,10 @@ export default function UserManagementPage() {
     return matchesSearch && matchesYear && matchesDept;
   });
 
-  const filteredStaff = staffMembers.filter(staff => 
+  const filteredStaff = staffList.filter(staff => 
     staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     staff.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    staff.role.toLowerCase().includes(searchQuery.toLowerCase())
+    STAFF_ROLE_LABELS[staff.role].toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredArchivedStudents = archivedStudents.filter(student => 
@@ -414,18 +533,21 @@ export default function UserManagementPage() {
                   </td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium">
-                      {staff.role}
+                      {STAFF_ROLE_LABELS[staff.role]}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{staff.phone}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      staff.status === "active" 
-                        ? "bg-green-50 text-green-700" 
-                        : "bg-gray-100 text-gray-600"
-                    }`}>
+                    <button
+                      onClick={() => handleToggleStaffStatus(staff.id, staff.status)}
+                      className={`px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
+                        staff.status === "active" 
+                          ? "bg-green-50 text-green-700 hover:bg-green-100" 
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
                       {staff.status === "active" ? "Active" : "Inactive"}
-                    </span>
+                    </button>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">{staff.joinedDate}</td>
                   <td className="px-6 py-4">
@@ -435,7 +557,10 @@ export default function UserManagementPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                       </button>
-                      <button className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => handleDeleteStaff(staff.id)}
+                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
@@ -521,7 +646,11 @@ export default function UserManagementPage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-800">Add New Staff</h2>
               <button 
-                onClick={() => setShowAddStaffModal(false)}
+                onClick={() => {
+                  setShowAddStaffModal(false);
+                  setFormError(null);
+                  setStaffFormData({ fullName: "", email: "", password: "", staffRole: "", phone: "" });
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -529,55 +658,97 @@ export default function UserManagementPage() {
                 </svg>
               </button>
             </div>
-            <form className="space-y-4">
+            
+            {formError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {formError}
+              </div>
+            )}
+            
+            <form onSubmit={handleAddStaff} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                 <input
                   type="text"
+                  name="fullName"
+                  value={staffFormData.fullName}
+                  onChange={handleStaffInputChange}
                   placeholder="Enter full name"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
+                  required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                 <input
                   type="email"
+                  name="email"
+                  value={staffFormData.email}
+                  onChange={handleStaffInputChange}
                   placeholder="Enter email address"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={staffFormData.password}
+                  onChange={handleStaffInputChange}
+                  placeholder="Enter password (min 8 characters)"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
+                  required
+                  minLength={8}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                 <input
                   type="tel"
+                  name="phone"
+                  value={staffFormData.phone}
+                  onChange={handleStaffInputChange}
                   placeholder="Enter phone number"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                <select 
+                  name="staffRole"
+                  value={staffFormData.staffRole}
+                  onChange={handleStaffInputChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white"
+                  required
+                >
                   <option value="">Select role</option>
-                  <option value="mess">Mess Manager</option>
-                  <option value="security">Security Guard</option>
-                  <option value="maintenance">Maintenance Staff</option>
-                  <option value="laundry">Laundry Manager</option>
-                  <option value="financial">Financial Staff</option>
+                  <option value="mess_manager">Mess Manager</option>
+                  <option value="security_guard">Security Guard</option>
+                  <option value="maintenance_staff">Maintenance Staff</option>
+                  <option value="laundry_manager">Laundry Manager</option>
+                  <option value="financial_staff">Financial Staff</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowAddStaffModal(false)}
+                  onClick={() => {
+                    setShowAddStaffModal(false);
+                    setFormError(null);
+                    setStaffFormData({ fullName: "", email: "", password: "", staffRole: "", phone: "" });
+                  }}
                   className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors"
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Add Staff
+                  {isSubmitting ? "Adding..." : "Add Staff"}
                 </button>
               </div>
             </form>

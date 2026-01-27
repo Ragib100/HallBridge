@@ -1,4 +1,7 @@
+'use client';
+
 import TopNavigation from "@/components/common/top_navigation";
+import { StaffRoleGuard } from "@/components/staff/role-guard";
 
 export default function MealsLayout( { children } : { children: React.ReactNode } ) {
 
@@ -9,9 +12,11 @@ export default function MealsLayout( { children } : { children: React.ReactNode 
     ];
 
     return(
-        <div className="px-4 md:px-8 py-4 max-w-full overflow-x-hidden">
-            <TopNavigation navItems={nav_items} />
-            {children}
-        </div>
+        <StaffRoleGuard allowedRoles={['mess_manager']}>
+            <div className="px-4 md:px-8 py-4 max-w-full overflow-x-hidden">
+                <TopNavigation navItems={nav_items} />
+                {children}
+            </div>
+        </StaffRoleGuard>
     );
 }

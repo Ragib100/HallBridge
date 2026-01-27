@@ -1,6 +1,7 @@
 'use client';
 
 import '../staff.css';
+import { StaffRoleGuard } from '@/components/staff/role-guard';
 
 interface ExpenseItem {
   id: string;
@@ -58,11 +59,8 @@ export default function ExpensesPage() {
   const totalExpenses = marketTotal + utilitiesTotal;
 
   return (
+    <StaffRoleGuard allowedRoles={['financial_staff']}>
     <div className="staff-page">
-      <div className="staff-header">
-        <h1>Expense Tracking</h1>
-      </div>
-
       <div className="staff-content">
         <div className="tab-content">
           <div className="expense-summary">
@@ -118,5 +116,6 @@ export default function ExpensesPage() {
         </div>
       </div>
     </div>
+    </StaffRoleGuard>
   );
 }

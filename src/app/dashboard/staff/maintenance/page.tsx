@@ -3,6 +3,7 @@
 import '../staff.css';
 import { useState } from 'react';
 import { ViewIssueDialog } from '@/components/staff/view_issue';
+import { StaffRoleGuard } from '@/components/staff/role-guard';
 
 interface MaintenanceTask {
   id: string;
@@ -70,6 +71,7 @@ export default function MaintenancePage() {
   const inProgressCount = mockTasks.filter(t => t.status === 'in-progress').length;
 
   return (
+    <StaffRoleGuard allowedRoles={['maintenance_staff']}>
     <div className="staff-page">
 
       <div className="staff-content">
@@ -155,5 +157,6 @@ export default function MaintenancePage() {
         </div>
       </div>
     </div>
+    </StaffRoleGuard>
   );
 }
