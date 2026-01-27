@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import ProfilePage, { ProfileData } from "@/components/common/profile_page";
 import { Spinner } from "@/components/ui/spinner";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { STAFF_ROLE_LABELS } from "@/types";
 
 export default function StaffProfilePage() {
   const router = useRouter();
-  const { user, loading, error } = useCurrentUser();
+  const { user, loading, error, refetch } = useCurrentUser();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,16 +41,32 @@ export default function StaffProfilePage() {
   const staffData: ProfileData = {
     name: user.fullName,
     email: user.email,
-    phone: "",
+    phone: user.phone || "",
     avatar: "/logos/profile.png",
     role: user.userType,
     joinedDate,
-    staffRole: "Staff",
+    staffRole: user.staffRole ? STAFF_ROLE_LABELS[user.staffRole] : "Staff",
   };
 
-  const handleSave = (data: ProfileData) => {
-    console.log("Profile updated:", data);
-    // TODO: Implement API call to save profile
+  const handleSave = async (data: ProfileData): Promise<boolean> => {
+    try {
+      const response = await fetch("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: data.name,
+          phone: data.phone,
+        }),
+      });
+
+      if (response.ok) {
+        await refetch();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
   };
 
   return <ProfilePage initialData={staffData} onSave={handleSave} />;
