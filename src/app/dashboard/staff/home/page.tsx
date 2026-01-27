@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -111,11 +111,46 @@ const defaultConfig = {
 
 export default function StaffHomePage() {
     const { user, loading } = useCurrentUser();
+    const [messMealStats, setMessMealStats] = useState<CardInfo[]>(roleConfigs.mess_manager.statsCards)
     
     // Get role-specific config
-    const config = user?.staffRole ? roleConfigs[user.staffRole] : defaultConfig;
+    const baseConfig = user?.staffRole ? roleConfigs[user.staffRole] : defaultConfig;
+    const config = user?.staffRole === 'mess_manager'
+        ? { ...baseConfig, statsCards: messMealStats }
+        : baseConfig;
     const displayName = user?.fullName || "Staff";
     const roleLabel = user?.staffRole ? STAFF_ROLE_LABELS[user.staffRole] : "Staff";
+
+    useEffect(() => {
+        if (user?.staffRole !== 'mess_manager') {
+            return
+        }
+
+        const fetchTodayMealCounts = async () => {
+            try {
+                const response = await fetch('/api/common/meal-count?day=today')
+                if (!response.ok) {
+                    throw new Error('Failed to fetch meal counts')
+                }
+                const data = await response.json()
+                const mealCounts = data?.mealCounts || {}
+
+                setMessMealStats([
+                    { title: "Today's Breakfast", value: mealCounts.breakfast ?? 0, icon: '🍳', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                    { title: "Today's Lunch", value: mealCounts.lunch ?? 0, icon: '🍲', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
+                    { title: "Today's Dinner", value: mealCounts.dinner ?? 0, icon: '🍛', backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' },
+                ])
+            } catch (error) {
+                setMessMealStats([
+                    { title: "Today's Breakfast", value: 0, icon: '🍳', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                    { title: "Today's Lunch", value: 0, icon: '🍲', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
+                    { title: "Today's Dinner", value: 0, icon: '🍛', backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' },
+                ])
+            }
+        }
+
+        fetchTodayMealCounts()
+    }, [user?.staffRole])
 
     if (loading) {
         return (
@@ -198,31 +233,6 @@ export default function StaffHomePage() {
                 </CardContent>
             </Card>
 
-            {/* Recent Activity (placeholder) */}
-            <Card className="shadow-lg border border-gray-200">
-                <CardHeader className="border-b border-gray-200">
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        🕐 Recent Activity
-                    </h2>
-                </CardHeader>
-                <CardContent className="p-6">
-                    <div className="space-y-4">
-                        {[
-                            { action: "Updated weekly menu", time: "10 minutes ago", icon: "📋" },
-                            { action: "Processed guest meal request", time: "30 minutes ago", icon: "🍽️" },
-                            { action: "Marked request as completed", time: "1 hour ago", icon: "✅" },
-                        ].map((activity, index) => (
-                            <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                                <span className="text-2xl">{activity.icon}</span>
-                                <div className="flex-1">
-                                    <p className="text-gray-800 font-medium">{activity.action}</p>
-                                    <p className="text-gray-500 text-sm">{activity.time}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     );
 }

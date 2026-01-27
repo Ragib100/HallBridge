@@ -1,3 +1,6 @@
+"use client"
+
+import { useEffect, useState } from 'react'
 import '@/app/dashboard/staff/staff.css'
 
 interface MealCountPageProps {
@@ -6,12 +9,46 @@ interface MealCountPageProps {
 }
 
 export default function MealCountPage() {
+    const [meals, setMeals] = useState<MealCountPageProps[]>([])
+    const [totalStudents, setTotalStudents] = useState(0)
+    const [guestMeals, setGuestMeals] = useState(0)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
-    const meals : MealCountPageProps[] = [
-        { meatype: 'breakfast', count: 82 },
-        { meatype: 'lunch', count: 85 },
-        { meatype: 'dinner', count: 87 },
-    ];
+    useEffect(() => {
+        const fetchMealCounts = async () => {
+            try {
+                setLoading(true)
+                setError(null)
+                const response = await fetch('/api/common/meal-count')
+                if (!response.ok) {
+                    throw new Error('Failed to fetch meal counts')
+                }
+                const data = await response.json()
+
+                const mealCounts = data?.mealCounts || {}
+                setMeals([
+                    { meatype: 'breakfast', count: mealCounts.breakfast ?? 0 },
+                    { meatype: 'lunch', count: mealCounts.lunch ?? 0 },
+                    { meatype: 'dinner', count: mealCounts.dinner ?? 0 },
+                ])
+
+                setTotalStudents(data?.totalStudents ?? 0)
+                setGuestMeals(data?.guestMeals ?? 0)
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to load data')
+                setMeals([
+                    { meatype: 'breakfast', count: 0 },
+                    { meatype: 'lunch', count: 0 },
+                    { meatype: 'dinner', count: 0 },
+                ])
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchMealCounts()
+    }, [])
 
     return (
         <div className="tab-content">
@@ -20,8 +57,14 @@ export default function MealCountPage() {
                     <span>📋</span>
                     <span>Tomorrow meal count</span>
                 </div>
-                <div className="auto-update-badge">Auto update at 11 PM</div>
+                <div className="auto-update-badge">
+                    {loading ? 'Loading...' : 'Auto update at 11 PM'}
+                </div>
             </div>
+
+            {error && (
+                <div className="text-sm text-red-600 mb-3">{error}</div>
+            )}
 
             <div className="meal-cards-grid">
                 {meals.map((meal, index) => (
@@ -37,11 +80,11 @@ export default function MealCountPage() {
             <div className="meal-info-footer">
                 <div className="meal-info-item">
                     <h4>Total Students</h4>
-                    <p>120 residents</p>
+                    <p>{loading ? 'Loading...' : `${totalStudents} residents`}</p>
                 </div>
                 <div className="meal-info-item guest">
                     <h4>Guest Meals</h4>
-                    <p>+3 requests</p>
+                    <p>{loading ? 'Loading...' : `+${guestMeals} requests`}</p>
                 </div>
             </div>
         </div>
