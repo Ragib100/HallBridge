@@ -2,9 +2,9 @@
 
 import '@/app/dashboard/staff/staff.css'
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import {
     Select,
@@ -16,6 +16,10 @@ import {
 import { getIcon } from '@/components/common/icons';
 
 export default function NewRequestPage() {
+    const router = useRouter();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
 
     const [formData, setFormData] = useState({
         category: '',
@@ -23,7 +27,6 @@ export default function NewRequestPage() {
         location: '',
         description: '',
         contactNumber: '',
-        preferredTime: ''
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -31,6 +34,7 @@ export default function NewRequestPage() {
             ...formData,
             [e.target.name]: e.target.value
         });
+        setError(null);
     };
 
     const handleSelectChange = (name: string, value: string) => {
@@ -38,7 +42,55 @@ export default function NewRequestPage() {
             ...formData,
             [name]: value
         });
+        setError(null);
     };
+
+    const handleSubmit = async () => {
+        // Validation
+        if (!formData.category || !formData.priority || !formData.location || !formData.description) {
+            setError('Please fill in all required fields');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setError(null);
+
+        try {
+            const response = await fetch('/api/maintenance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setError(data.message || 'Failed to submit request');
+                return;
+            }
+
+            setSuccess(true);
+            setTimeout(() => {
+                router.push('/dashboard/student/maintenance/my_requests');
+            }, 2000);
+        } catch {
+            setError('Something went wrong. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (success) {
+        return (
+            <div className="p-4 md:p-7 max-w-full overflow-x-hidden">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+                    <div className="text-4xl mb-3">✅</div>
+                    <h3 className="text-lg font-semibold text-green-800 mb-2">Request Submitted Successfully!</h3>
+                    <p className="text-green-600">Redirecting to your requests...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 md:p-7 max-w-full overflow-x-hidden">
@@ -117,7 +169,7 @@ export default function NewRequestPage() {
                 </div>
 
                 <div className="space-y-2">
-                    <p>Contact Number *</p>
+                    <p>Contact Number</p>
                     <Input
                         type="tel"
                         id="contactNumber"
@@ -128,10 +180,18 @@ export default function NewRequestPage() {
                     />
                 </div>
 
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                        {error}
+                    </div>
+                )}
+
                 <Button
-                    className="mt-4 bg-blue-600 hover:bg-blue-700 border border-blue-700 cursor-pointer text-white"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="mt-4 bg-blue-600 hover:bg-blue-700 border border-blue-700 cursor-pointer text-white disabled:opacity-50"
                 >
-                    {getIcon('submit')} Submit Request
+                    {isSubmitting ? 'Submitting...' : `${getIcon('submit')} Submit Request`}
                 </Button>
             </div>
         </div>

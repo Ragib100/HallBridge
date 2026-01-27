@@ -4,16 +4,12 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { STAFF_ROLE_LABELS, type StaffRole } from "@/types";
 
-type TabType = "pending" | "active" | "staff" | "archived";
+type TabType = "pending" | "active" | "staff";
 
 interface Student {
   id: string;
   name: string;
   email: string;
-  studentId: string;
-  department: string;
-  year: string;
-  room: string;
   status: string;
   avatar: string;
   pendingSince?: string;
@@ -40,45 +36,18 @@ interface StaffFormData {
   phone: string;
 }
 
-const pendingStudents: Student[] = [
-  { id: "1", name: "Rahim Ahmed", email: "rahim@example.com", studentId: "202314008", department: "CSE", year: "3rd", room: "-", status: "pending", pendingSince: "Jan 2, 2026", avatar: "/logos/profile.png" },
-  { id: "2", name: "Karim Khan", email: "karim@example.com", studentId: "202314012", department: "EEE", year: "2nd", room: "-", status: "pending", pendingSince: "Jan 3, 2026", avatar: "/logos/profile.png" },
-  { id: "3", name: "Fahim Hasan", email: "fahim@example.com", studentId: "202314045", department: "ME", year: "4th", room: "-", status: "pending", pendingSince: "Jan 4, 2026", avatar: "/logos/profile.png" },
-  { id: "4", name: "Anik Roy", email: "anik@example.com", studentId: "202314067", department: "CSE", year: "1st", room: "-", status: "pending", pendingSince: "Jan 5, 2026", avatar: "/logos/profile.png" },
-];
-
-const activeStudents: Student[] = [
-  { id: "1", name: "David Johnson", email: "david@example.com", studentId: "202214001", department: "CSE", year: "4th", room: "201", status: "active", joinedDate: "Aug 15, 2022", avatar: "/logos/profile.png" },
-  { id: "2", name: "Michael Charter", email: "michael@example.com", studentId: "202214015", department: "EEE", year: "4th", room: "201", status: "active", joinedDate: "Aug 20, 2022", avatar: "/logos/profile.png" },
-  { id: "3", name: "Mark Wilson", email: "mark@example.com", studentId: "202314032", department: "ME", year: "3rd", room: "203", status: "active", joinedDate: "Sep 1, 2023", avatar: "/logos/profile.png" },
-  { id: "4", name: "Ethan Lowe", email: "ethan@example.com", studentId: "202314089", department: "CE", year: "3rd", room: "204", status: "active", joinedDate: "Sep 5, 2023", avatar: "/logos/profile.png" },
-  { id: "5", name: "James Brown", email: "james@example.com", studentId: "202414002", department: "CSE", year: "2nd", room: "205", status: "active", joinedDate: "Aug 10, 2024", avatar: "/logos/profile.png" },
-  { id: "6", name: "Robert Smith", email: "robert@example.com", studentId: "202414056", department: "EEE", year: "2nd", room: "206", status: "active", joinedDate: "Aug 12, 2024", avatar: "/logos/profile.png" },
-];
-
-const staffMembers: Staff[] = [
-  { id: "1", name: "Abdul Karim", email: "karim@hallbridge.com", role: "mess_manager", phone: "+880 1712-345678", status: "active", joinedDate: "Jan 1, 2020", avatar: "/logos/profile.png" },
-  { id: "2", name: "Rafiq Ahmed", email: "rafiq@hallbridge.com", role: "security_guard", phone: "+880 1812-456789", status: "active", joinedDate: "Mar 15, 2021", avatar: "/logos/profile.png" },
-  { id: "3", name: "Shahid Hossain", email: "shahid@hallbridge.com", role: "maintenance_staff", phone: "+880 1612-567890", status: "active", joinedDate: "Jun 20, 2022", avatar: "/logos/profile.png" },
-  { id: "4", name: "Jamal Uddin", email: "jamal@hallbridge.com", role: "laundry_manager", phone: "+880 1912-678901", status: "inactive", joinedDate: "Feb 10, 2023", avatar: "/logos/profile.png" },
-  { id: "5", name: "Hasan Ali", email: "hasan@hallbridge.com", role: "financial_staff", phone: "+880 1512-789012", status: "active", joinedDate: "Apr 5, 2023", avatar: "/logos/profile.png" },
-];
-
-const archivedStudents: Student[] = [
-  { id: "1", name: "Tanvir Islam", email: "tanvir@example.com", studentId: "201914023", department: "CSE", year: "Graduated", room: "-", status: "archived", archivedDate: "Jun 15, 2024", avatar: "/logos/profile.png" },
-  { id: "2", name: "Sakib Hassan", email: "sakib@example.com", studentId: "201914056", department: "EEE", year: "Graduated", room: "-", status: "archived", archivedDate: "Jun 15, 2024", avatar: "/logos/profile.png" },
-  { id: "3", name: "Imran Khan", email: "imran@example.com", studentId: "202014012", department: "ME", year: "Left", room: "-", status: "archived", archivedDate: "Dec 20, 2024", avatar: "/logos/profile.png" },
-];
-
 export default function UserManagementPage() {
-  const [activeTab, setActiveTab] = useState<TabType>("pending");
+  const [activeTab, setActiveTab] = useState<TabType>("active");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedYear, setSelectedYear] = useState("all");
-  const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
   const [showStudentDetailsModal, setShowStudentDetailsModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [staffList, setStaffList] = useState<Staff[]>(staffMembers);
+  
+  // Data from database
+  const [activeStudents, setActiveStudents] = useState<Student[]>([]);
+  const [pendingStudents, setPendingStudents] = useState<Student[]>([]);
+  const [staffList, setStaffList] = useState<Staff[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [staffFormData, setStaffFormData] = useState<StaffFormData>({
@@ -89,11 +58,68 @@ export default function UserManagementPage() {
     phone: "",
   });
 
+  // Fetch data on mount
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      // Fetch active students
+      const activeRes = await fetch("/api/admin/users?type=student&status=active");
+      const activeData = await activeRes.json();
+      if (activeRes.ok) {
+        setActiveStudents((activeData.users || []).map((u: { id: string; fullName: string; email: string; createdAt: string }) => ({
+          id: u.id,
+          name: u.fullName,
+          email: u.email,
+          status: "active",
+          avatar: "/logos/profile.png",
+          joinedDate: new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        })));
+      }
+
+      // Fetch pending students
+      const pendingRes = await fetch("/api/admin/users?type=student&status=pending");
+      const pendingData = await pendingRes.json();
+      if (pendingRes.ok) {
+        setPendingStudents((pendingData.users || []).map((u: { id: string; fullName: string; email: string; createdAt: string }) => ({
+          id: u.id,
+          name: u.fullName,
+          email: u.email,
+          status: "pending",
+          avatar: "/logos/profile.png",
+          pendingSince: new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        })));
+      }
+
+      // Fetch staff
+      const staffRes = await fetch("/api/admin/staff");
+      const staffData = await staffRes.json();
+      if (staffRes.ok) {
+        setStaffList((staffData.staff || []).map((s: { id: string; fullName: string; email: string; staffRole: StaffRole; phone: string; isActive: boolean; createdAt: string }) => ({
+          id: s.id,
+          name: s.fullName,
+          email: s.email,
+          role: s.staffRole,
+          phone: s.phone || "",
+          status: s.isActive ? "active" : "inactive",
+          avatar: "/logos/profile.png",
+          joinedDate: new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        })));
+      }
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const tabs = [
-    { id: "pending" as TabType, label: "New Registration Requests", count: pendingStudents.length },
     { id: "active" as TabType, label: "Active Students", count: activeStudents.length },
+    { id: "pending" as TabType, label: "Pending Registrations", count: pendingStudents.length },
     { id: "staff" as TabType, label: "Staff Accounts", count: staffList.length },
-    { id: "archived" as TabType, label: "Archived", count: archivedStudents.length },
   ];
 
   const handleViewStudent = (student: Student) => {
@@ -200,34 +226,76 @@ export default function UserManagementPage() {
     }
   };
 
+  const handleApproveStudent = async (studentId: string) => {
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: studentId, isActive: true }),
+      });
+
+      if (response.ok) {
+        const student = pendingStudents.find(s => s.id === studentId);
+        if (student) {
+          setPendingStudents(prev => prev.filter(s => s.id !== studentId));
+          setActiveStudents(prev => [...prev, { ...student, status: "active", joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) }]);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to approve student:", error);
+    }
+  };
+
+  const handleRejectStudent = async (studentId: string) => {
+    if (!confirm("Are you sure you want to reject this student registration?")) return;
+
+    try {
+      const response = await fetch(`/api/admin/users?id=${studentId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setPendingStudents(prev => prev.filter(s => s.id !== studentId));
+      }
+    } catch (error) {
+      console.error("Failed to reject student:", error);
+    }
+  };
+
+  const handleDeactivateStudent = async (studentId: string) => {
+    if (!confirm("Are you sure you want to deactivate this student?")) return;
+
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: studentId, isActive: false }),
+      });
+
+      if (response.ok) {
+        setActiveStudents(prev => prev.filter(s => s.id !== studentId));
+      }
+    } catch (error) {
+      console.error("Failed to deactivate student:", error);
+    }
+  };
+
   const filteredActiveStudents = activeStudents.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         student.studentId.includes(searchQuery) ||
                          student.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesYear = selectedYear === "all" || student.year === selectedYear;
-    const matchesDept = selectedDepartment === "all" || student.department === selectedDepartment;
-    return matchesSearch && matchesYear && matchesDept;
+    return matchesSearch;
   });
 
   const filteredPendingStudents = pendingStudents.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         student.studentId.includes(searchQuery) ||
                          student.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesYear = selectedYear === "all" || student.year === selectedYear;
-    const matchesDept = selectedDepartment === "all" || student.department === selectedDepartment;
-    return matchesSearch && matchesYear && matchesDept;
+    return matchesSearch;
   });
 
   const filteredStaff = staffList.filter(staff => 
     staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     staff.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    STAFF_ROLE_LABELS[staff.role].toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredArchivedStudents = archivedStudents.filter(student => 
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.studentId.includes(searchQuery) ||
-    student.email.toLowerCase().includes(searchQuery.toLowerCase())
+    STAFF_ROLE_LABELS[staff.role]?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -287,44 +355,23 @@ export default function UserManagementPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
-        {(activeTab === "active" || activeTab === "pending") && (
-          <>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] bg-white"
-            >
-              <option value="all">All Years</option>
-              <option value="1st">1st Year</option>
-              <option value="2nd">2nd Year</option>
-              <option value="3rd">3rd Year</option>
-              <option value="4th">4th Year</option>
-            </select>
-            <select
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] bg-white"
-            >
-              <option value="all">All Departments</option>
-              <option value="CSE">CSE</option>
-              <option value="EEE">EEE</option>
-              <option value="ME">ME</option>
-              <option value="CE">CE</option>
-            </select>
-          </>
-        )}
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D6A4F] mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading users...</p>
+        </div>
+      )}
+
       {/* Pending Approvals Tab */}
-      {activeTab === "pending" && (
+      {!loading && activeTab === "pending" && (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Student</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Student ID</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Department</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Year</th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Applied On</th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Actions</th>
               </tr>
@@ -332,7 +379,7 @@ export default function UserManagementPage() {
             <tbody className="divide-y divide-gray-100">
               {filteredPendingStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
                     No pending approvals found
                   </td>
                 </tr>
@@ -354,13 +401,6 @@ export default function UserManagementPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 font-mono">{student.studentId}</td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
-                        {student.department}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{student.year}</td>
                     <td className="px-6 py-4 text-sm text-gray-500">{student.pendingSince}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -370,10 +410,16 @@ export default function UserManagementPage() {
                         >
                           View
                         </button>
-                        <button className="px-3 py-1.5 bg-[#2D6A4F] text-white text-sm rounded-md hover:bg-[#245840] transition-colors">
+                        <button 
+                          onClick={() => handleApproveStudent(student.id)}
+                          className="px-3 py-1.5 bg-[#2D6A4F] text-white text-sm rounded-md hover:bg-[#245840] transition-colors"
+                        >
                           Approve
                         </button>
-                        <button className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors">
+                        <button 
+                          onClick={() => handleRejectStudent(student.id)}
+                          className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors"
+                        >
                           Reject
                         </button>
                       </div>
@@ -387,16 +433,12 @@ export default function UserManagementPage() {
       )}
 
       {/* Active Students Tab */}
-      {activeTab === "active" && (
+      {!loading && activeTab === "active" && (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Student</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Student ID</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Department</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Year</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Room</th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Joined</th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Actions</th>
               </tr>
@@ -404,7 +446,7 @@ export default function UserManagementPage() {
             <tbody className="divide-y divide-gray-100">
               {filteredActiveStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
                     No students found matching your criteria
                   </td>
                 </tr>
@@ -426,18 +468,6 @@ export default function UserManagementPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 font-mono">{student.studentId}</td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
-                        {student.department}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{student.year}</td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium">
-                        Room {student.room}
-                      </span>
-                    </td>
                     <td className="px-6 py-4 text-sm text-gray-500">{student.joinedDate}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -452,19 +482,12 @@ export default function UserManagementPage() {
                           </svg>
                         </button>
                         <button 
-                          className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
-                        <button 
+                          onClick={() => handleDeactivateStudent(student.id)}
                           className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Archive"
+                          title="Deactivate"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                           </svg>
                         </button>
                       </div>
@@ -493,7 +516,7 @@ export default function UserManagementPage() {
       )}
 
       {/* Staff Tab */}
-      {activeTab === "staff" && (
+      {!loading && activeTab === "staff" && (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -566,70 +589,6 @@ export default function UserManagementPage() {
                         </svg>
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Archived Tab */}
-      {activeTab === "archived" && (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Student</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Student ID</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Department</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Status</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Archived On</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredArchivedStudents.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    No archived students found matching your search
-                  </td>
-                </tr>
-              ) : (
-              filteredArchivedStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <Image
-                        src={student.avatar}
-                        alt={student.name}
-                        width={40}
-                        height={40}
-                        className="w-10 h-10 rounded-full object-cover grayscale"
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">{student.name}</p>
-                        <p className="text-xs text-gray-400">{student.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 font-mono">{student.studentId}</td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">
-                      {student.department}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">
-                      {student.year}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{student.archivedDate}</td>
-                  <td className="px-6 py-4">
-                    <button className="px-3 py-1.5 border border-gray-200 text-gray-600 text-sm rounded-md hover:bg-gray-50 transition-colors">
-                      Restore
-                    </button>
                   </td>
                 </tr>
               ))
@@ -793,21 +752,25 @@ export default function UserManagementPage() {
             </div>
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">Student ID</p>
-                <p className="font-medium text-gray-800">{selectedStudent.studentId}</p>
+                <p className="text-xs text-gray-500">Email</p>
+                <p className="font-medium text-gray-800">{selectedStudent.email}</p>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">Department</p>
-                <p className="font-medium text-gray-800">{selectedStudent.department}</p>
+                <p className="text-xs text-gray-500">Status</p>
+                <p className="font-medium text-gray-800 capitalize">{selectedStudent.status}</p>
               </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">Year</p>
-                <p className="font-medium text-gray-800">{selectedStudent.year}</p>
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">Room</p>
-                <p className="font-medium text-gray-800">{selectedStudent.room || "Not Assigned"}</p>
-              </div>
+              {selectedStudent.joinedDate && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">Joined Date</p>
+                  <p className="font-medium text-gray-800">{selectedStudent.joinedDate}</p>
+                </div>
+              )}
+              {selectedStudent.pendingSince && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">Applied On</p>
+                  <p className="font-medium text-gray-800">{selectedStudent.pendingSince}</p>
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
               <button
