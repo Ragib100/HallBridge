@@ -112,45 +112,79 @@ const defaultConfig = {
 export default function StaffHomePage() {
     const { user, loading } = useCurrentUser();
     const [messMealStats, setMessMealStats] = useState<CardInfo[]>(roleConfigs.mess_manager.statsCards)
+    const [securityStats, setSecurityStats] = useState<CardInfo[]>(roleConfigs.security_guard.statsCards)
     
     // Get role-specific config
     const baseConfig = user?.staffRole ? roleConfigs[user.staffRole] : defaultConfig;
-    const config = user?.staffRole === 'mess_manager'
-        ? { ...baseConfig, statsCards: messMealStats }
-        : baseConfig;
+    let config = baseConfig;
+    if (user?.staffRole === 'mess_manager') {
+        config = { ...baseConfig, statsCards: messMealStats };
+    } else if (user?.staffRole === 'security_guard') {
+        config = { ...baseConfig, statsCards: securityStats };
+    }
     const displayName = user?.fullName || "Staff";
     const roleLabel = user?.staffRole ? STAFF_ROLE_LABELS[user.staffRole] : "Staff";
 
     useEffect(() => {
-        if (user?.staffRole !== 'mess_manager') {
-            return
+        if (user?.staffRole === 'mess_manager') {
+            fetchTodayMealCounts();
+        } else if (user?.staffRole === 'security_guard') {
+            fetchSecurityStats();
         }
-
-        const fetchTodayMealCounts = async () => {
-            try {
-                const response = await fetch('/api/common/meal-count?day=today')
-                if (!response.ok) {
-                    throw new Error('Failed to fetch meal counts')
-                }
-                const data = await response.json()
-                const mealCounts = data?.mealCounts || {}
-
-                setMessMealStats([
-                    { title: "Today's Breakfast", value: mealCounts.breakfast ?? 0, icon: '🍳', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-                    { title: "Today's Lunch", value: mealCounts.lunch ?? 0, icon: '🍲', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
-                    { title: "Today's Dinner", value: mealCounts.dinner ?? 0, icon: '🍛', backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' },
-                ])
-            } catch (error) {
-                setMessMealStats([
-                    { title: "Today's Breakfast", value: 0, icon: '🍳', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-                    { title: "Today's Lunch", value: 0, icon: '🍲', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
-                    { title: "Today's Dinner", value: 0, icon: '🍛', backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' },
-                ])
-            }
-        }
-
-        fetchTodayMealCounts()
     }, [user?.staffRole])
+
+    const fetchTodayMealCounts = async () => {
+        try {
+            const response = await fetch('/api/common/meal-count?day=today')
+            if (!response.ok) {
+                throw new Error('Failed to fetch meal counts')
+            }
+            const data = await response.json()
+            const mealCounts = data?.mealCounts || {}
+
+            setMessMealStats([
+                { title: "Today's Breakfast", value: mealCounts.breakfast ?? 0, icon: '🍳', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                { title: "Today's Lunch", value: mealCounts.lunch ?? 0, icon: '🍲', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
+                { title: "Today's Dinner", value: mealCounts.dinner ?? 0, icon: '🍛', backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' },
+            ])
+        } catch (error) {
+            setMessMealStats([
+                { title: "Today's Breakfast", value: 0, icon: '🍳', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                { title: "Today's Lunch", value: 0, icon: '🍲', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
+                { title: "Today's Dinner", value: 0, icon: '🍛', backgroundColor: 'linear-gradient(135deg, #9b51e0 0%, #3436d6 100%)' },
+            ])
+        }
+    }
+
+    const fetchSecurityStats = async () => {
+        try {
+            const response = await fetch('/api/gate-pass')
+            if (!response.ok) {
+                throw new Error('Failed to fetch gate pass stats')
+            }
+            const data = await response.json()
+            const passes = data?.passes || []
+
+            const activeCount = passes.filter((p: any) => p.status === 'active').length
+            const entriesCount = passes.filter((p: any) => {
+                const today = new Date().toISOString().split('T')[0]
+                return p.actualOutTime && p.actualOutTime.startsWith(today)
+            }).length
+            const lateCount = passes.filter((p: any) => p.status === 'late').length
+
+            setSecurityStats([
+                { title: 'Students Out', value: activeCount, icon: '🚶', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                { title: "Today's Entries", value: entriesCount, icon: '↓', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
+                { title: 'Late Returns', value: lateCount, icon: '⏰', backgroundColor: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)' },
+            ])
+        } catch (error) {
+            setSecurityStats([
+                { title: 'Students Out', value: 0, icon: '🚶', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                { title: "Today's Entries", value: 0, icon: '↓', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' },
+                { title: 'Late Returns', value: 0, icon: '⏰', backgroundColor: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)' },
+            ])
+        }
+    }
 
     if (loading) {
         return (

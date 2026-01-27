@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,20 +8,27 @@ import { Input } from '@/components/ui/input';
 import { StaffRoleGuard } from '@/components/staff/role-guard';
 
 interface GatePass {
-  id: string;
-  studentName: string;
-  studentId: string;
-  roomNumber: string;
+  _id: string;
+  passId: string;
+  studentId: {
+    _id: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+  };
   purpose: string;
+  purposeDetails?: string;
   destination: string;
   outDate: string;
   outTime: string;
   returnDate: string;
   returnTime: string;
-  status: 'pending' | 'approved' | 'active' | 'completed' | 'late';
+  status: 'pending' | 'approved' | 'rejected' | 'active' | 'completed' | 'late';
   contactNumber: string;
+  emergencyContact: string;
   actualOutTime?: string;
   actualReturnTime?: string;
+  createdAt: string;
 }
 
 interface EntryLog {
@@ -34,67 +41,57 @@ interface EntryLog {
   gatePassId?: string;
 }
 
-// Mock data for gate passes
-const mockGatePasses: GatePass[] = [
-  {
-    id: '1',
-    studentName: 'Rahim Ahmed',
-    studentId: '202314008',
-    roomNumber: '201',
-    purpose: 'Home Visit',
-    destination: 'Dhaka',
-    outDate: '2026-01-27',
-    outTime: '10:00',
-    returnDate: '2026-01-29',
-    returnTime: '18:00',
-    status: 'active',
-    contactNumber: '+880 1712-345678',
-    actualOutTime: '10:15',
-  },
-  {
-    id: '2',
-    studentName: 'Karim Khan',
-    studentId: '202314012',
-    roomNumber: '203',
-    purpose: 'Medical',
-    destination: 'Hospital',
-    outDate: '2026-01-27',
-    outTime: '14:00',
-    returnDate: '2026-01-27',
-    returnTime: '17:00',
-    status: 'approved',
-    contactNumber: '+880 1812-456789',
-  },
-  {
-    id: '3',
-    studentName: 'Fahim Hasan',
-    studentId: '202314045',
-    roomNumber: '205',
-    purpose: 'Personal',
-    destination: 'Market',
-    outDate: '2026-01-26',
-    outTime: '16:00',
-    returnDate: '2026-01-26',
-    returnTime: '20:00',
-    status: 'late',
-    contactNumber: '+880 1612-567890',
-    actualOutTime: '16:30',
-  },
-];
-
-// Mock entry/exit logs
-const mockEntryLogs: EntryLog[] = [
-  { id: '1', studentName: 'Rahim Ahmed', studentId: '202314008', roomNumber: '201', type: 'exit', time: '10:15 AM' },
-  { id: '2', studentName: 'Anik Roy', studentId: '202314067', roomNumber: '207', type: 'entry', time: '09:45 AM' },
-  { id: '3', studentName: 'David Johnson', studentId: '202214001', roomNumber: '201', type: 'exit', time: '09:30 AM' },
-  { id: '4', studentName: 'Michael Charter', studentId: '202214015', roomNumber: '201', type: 'entry', time: '09:00 AM' },
-];
-
 export default function SecurityPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'passes' | 'logs'>('passes');
-  const [gatePasses, setGatePasses] = useState<GatePass[]>(mockGatePasses);
-  const [entryLogs] = useState<EntryLog[]>(mockEntryLogs);
+  const [gatePasses, setGatePasses] = useState<GatePass[]>([]);
+  const [entryLogs] = useState<EntryLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchGatePasses();
+  }, []);
+
+  const fetchGatePasses = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/gate-pass');
+      if (!response.ok) {
+        throw new Error('Failed to fetch gate passes');
+      }
+      const data = await response.json();
+      setGatePasses(data.passes || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load gate passes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAction = async (passId: string, action: string) => {
+    try {
+      const response = await fetch('/api/gate-pass', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ passId, action }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data?.message || data?.error || 'Action failed');
+        return;
+      }
+
+      await fetchGatePasses();
+    } catch (err) {
+      console.error("Action error:", err);
+      alert(err instanceof Error ? err.message : 'Action failed');
+    }
+  };
 
   const activePassesCount = gatePasses.filter(p => p.status === 'active').length;
   const approvedPassesCount = gatePasses.filter(p => p.status === 'approved').length;
@@ -107,52 +104,43 @@ export default function SecurityPage() {
       active: { color: 'bg-green-100 text-green-700', label: 'Active (Out)' },
       completed: { color: 'bg-gray-100 text-gray-700', label: 'Completed' },
       late: { color: 'bg-red-100 text-red-700', label: 'Late Return' },
+      rejected: { color: 'bg-red-100 text-red-700', label: 'Rejected' },
     };
     const variant = variants[status];
     return <span className={`px-2 py-1 rounded text-xs font-medium ${variant.color}`}>{variant.label}</span>;
   };
 
-  const handleVerifyExit = (passId: string) => {
-    setGatePasses(prev =>
-      prev.map(p =>
-        p.id === passId
-          ? { ...p, status: 'active' as const, actualOutTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }
-          : p
-      )
-    );
+  const formatDateTime = (date: string | Date) => {
+    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const handleVerifyReturn = (passId: string) => {
-    const pass = gatePasses.find(p => p.id === passId);
-    if (!pass) return;
-
-    const now = new Date();
-    const expectedReturn = new Date(`${pass.returnDate}T${pass.returnTime}`);
-    const isLate = now > expectedReturn;
-
-    setGatePasses(prev =>
-      prev.map(p =>
-        p.id === passId
-          ? {
-              ...p,
-              status: isLate ? 'late' as const : 'completed' as const,
-              actualReturnTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            }
-          : p
-      )
-    );
+  const formatTime = (date: string | Date) => {
+    return new Date(date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   const filteredPasses = gatePasses.filter(
     pass =>
-      pass.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pass.studentId.includes(searchQuery) ||
-      pass.roomNumber.includes(searchQuery)
+      pass.studentId?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pass.passId.includes(searchQuery)
   );
 
   return (
     <StaffRoleGuard allowedRoles={['security_guard']}>
     <div className="space-y-6">
+      {loading && (
+        <div className="text-center py-8">
+          <div className="text-gray-600">Loading gate passes...</div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && (
+        <>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
@@ -285,19 +273,19 @@ export default function SecurityPage() {
                 </thead>
                 <tbody className="divide-y">
                   {filteredPasses.map((pass) => (
-                    <tr key={pass.id} className="hover:bg-gray-50">
+                    <tr key={pass._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-medium text-gray-900">{pass.studentName}</p>
-                          <p className="text-sm text-gray-500">{pass.studentId}</p>
+                          <p className="font-medium text-gray-900">{pass.studentId?.fullName || 'N/A'}</p>
+                          <p className="text-sm text-gray-500">{pass.passId}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="px-2 py-1 bg-gray-100 rounded text-sm">{pass.roomNumber}</span>
+                        <span className="px-2 py-1 bg-gray-100 rounded text-sm">{pass.studentId?.phone || 'N/A'}</span>
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <p className="text-gray-900">{pass.purpose}</p>
+                          <p className="text-gray-900">{pass.purpose === 'other' && pass.purposeDetails ? pass.purposeDetails : pass.purpose}</p>
                           <p className="text-sm text-gray-500">{pass.destination}</p>
                         </div>
                       </td>
@@ -305,23 +293,32 @@ export default function SecurityPage() {
                         <div>
                           <p className="text-gray-900">{pass.outTime}</p>
                           {pass.actualOutTime && (
-                            <p className="text-xs text-green-600">Actual: {pass.actualOutTime}</p>
+                            <p className="text-xs text-green-600">Actual: {formatTime(pass.actualOutTime)}</p>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div>
                           <p className="text-gray-900">{pass.returnTime}</p>
-                          <p className="text-sm text-gray-500">{pass.returnDate}</p>
+                          <p className="text-sm text-gray-500">{formatDateTime(pass.returnDate)}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">{getStatusBadge(pass.status)}</td>
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
+                          {pass.status === 'pending' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleAction(pass._id, 'approve')}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Approve
+                            </Button>
+                          )}
                           {pass.status === 'approved' && (
                             <Button
                               size="sm"
-                              onClick={() => handleVerifyExit(pass.id)}
+                              onClick={() => handleAction(pass._id, 'verify_exit')}
                               className="bg-green-600 hover:bg-green-700"
                             >
                               Verify Exit
@@ -330,7 +327,7 @@ export default function SecurityPage() {
                           {pass.status === 'active' && (
                             <Button
                               size="sm"
-                              onClick={() => handleVerifyReturn(pass.id)}
+                              onClick={() => handleAction(pass._id, 'verify_return')}
                               className="bg-blue-600 hover:bg-blue-700"
                             >
                               Verify Return
@@ -404,6 +401,8 @@ export default function SecurityPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+      </>
       )}
     </div>
     </StaffRoleGuard>

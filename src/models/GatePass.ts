@@ -19,7 +19,7 @@ const gatePassSchema = new Schema(
     emergencyContact: { type: String, required: true },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected", "checked-out", "checked-in", "late"],
+      enum: ["pending", "approved", "rejected", "active", "completed", "late"],
       default: "pending",
     },
     actualOutTime: { type: Date },

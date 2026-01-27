@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import GatePass from "@/models/GatePass";
 import { getCurrentDateBD } from "@/lib/dates";
+import mongoose from "mongoose";
 
 // GET /api/gate-pass - Get user's gate passes
 export async function GET() {
@@ -27,7 +28,10 @@ export async function GET() {
       query.studentId = session;
     }
 
-    const passes = await GatePass.find(query).sort({ createdAt: -1 }).lean();
+    const passes = await GatePass.find(query)
+      .populate("studentId", "fullName email phone")
+      .sort({ createdAt: -1 })
+      .lean();
 
     return NextResponse.json({ passes }, { status: 200 });
   } catch (error) {
@@ -142,6 +146,166 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to create gate pass" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/gate-pass - Update gate pass status (security/admin)
+export async function PATCH(request: Request) {
+  try {
+    const cookieStore = await cookies();
+    const session = cookieStore.get("hb_session")?.value;
+
+    if (!session) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+
+    await connectDB();
+
+    const user = await User.findById(session).select("userType staffRole");
+    if (!user || (user.userType !== "staff" && user.userType !== "admin")) {
+      return NextResponse.json(
+        { message: "Only staff can update gate passes" },
+        { status: 403 }
+      );
+    }
+
+    if (user.userType === "staff" && user.staffRole !== "security_guard") {
+      return NextResponse.json(
+        { message: "Only security guards can update gate passes" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const { passId, action } = body;
+
+    if (!passId || !action) {
+      return NextResponse.json(
+        { message: "Pass ID and action are required" },
+        { status: 400 }
+      );
+    }
+
+    const gatePass = await GatePass.findById(passId);
+    if (!gatePass) {
+      return NextResponse.json({ message: "Gate pass not found" }, { status: 404 });
+    }
+
+    const now = new Date();
+    const userId = new mongoose.Types.ObjectId(session);
+
+    switch (action) {
+      case "approve":
+        if (gatePass.status !== "pending") {
+          return NextResponse.json(
+            { message: "Only pending passes can be approved" },
+            { status: 400 }
+          );
+        }
+        await GatePass.findByIdAndUpdate(passId, {
+          status: "approved",
+          approvedBy: userId,
+          approvedAt: now
+        });
+        
+        return NextResponse.json(
+          {
+            message: "Gate pass approved successfully",
+            gatePass: {
+              id: passId,
+              status: "approved",
+            },
+          },
+          { status: 200 }
+        );
+
+      case "verify_exit":
+        if (gatePass.status !== "approved") {
+          return NextResponse.json(
+            { message: "Only approved passes can be verified for exit" },
+            { status: 400 }
+          );
+        }
+        await GatePass.findByIdAndUpdate(passId, {
+          status: "active",
+          actualOutTime: now,
+          checkedOutBy: userId
+        });
+        
+        return NextResponse.json(
+          {
+            message: "Gate pass exit verified successfully",
+            gatePass: {
+              id: passId,
+              status: "active",
+            },
+          },
+          { status: 200 }
+        );
+
+      case "verify_return":
+        if (gatePass.status !== "active") {
+          return NextResponse.json(
+            { message: "Only active passes can be verified for return" },
+            { status: 400 }
+          );
+        }
+        const returnDateStr = gatePass.returnDate.toISOString().split('T')[0];
+        const returnTimeStr = gatePass.returnTime.includes(':') ? gatePass.returnTime : `${gatePass.returnTime}:00`;
+        const expectedReturnStr = `${returnDateStr}T${returnTimeStr}:00`;
+        const expectedReturn = new Date(expectedReturnStr);
+        const isLate = now > expectedReturn;
+        const newStatus = isLate ? "late" : "completed";
+        
+        await GatePass.findByIdAndUpdate(passId, {
+          status: newStatus,
+          actualReturnTime: now,
+          checkedInBy: userId
+        });
+        
+        return NextResponse.json(
+          {
+            message: "Gate pass return verified successfully",
+            gatePass: {
+              id: passId,
+              status: newStatus,
+            },
+          },
+          { status: 200 }
+        );
+
+      case "reject":
+        if (gatePass.status !== "pending") {
+          return NextResponse.json(
+            { message: "Only pending passes can be rejected" },
+            { status: 400 }
+          );
+        }
+        await GatePass.findByIdAndUpdate(passId, {
+          status: "rejected",
+          rejectionReason: body.reason || "Not specified"
+        });
+        
+        return NextResponse.json(
+          {
+            message: "Gate pass rejected successfully",
+            gatePass: {
+              id: passId,
+              status: "rejected",
+            },
+          },
+          { status: 200 }
+        );
+
+      default:
+        return NextResponse.json({ message: "Invalid action" }, { status: 400 });
+    }
+  } catch (error) {
+    console.error("Error updating gate pass:", error);
+    return NextResponse.json(
+      { message: "Something went wrong", error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
