@@ -1,37 +1,39 @@
+"use client"
+
 import '@/app/dashboard/staff/staff.css'
+import { useEffect, useState } from 'react'
 
 interface MealRating {
     mealTime: string;
-    menuItems: string;
     icon: string;
     avgRating: number;
     totalReviews: number;
 }
 
 export default function VotingResultPage() {
-    const mealRatings: MealRating[] = [
-        {
-            mealTime: 'Breakfast',
-            menuItems: 'Paratha, Egg Curry, Tea/Coffee, Banana',
-            icon: '🍳',
-            avgRating: 4.5,
-            totalReviews: 45,
-        },
-        {
-            mealTime: 'Lunch',
-            menuItems: 'Rice, Dal, Chicken Curry, Mixed Vegetable, Salad',
-            icon: '🍛',
-            avgRating: 4.2,
-            totalReviews: 38,
-        },
-        {
-            mealTime: 'Dinner',
-            menuItems: 'Roti, Fish Curry, Aloo Bhaji, Dal, Sweet Dish',
-            icon: '🍽️',
-            avgRating: 3.8,
-            totalReviews: 32,
-        },
-    ];
+    const [mealRatings, setMealRatings] = useState<MealRating[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchVotingResults = async () => {
+            try {
+                const response = await fetch('/api/meals/voting-results')
+                const data = await response.json()
+                if (data.mealRatings) {
+                    setMealRatings(data.mealRatings)
+                }
+            } catch (error) {
+                console.error('Error fetching voting results:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchVotingResults()
+    }, [])
+
+    if (loading) {
+        return <div className="tab-content">Loading voting results...</div>
+    }
 
     const totalReviews = mealRatings.reduce((sum, meal) => sum + meal.totalReviews, 0);
 
@@ -69,7 +71,6 @@ export default function VotingResultPage() {
                         </span>
                         <span className="voting-count">{meal.totalReviews} Reviews</span>
                     </div>
-                    <div className="text-sm text-gray-600 ml-8 mb-2">{meal.menuItems}</div>
                     <div className="ml-8 mb-2">
                         {renderStars(meal.avgRating)}
                     </div>
