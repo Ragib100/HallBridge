@@ -1,73 +1,118 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
+import { sendRequestReceivedEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
-    const { fullName, email, password, userType } = await req.json();
+    const { fullName, email, studentId, userType } = await req.json();
 
-    if (!fullName || !email || !password || !userType) {
+    if (!fullName || !email || !studentId || !userType) {
       return NextResponse.json(
-        { message: "All fields are required" },
+        { message: "Full name, email, and student ID are required" },
         { status: 400 }
       );
     }
 
-    if (typeof password !== "string" || password.length < 8) {
+    // Only students can self-register via hall seat request
+    if (userType !== "student") {
       return NextResponse.json(
-        { message: "Password must be at least 8 characters long" },
-        { status: 400 }
-      );
-    }
-
-    // Only students can self-register. Staff accounts must be created by admin.
-    if (userType === "staff") {
-      return NextResponse.json(
-        { message: "Staff accounts can only be created by administrators" },
+        { message: "Only students can request hall seats" },
         { status: 403 }
-      );
-    }
-
-    if (!["student", "admin"].includes(userType)) {
-      return NextResponse.json(
-        { message: "Invalid user type" },
-        { status: 400 }
       );
     }
 
     await connectDB();
 
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
+    // Check if email already exists
+    const existingEmail = await User.findOne({ email: email.toLowerCase() });
+    if (existingEmail) {
+      // Provide specific message based on current status
+      if (existingEmail.userType === "student") {
+        if (existingEmail.approvalStatus === "pending") {
+          return NextResponse.json(
+            { message: "A hall seat request with this email is already pending. Please wait for admin approval." },
+            { status: 409 }
+          );
+        }
+        if (existingEmail.approvalStatus === "approved" && existingEmail.isActive) {
+          return NextResponse.json(
+            { message: "This email is already registered and approved. Please log in instead." },
+            { status: 409 }
+          );
+        }
+        if (existingEmail.approvalStatus === "rejected") {
+          return NextResponse.json(
+            { message: "A previous request with this email was rejected. Please contact administration for assistance." },
+            { status: 409 }
+          );
+        }
+      }
       return NextResponse.json(
         { message: "Email already in use" },
         { status: 409 }
       );
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Check if student ID already exists
+    const existingStudentId = await User.findOne({ studentId: studentId.trim() });
+    if (existingStudentId) {
+      // Provide specific message based on current status
+      if (existingStudentId.approvalStatus === "pending") {
+        return NextResponse.json(
+          { message: "A hall seat request with this Student ID is already pending. Please wait for admin approval." },
+          { status: 409 }
+        );
+      }
+      if (existingStudentId.approvalStatus === "approved" && existingStudentId.isActive) {
+        return NextResponse.json(
+          { message: "This Student ID is already registered and approved. Please log in instead." },
+          { status: 409 }
+        );
+      }
+      if (existingStudentId.approvalStatus === "rejected") {
+        return NextResponse.json(
+          { message: "A previous request with this Student ID was rejected. Please contact administration for assistance." },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json(
+        { message: "Student ID already registered" },
+        { status: 409 }
+      );
+    }
 
+    // Create user with pending status (no password yet)
     const user = await User.create({
       fullName,
       email: email.toLowerCase(),
-      passwordHash,
-      userType,
+      studentId: studentId.trim(),
+      userType: "student",
+      approvalStatus: "pending",
+      isActive: false, // Will be activated upon approval
+      mustChangePassword: true, // Will need to change password on first login
+    });
+
+    // Send confirmation email (async, don't wait)
+    sendRequestReceivedEmail(user.email, user.fullName, user.studentId).catch((err) => {
+      console.error("Failed to send request received email:", err);
     });
 
     return NextResponse.json(
       {
-        message: "Registration successful",
+        message: "Hall seat request submitted successfully. Please wait for admin approval.",
         user: {
           id: user._id,
           fullName: user.fullName,
           email: user.email,
-          userType: user.userType,
+          studentId: user.studentId,
+          approvalStatus: user.approvalStatus,
         },
       },
       { status: 201 }
     );
   } catch (error) {
+    console.error("Registration error:", error);
     return NextResponse.json(
       { message: "Something went wrong" },
       { status: 500 }

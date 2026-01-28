@@ -85,6 +85,13 @@ function LoginForm() {
       }
 
       const userType = data?.user?.userType;
+      const mustChangePassword = data?.user?.mustChangePassword;
+
+      // Redirect to change password page if required
+      if (mustChangePassword) {
+        router.push("/auth/change-password");
+        return;
+      }
 
       if (userType === "student") {
         router.push("/dashboard/student/home");

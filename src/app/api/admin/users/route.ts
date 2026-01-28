@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import bcrypt from "bcryptjs";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
+import { sendApprovalEmail, sendRejectionEmail } from "@/lib/email";
 
 // GET /api/admin/users - Get all users (admin only)
 export async function GET(request: Request) {
@@ -35,15 +37,27 @@ export async function GET(request: Request) {
       query.userType = { $ne: "admin" };
     }
 
-    // For students, active means isActive: true, pending means isActive: false
-    if (status === "active") {
-      query.isActive = true;
-    } else if (status === "pending") {
-      query.isActive = false;
+    // For students, use approvalStatus for filtering
+    if (userType === "student") {
+      if (status === "active") {
+        query.approvalStatus = "approved";
+        query.isActive = true;
+      } else if (status === "pending") {
+        query.approvalStatus = "pending";
+      } else if (status === "rejected") {
+        query.approvalStatus = "rejected";
+      }
+    } else {
+      // For non-students, use isActive
+      if (status === "active") {
+        query.isActive = true;
+      } else if (status === "pending") {
+        query.isActive = false;
+      }
     }
 
     const users = await User.find(query)
-      .select("fullName email userType staffRole phone isActive createdAt")
+      .select("fullName email userType staffRole studentId phone isActive approvalStatus createdAt")
       .sort({ createdAt: -1 });
 
     return NextResponse.json({
@@ -53,8 +67,10 @@ export async function GET(request: Request) {
         email: u.email,
         userType: u.userType,
         staffRole: u.staffRole,
+        studentId: u.studentId,
         phone: u.phone,
         isActive: u.isActive ?? true,
+        approvalStatus: u.approvalStatus,
         createdAt: u.createdAt,
       })),
     });
@@ -64,7 +80,7 @@ export async function GET(request: Request) {
   }
 }
 
-// PATCH /api/admin/users - Update user status (admin only)
+// PATCH /api/admin/users - Update user status or approve/reject student (admin only)
 export async function PATCH(request: Request) {
   try {
     const cookieStore = await cookies();
@@ -83,17 +99,92 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { id, isActive } = body;
+    const { id, isActive, action } = body;
 
     if (!id) {
       return NextResponse.json({ message: "User ID is required" }, { status: 400 });
     }
 
+    // Handle approval/rejection actions for students
+    if (action === "approve" || action === "reject") {
+      const student = await User.findById(id);
+      
+      if (!student) {
+        return NextResponse.json({ message: "User not found" }, { status: 404 });
+      }
+
+      if (student.userType !== "student") {
+        return NextResponse.json({ message: "This action is only for students" }, { status: 400 });
+      }
+
+      if (action === "approve") {
+        // Set password hash using student ID as initial password
+        const passwordHash = await bcrypt.hash(student.studentId, 10);
+        
+        const updatedStudent = await User.findByIdAndUpdate(
+          id,
+          {
+            approvalStatus: "approved",
+            isActive: true,
+            passwordHash,
+            mustChangePassword: true,
+          },
+          { new: true }
+        ).select("fullName email studentId userType approvalStatus isActive");
+
+        // Send approval email notification (async, don't wait)
+        sendApprovalEmail(
+          updatedStudent.email,
+          updatedStudent.fullName,
+          updatedStudent.studentId
+        ).catch((err) => {
+          console.error("Failed to send approval email:", err);
+        });
+
+        return NextResponse.json({
+          message: "Student approved successfully. They can now login using their Student ID as password.",
+          user: {
+            id: updatedStudent._id,
+            fullName: updatedStudent.fullName,
+            email: updatedStudent.email,
+            studentId: updatedStudent.studentId,
+            approvalStatus: updatedStudent.approvalStatus,
+            isActive: updatedStudent.isActive,
+          },
+        });
+      } else if (action === "reject") {
+        const updatedStudent = await User.findByIdAndUpdate(
+          id,
+          { approvalStatus: "rejected", isActive: false },
+          { new: true }
+        ).select("fullName email studentId userType approvalStatus isActive");
+
+        // Send rejection email notification (async, don't wait)
+        sendRejectionEmail(
+          updatedStudent.email,
+          updatedStudent.fullName
+        ).catch((err) => {
+          console.error("Failed to send rejection email:", err);
+        });
+
+        return NextResponse.json({
+          message: "Student request rejected",
+          user: {
+            id: updatedStudent._id,
+            fullName: updatedStudent.fullName,
+            email: updatedStudent.email,
+            approvalStatus: updatedStudent.approvalStatus,
+          },
+        });
+      }
+    }
+
+    // Regular isActive toggle (for deactivating approved students)
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { isActive },
       { new: true }
-    ).select("fullName email userType isActive");
+    ).select("fullName email userType isActive approvalStatus");
 
     if (!updatedUser) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });

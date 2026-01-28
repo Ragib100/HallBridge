@@ -14,7 +14,7 @@ export async function GET() {
 
     await connectDB();
 
-    const user = await User.findById(session).select("fullName email userType staffRole phone isActive createdAt");
+    const user = await User.findById(session).select("fullName email studentId userType staffRole phone isActive approvalStatus mustChangePassword createdAt");
     if (!user) {
       return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
     }
@@ -24,10 +24,13 @@ export async function GET() {
         id: user._id,
         fullName: user.fullName,
         email: user.email,
+        studentId: user.studentId,
         userType: user.userType,
         staffRole: user.staffRole,
         phone: user.phone,
         isActive: user.isActive,
+        approvalStatus: user.approvalStatus,
+        mustChangePassword: user.mustChangePassword,
         createdAt: user.createdAt,
       },
     });

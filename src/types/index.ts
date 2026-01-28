@@ -3,6 +3,9 @@
 // =====================
 export type UserRole = "student" | "staff" | "admin";
 
+// Approval status for student hall seat requests
+export type ApprovalStatus = "pending" | "approved" | "rejected";
+
 // Staff role types for role-based dashboard access
 export type StaffRole =
   | "mess_manager"
@@ -23,8 +26,11 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  studentId?: string;
   role: UserRole;
   staffRole?: StaffRole;
+  approvalStatus?: ApprovalStatus;
+  mustChangePassword?: boolean;
   phone?: string;
   isActive?: boolean;
   avatar?: string;

@@ -24,6 +24,30 @@ export async function POST(req: Request) {
       );
     }
 
+    // Check approval status for students
+    if (user.userType === "student") {
+      if (user.approvalStatus === "pending") {
+        return NextResponse.json(
+          { message: "Your hall seat request is still pending approval. Please wait for admin confirmation." },
+          { status: 403 }
+        );
+      }
+      if (user.approvalStatus === "rejected") {
+        return NextResponse.json(
+          { message: "Your hall seat request has been rejected. Please contact administration for more information." },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Check if user has a password set
+    if (!user.passwordHash) {
+      return NextResponse.json(
+        { message: "Your account is not yet activated. Please wait for admin approval." },
+        { status: 403 }
+      );
+    }
+
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       return NextResponse.json(
@@ -42,6 +66,7 @@ export async function POST(req: Request) {
           userType: user.userType,
           staffRole: user.staffRole,
           isActive: user.isActive,
+          mustChangePassword: user.mustChangePassword ?? false,
         },
       },
       { status: 200 }

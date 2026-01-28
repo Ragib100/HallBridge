@@ -11,16 +11,38 @@ export const STAFF_ROLES = [
 
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
+// Approval status for student hall seat requests
+export const APPROVAL_STATUS = ["pending", "approved", "rejected"] as const;
+export type ApprovalStatus = (typeof APPROVAL_STATUS)[number];
+
 const userSchema = new Schema(
   {
     fullName: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    passwordHash: { type: String, required: false }, // Not required for Google-only accounts
+    // Student ID - unique identifier for students (serves as primary key along with email)
+    studentId: {
+      type: String,
+      trim: true,
+      sparse: true, // Allows null values while maintaining uniqueness
+      unique: true,
+    },
+    passwordHash: { type: String, required: false }, // Not required until approved
     userType: {
       type: String,
       required: true,
       enum: ["student", "staff", "admin"],
     },
+    // Approval status for student hall seat requests
+    approvalStatus: {
+      type: String,
+      enum: APPROVAL_STATUS,
+      default: "pending",
+      required: function (this: { userType: string }) {
+        return this.userType === "student";
+      },
+    },
+    // Flag to force password change on first login
+    mustChangePassword: { type: Boolean, default: false },
     // Staff-specific fields
     staffRole: {
       type: String,
@@ -36,6 +58,9 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
+
+// Compound index for efficient queries
+userSchema.index({ userType: 1, approvalStatus: 1 });
 
 export type UserDocument = InferSchemaType<typeof userSchema> & {
   _id: mongoose.Types.ObjectId;

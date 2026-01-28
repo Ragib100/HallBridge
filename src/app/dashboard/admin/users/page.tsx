@@ -10,6 +10,7 @@ interface Student {
   id: string;
   name: string;
   email: string;
+  studentId: string;
   status: string;
   avatar: string;
   pendingSince?: string;
@@ -70,10 +71,11 @@ export default function UserManagementPage() {
       const activeRes = await fetch("/api/admin/users?type=student&status=active");
       const activeData = await activeRes.json();
       if (activeRes.ok) {
-        setActiveStudents((activeData.users || []).map((u: { id: string; fullName: string; email: string; createdAt: string }) => ({
+        setActiveStudents((activeData.users || []).map((u: { id: string; fullName: string; email: string; studentId: string; createdAt: string }) => ({
           id: u.id,
           name: u.fullName,
           email: u.email,
+          studentId: u.studentId || "",
           status: "active",
           avatar: "/logos/profile.png",
           joinedDate: new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
@@ -84,10 +86,11 @@ export default function UserManagementPage() {
       const pendingRes = await fetch("/api/admin/users?type=student&status=pending");
       const pendingData = await pendingRes.json();
       if (pendingRes.ok) {
-        setPendingStudents((pendingData.users || []).map((u: { id: string; fullName: string; email: string; createdAt: string }) => ({
+        setPendingStudents((pendingData.users || []).map((u: { id: string; fullName: string; email: string; studentId: string; createdAt: string }) => ({
           id: u.id,
           name: u.fullName,
           email: u.email,
+          studentId: u.studentId || "",
           status: "pending",
           avatar: "/logos/profile.png",
           pendingSince: new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
@@ -231,7 +234,7 @@ export default function UserManagementPage() {
       const response = await fetch("/api/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: studentId, isActive: true }),
+        body: JSON.stringify({ id: studentId, action: "approve" }),
       });
 
       if (response.ok) {
@@ -240,6 +243,8 @@ export default function UserManagementPage() {
           setPendingStudents(prev => prev.filter(s => s.id !== studentId));
           setActiveStudents(prev => [...prev, { ...student, status: "active", joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) }]);
         }
+        // Show success message
+        alert("Student approved successfully! They can now login using their Student ID as password.");
       }
     } catch (error) {
       console.error("Failed to approve student:", error);
@@ -247,11 +252,13 @@ export default function UserManagementPage() {
   };
 
   const handleRejectStudent = async (studentId: string) => {
-    if (!confirm("Are you sure you want to reject this student registration?")) return;
+    if (!confirm("Are you sure you want to reject this student registration? This action cannot be undone.")) return;
 
     try {
-      const response = await fetch(`/api/admin/users?id=${studentId}`, {
-        method: "DELETE",
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: studentId, action: "reject" }),
       });
 
       if (response.ok) {
@@ -282,13 +289,15 @@ export default function UserManagementPage() {
 
   const filteredActiveStudents = activeStudents.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchQuery.toLowerCase());
+                         student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         student.studentId.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
   const filteredPendingStudents = pendingStudents.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchQuery.toLowerCase());
+                         student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         student.studentId.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -372,6 +381,7 @@ export default function UserManagementPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Student</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Student ID</th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Applied On</th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Actions</th>
               </tr>
@@ -379,7 +389,7 @@ export default function UserManagementPage() {
             <tbody className="divide-y divide-gray-100">
               {filteredPendingStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
                     No pending approvals found
                   </td>
                 </tr>
@@ -400,6 +410,11 @@ export default function UserManagementPage() {
                           <p className="text-xs text-gray-500">{student.email}</p>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm font-mono">
+                        {student.studentId}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">{student.pendingSince}</td>
                     <td className="px-6 py-4">
@@ -439,6 +454,7 @@ export default function UserManagementPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Student</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Student ID</th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Joined</th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Actions</th>
               </tr>
@@ -446,7 +462,7 @@ export default function UserManagementPage() {
             <tbody className="divide-y divide-gray-100">
               {filteredActiveStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
                     No students found matching your criteria
                   </td>
                 </tr>
@@ -467,6 +483,11 @@ export default function UserManagementPage() {
                           <p className="text-xs text-gray-500">{student.email}</p>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm font-mono">
+                        {student.studentId}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">{student.joinedDate}</td>
                     <td className="px-6 py-4">
