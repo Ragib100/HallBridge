@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -111,8 +112,16 @@ const defaultConfig = {
 
 export default function StaffHomePage() {
     const { user, loading } = useCurrentUser();
+    const router = useRouter();
     const [messMealStats, setMessMealStats] = useState<CardInfo[]>(roleConfigs.mess_manager.statsCards)
     const [securityStats, setSecurityStats] = useState<CardInfo[]>(roleConfigs.security_guard.statsCards)
+
+    // Redirect maintenance_staff to maintenance page (they don't have dashboard)
+    useEffect(() => {
+        if (!loading && user?.staffRole === 'maintenance_staff') {
+            router.replace('/dashboard/staff/maintenance');
+        }
+    }, [user?.staffRole, loading, router]);
     
     // Get role-specific config
     const baseConfig = user?.staffRole ? roleConfigs[user.staffRole] : defaultConfig;
