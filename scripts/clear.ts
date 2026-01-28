@@ -18,6 +18,7 @@ import Meal from "../src/models/Meal";
 import GuestMeal from "../src/models/GuestMeal";
 import VoteMeal from "../src/models/VoteMeal";
 import WeeklyMeal from "../src/models/WeeklyMeal";
+import Room from "../src/models/Room";
 
 async function promptConfirmation(): Promise<boolean> {
   const rl = readline.createInterface({
@@ -49,6 +50,7 @@ async function clearDatabase() {
     { name: "GuestMeals", model: GuestMeal },
     { name: "VoteMeals", model: VoteMeal },
     { name: "WeeklyMeals", model: WeeklyMeal },
+    { name: "Rooms", model: Room },
   ];
 
   let totalDeleted = 0;

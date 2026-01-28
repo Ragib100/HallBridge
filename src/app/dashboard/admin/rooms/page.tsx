@@ -1,137 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 type RoomStatus = "occupied" | "vacant" | "partial" | "maintenance";
 type ViewMode = "grid" | "list";
 
 interface RoomMember {
-  name: string;
+  id: string;
+  fullName: string;
   studentId: string;
-  avatar: string;
+}
+
+interface Bed {
+  bedNumber: number;
+  isOccupied: boolean;
+  student: RoomMember | null;
 }
 
 interface Room {
-  number: string;
+  id: string;
   floor: number;
+  roomNumber: string;
+  displayNumber: string;
   capacity: number;
-  members: RoomMember[];
+  beds: Bed[];
   status: RoomStatus;
   amenities: string[];
+  hallId?: string;
+  availableBeds: number;
+  occupiedBeds: number;
 }
 
-interface AllocationRequest {
-  id: string;
-  name: string;
-  studentId: string;
-  department: string;
-  year: string;
-  preferredRoom?: string;
-  avatar: string;
-  requestDate: string;
+interface RoomStats {
+  totalRooms: number;
+  occupied: number;
+  partial: number;
+  vacant: number;
+  maintenance: number;
+  totalBeds: number;
+  occupiedBeds: number;
 }
-
-const rooms: Room[] = [
-  { 
-    number: "201", 
-    floor: 2,
-    capacity: 4, 
-    members: [
-      { name: "David Johnson", studentId: "202214001", avatar: "/logos/profile.png" },
-      { name: "Michael Charter", studentId: "202214015", avatar: "/logos/profile.png" },
-      { name: "Mark Wilson", studentId: "202314032", avatar: "/logos/profile.png" },
-      { name: "Ethan Lowe", studentId: "202314089", avatar: "/logos/profile.png" }
-    ], 
-    status: "occupied",
-    amenities: ["AC", "Attached Bath", "Balcony"]
-  },
-  { 
-    number: "202", 
-    floor: 2,
-    capacity: 4, 
-    members: [
-      { name: "James Brown", studentId: "202414002", avatar: "/logos/profile.png" },
-      { name: "Robert Smith", studentId: "202414056", avatar: "/logos/profile.png" },
-      { name: "William Davis", studentId: "202414078", avatar: "/logos/profile.png" },
-      { name: "Richard Miller", studentId: "202414091", avatar: "/logos/profile.png" }
-    ], 
-    status: "occupied",
-    amenities: ["AC", "Attached Bath"]
-  },
-  { 
-    number: "203", 
-    floor: 2,
-    capacity: 4, 
-    members: [
-      { name: "Thomas Anderson", studentId: "202314045", avatar: "/logos/profile.png" },
-      { name: "Charles White", studentId: "202314067", avatar: "/logos/profile.png" },
-      { name: "Daniel Harris", studentId: "202314082", avatar: "/logos/profile.png" },
-      { name: "Matthew Clark", studentId: "202314098", avatar: "/logos/profile.png" }
-    ], 
-    status: "occupied",
-    amenities: ["AC", "Attached Bath"]
-  },
-  { 
-    number: "204", 
-    floor: 2,
-    capacity: 4, 
-    members: [
-      { name: "Andrew Martin", studentId: "202514001", avatar: "/logos/profile.png" },
-      { name: "Joshua Garcia", studentId: "202514023", avatar: "/logos/profile.png" }
-    ], 
-    status: "partial",
-    amenities: ["Fan", "Common Bath"]
-  },
-  { 
-    number: "205", 
-    floor: 2,
-    capacity: 4, 
-    members: [], 
-    status: "vacant",
-    amenities: ["Fan", "Common Bath"]
-  },
-  { 
-    number: "206", 
-    floor: 2,
-    capacity: 4, 
-    members: [], 
-    status: "maintenance",
-    amenities: ["AC", "Attached Bath", "Balcony"]
-  },
-  { 
-    number: "301", 
-    floor: 3,
-    capacity: 4, 
-    members: [
-      { name: "Kevin Lee", studentId: "202214022", avatar: "/logos/profile.png" },
-      { name: "Brian Walker", studentId: "202214034", avatar: "/logos/profile.png" },
-      { name: "George Hall", studentId: "202214056", avatar: "/logos/profile.png" },
-      { name: "Edward Allen", studentId: "202214078", avatar: "/logos/profile.png" }
-    ], 
-    status: "occupied",
-    amenities: ["AC", "Attached Bath"]
-  },
-  { 
-    number: "302", 
-    floor: 3,
-    capacity: 4, 
-    members: [
-      { name: "Ryan Young", studentId: "202314011", avatar: "/logos/profile.png" },
-      { name: "Nicholas King", studentId: "202314029", avatar: "/logos/profile.png" },
-      { name: "Tyler Wright", studentId: "202314047", avatar: "/logos/profile.png" }
-    ], 
-    status: "partial",
-    amenities: ["AC", "Attached Bath"]
-  },
-];
-
-const allocationRequests: AllocationRequest[] = [
-  { id: "1", name: "Rahim Ahmed", studentId: "202514045", department: "CSE", year: "1st", preferredRoom: "204", requestDate: "Jan 3, 2026", avatar: "/logos/profile.png" },
-  { id: "2", name: "Karim Khan", studentId: "202514056", department: "EEE", year: "1st", requestDate: "Jan 4, 2026", avatar: "/logos/profile.png" },
-  { id: "3", name: "Fahim Hasan", studentId: "202514067", department: "ME", year: "1st", preferredRoom: "205", requestDate: "Jan 4, 2026", avatar: "/logos/profile.png" },
-  { id: "4", name: "Anik Roy", studentId: "202514078", department: "CE", year: "1st", requestDate: "Jan 5, 2026", avatar: "/logos/profile.png" },
-];
 
 function getStatusColor(status: RoomStatus) {
   switch (status) {
@@ -179,85 +88,202 @@ function getHeaderColor(status: RoomStatus) {
 }
 
 export default function RoomAllocationPage() {
-  const [selectedFloor, setSelectedFloor] = useState("all");
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [stats, setStats] = useState<RoomStats>({
+    totalRooms: 0,
+    occupied: 0,
+    partial: 0,
+    vacant: 0,
+    maintenance: 0,
+    totalBeds: 0,
+    occupiedBeds: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [selectedFloor, setSelectedFloor] = useState("1"); // Default to floor 1
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showRoomDetails, setShowRoomDetails] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [showAllocateModal, setShowAllocateModal] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<AllocationRequest | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showAllRooms, setShowAllRooms] = useState(false); // For "View All" toggle
 
-  // Filter rooms
+  // Fetch rooms from database
+  useEffect(() => {
+    fetchRooms();
+  }, [selectedFloor, selectedStatus, showAllRooms]);
+
+  const fetchRooms = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (!showAllRooms && selectedFloor !== "all") params.append("floor", selectedFloor);
+      if (selectedStatus !== "all") params.append("status", selectedStatus);
+      if (searchQuery) params.append("search", searchQuery);
+
+      const res = await fetch(`/api/admin/rooms?${params.toString()}`);
+      const data = await res.json();
+      
+      if (res.ok) {
+        setRooms(data.rooms || []);
+        setStats(data.stats || {
+          totalRooms: 0,
+          occupied: 0,
+          partial: 0,
+          vacant: 0,
+          maintenance: 0,
+          totalBeds: 0,
+          occupiedBeds: 0,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch rooms:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter rooms by search query (client-side for room number and student name)
   const filteredRooms = rooms.filter(room => {
-    const matchesFloor = selectedFloor === "all" || room.floor === parseInt(selectedFloor);
-    const matchesStatus = selectedStatus === "all" || room.status === selectedStatus;
-    const matchesSearch = room.number.includes(searchQuery) || 
-                         room.members.some(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesFloor && matchesStatus && matchesSearch;
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    const matchesRoom = room.roomNumber.includes(query) || room.displayNumber.toLowerCase().includes(query);
+    const matchesMember = room.beds.some(bed => 
+      bed.student?.fullName.toLowerCase().includes(query) ||
+      bed.student?.studentId.toLowerCase().includes(query)
+    );
+    return matchesRoom || matchesMember;
   });
-
-  // Stats
-  const totalRooms = rooms.length;
-  const occupiedRooms = rooms.filter(r => r.status === "occupied").length;
-  const partialRooms = rooms.filter(r => r.status === "partial").length;
-  const vacantRooms = rooms.filter(r => r.status === "vacant").length;
-  const maintenanceRooms = rooms.filter(r => r.status === "maintenance").length;
 
   const handleViewRoom = (room: Room) => {
     setSelectedRoom(room);
     setShowRoomDetails(true);
   };
 
-  const handleAllocate = (request: AllocationRequest) => {
-    setSelectedRequest(request);
-    setShowAllocateModal(true);
+  const handleUpdateRoomStatus = async (roomId: string, status: RoomStatus) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/rooms", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId, action: "updateStatus", status }),
+      });
+
+      if (res.ok) {
+        fetchRooms();
+        setShowRoomDetails(false);
+      }
+    } catch (error) {
+      console.error("Failed to update room status:", error);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const availableRoomsForAllocation = rooms.filter(r => r.status === "vacant" || r.status === "partial");
+  const handleRemoveStudent = async (roomId: string, bedNumber: number) => {
+    if (!confirm("Are you sure you want to remove this student from the room?")) return;
+    
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/rooms", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId, action: "removeStudent", bedNumber }),
+      });
+
+      if (res.ok) {
+        fetchRooms();
+        // Update selected room if still viewing
+        if (selectedRoom && selectedRoom.id === roomId) {
+          const updatedRoom = rooms.find(r => r.id === roomId);
+          if (updatedRoom) {
+            setSelectedRoom({
+              ...updatedRoom,
+              beds: updatedRoom.beds.map(b => 
+                b.bedNumber === bedNumber ? { ...b, isOccupied: false, student: null } : b
+              ),
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to remove student:", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Get members from beds for display
+  const getRoomMembers = (room: Room) => {
+    return room.beds
+      .filter(bed => bed.isOccupied && bed.student)
+      .map(bed => ({
+        name: bed.student!.fullName,
+        studentId: bed.student!.studentId,
+        avatar: "/logos/profile.png",
+      }));
+  };
 
   return (
     <div className="flex gap-6 h-full">
       {/* Main Content */}
       <div className="flex-1 space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <div className="bg-white rounded-xl p-4 shadow-sm text-center">
-            <p className="text-2xl font-bold text-gray-800">{totalRooms}</p>
+            <p className="text-2xl font-bold text-gray-800">{stats.totalRooms}</p>
             <p className="text-sm text-gray-500">Total Rooms</p>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm text-center border-l-4 border-[#2D6A4F]">
-            <p className="text-2xl font-bold text-[#2D6A4F]">{occupiedRooms}</p>
-            <p className="text-sm text-gray-500">Fully Occupied</p>
+          <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+            <p className="text-2xl font-bold text-blue-600">{stats.totalBeds}</p>
+            <p className="text-sm text-gray-500">Total Beds</p>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm text-center border-l-4 border-[#40E0D0]">
-            <p className="text-2xl font-bold text-[#40E0D0]">{partialRooms}</p>
-            <p className="text-sm text-gray-500">Partially Filled</p>
+          <div className="bg-white rounded-xl p-4 shadow-sm text-center border-l-4 border-[#2D6A4F]">
+            <p className="text-2xl font-bold text-[#2D6A4F]">{stats.occupiedBeds}</p>
+            <p className="text-sm text-gray-500">Occupied Beds</p>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm text-center border-l-4 border-green-500">
-            <p className="text-2xl font-bold text-green-500">{vacantRooms}</p>
-            <p className="text-sm text-gray-500">Vacant</p>
+            <p className="text-2xl font-bold text-green-500">{stats.totalBeds - stats.occupiedBeds}</p>
+            <p className="text-sm text-gray-500">Available Beds</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 shadow-sm text-center border-l-4 border-[#40E0D0]">
+            <p className="text-2xl font-bold text-[#40E0D0]">{stats.partial}</p>
+            <p className="text-sm text-gray-500">Partial Rooms</p>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm text-center border-l-4 border-red-400">
-            <p className="text-2xl font-bold text-red-400">{maintenanceRooms}</p>
-            <p className="text-sm text-gray-500">Under Maintenance</p>
+            <p className="text-2xl font-bold text-red-400">{stats.maintenance}</p>
+            <p className="text-sm text-gray-500">Maintenance</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <select
-              value={selectedFloor}
-              onChange={(e) => setSelectedFloor(e.target.value)}
-              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
-            >
-              <option value="all">All Floors</option>
-              <option value="1">1st Floor</option>
-              <option value="2">2nd Floor</option>
-              <option value="3">3rd Floor</option>
-              <option value="4">4th Floor</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedFloor}
+                onChange={(e) => {
+                  setSelectedFloor(e.target.value);
+                  setShowAllRooms(false);
+                }}
+                disabled={showAllRooms}
+                className={`px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] ${showAllRooms ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(floor => (
+                  <option key={floor} value={floor}>{floor}{floor === 1 ? 'st' : floor === 2 ? 'nd' : floor === 3 ? 'rd' : 'th'} Floor</option>
+                ))}
+              </select>
+              <button
+                onClick={() => setShowAllRooms(!showAllRooms)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  showAllRooms
+                    ? "bg-[#2D6A4F] text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {showAllRooms ? "Showing All Floors" : "View All Floors"}
+              </button>
+            </div>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
@@ -304,88 +330,149 @@ export default function RoomAllocationPage() {
           </div>
         </div>
 
-        {/* Room Grid View */}
-        {viewMode === "grid" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredRooms.map((room) => (
-              <div 
-                key={room.number} 
-                className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleViewRoom(room)}
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D6A4F] mx-auto mb-4"></div>
+            <p className="text-gray-500">Loading rooms...</p>
+          </div>
+        )}
+
+        {/* Floor Header when viewing single floor */}
+        {!loading && !showAllRooms && filteredRooms.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-gray-800">
+                Floor {selectedFloor} — {filteredRooms.length} Rooms
+              </h2>
+              <p className="text-sm text-gray-500">
+                {filteredRooms.filter(r => r.status === "vacant").length} vacant • 
+                {filteredRooms.filter(r => r.status === "partial").length} partially filled • 
+                {filteredRooms.filter(r => r.status === "occupied").length} occupied
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedFloor(String(Math.max(1, parseInt(selectedFloor) - 1)))}
+                disabled={selectedFloor === "1"}
+                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {/* Room Header */}
-                <div className={`${getHeaderColor(room.status)} px-4 py-3 flex items-center justify-between`}>
-                  <span className="text-white font-bold text-lg">Room {room.number}</span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    room.status === "occupied" ? "bg-white/20 text-white" : "bg-white text-gray-700"
-                  }`}>
-                    {room.members.length}/{room.capacity}
-                  </span>
-                </div>
-                
-                {/* Room Content */}
-                <div className="p-4">
-                  {room.status === "vacant" ? (
-                    <div className="flex flex-col items-center justify-center h-24 text-gray-400">
-                      <svg className="w-8 h-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                      <span>Available for allocation</span>
-                    </div>
-                  ) : room.status === "maintenance" ? (
-                    <div className="flex flex-col items-center justify-center h-24 text-red-400">
-                      <svg className="w-8 h-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      <span>Under maintenance</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {room.members.slice(0, 3).map((member, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Image
-                            src={member.avatar}
-                            alt={member.name}
-                            width={24}
-                            height={24}
-                            className="w-6 h-6 rounded-full"
-                          />
-                          <span className="text-sm text-gray-700 truncate">{member.name}</span>
-                        </div>
-                      ))}
-                      {room.members.length > 3 && (
-                        <span className="text-xs text-gray-400">+{room.members.length - 3} more</span>
-                      )}
-                      {room.status === "partial" && (
-                        <div className="text-sm text-[#40E0D0] font-medium mt-2">
-                          {room.capacity - room.members.length} bed(s) available
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Status Badge & Amenities */}
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className={`inline-block px-3 py-1 rounded-md text-xs font-medium ${getStatusColor(room.status)}`}>
-                      {getStatusLabel(room.status)}
+                <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span className="text-sm text-gray-600 px-2">Floor {selectedFloor} of 8</span>
+              <button
+                onClick={() => setSelectedFloor(String(Math.min(8, parseInt(selectedFloor) + 1)))}
+                disabled={selectedFloor === "8"}
+                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && filteredRooms.length === 0 && (
+          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+            <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <p className="text-gray-500 mb-2">No rooms found</p>
+            <p className="text-sm text-gray-400">Run the room seed script to initialize rooms</p>
+          </div>
+        )}
+
+        {/* Room Grid View */}
+        {!loading && viewMode === "grid" && filteredRooms.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredRooms.map((room) => {
+              const members = getRoomMembers(room);
+              return (
+                <div 
+                  key={room.id} 
+                  className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => handleViewRoom(room)}
+                >
+                  {/* Room Header */}
+                  <div className={`${getHeaderColor(room.status)} px-4 py-3 flex items-center justify-between`}>
+                    <span className="text-white font-bold text-lg">Room {room.roomNumber}</span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      room.status === "occupied" ? "bg-white/20 text-white" : "bg-white text-gray-700"
+                    }`}>
+                      {room.occupiedBeds}/{room.capacity}
                     </span>
-                    <div className="flex gap-1">
-                      {room.amenities.includes("AC") && (
-                        <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">AC</span>
-                      )}
-                      {room.amenities.includes("Attached Bath") && (
-                        <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded">Bath</span>
-                      )}
+                  </div>
+                  
+                  {/* Room Content */}
+                  <div className="p-4">
+                    <div className="text-xs text-gray-500 mb-2">Floor {room.floor}</div>
+                    
+                    {room.status === "vacant" ? (
+                      <div className="flex flex-col items-center justify-center h-20 text-gray-400">
+                        <svg className="w-8 h-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <span className="text-sm">Available for allocation</span>
+                      </div>
+                    ) : room.status === "maintenance" ? (
+                      <div className="flex flex-col items-center justify-center h-20 text-red-400">
+                        <svg className="w-8 h-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span className="text-sm">Under maintenance</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {members.slice(0, 3).map((member, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Image
+                              src={member.avatar}
+                              alt={member.name}
+                              width={24}
+                              height={24}
+                              className="w-6 h-6 rounded-full"
+                            />
+                            <span className="text-sm text-gray-700 truncate">{member.name}</span>
+                          </div>
+                        ))}
+                        {members.length > 3 && (
+                          <span className="text-xs text-gray-400">+{members.length - 3} more</span>
+                        )}
+                        {room.status === "partial" && (
+                          <div className="text-sm text-[#40E0D0] font-medium mt-2">
+                            {room.availableBeds} bed(s) available
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Status Badge & Amenities */}
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className={`inline-block px-3 py-1 rounded-md text-xs font-medium ${getStatusColor(room.status)}`}>
+                        {getStatusLabel(room.status)}
+                      </span>
+                      <div className="flex gap-1">
+                        {room.amenities.includes("AC") && (
+                          <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">AC</span>
+                        )}
+                        {room.amenities.includes("Attached Bath") && (
+                          <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded">Bath</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
         {/* Room List View */}
-        {viewMode === "list" && (
+        {!loading && viewMode === "list" && filteredRooms.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -395,121 +482,97 @@ export default function RoomAllocationPage() {
                   <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Occupancy</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Residents</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Status</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Amenities</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredRooms.map((room) => (
-                  <tr key={room.number} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <span className="font-medium text-gray-800">Room {room.number}</span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{room.floor}nd Floor</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full ${getHeaderColor(room.status)}`}
-                            style={{ width: `${(room.members.length / room.capacity) * 100}%` }}
-                          />
+                {filteredRooms.map((room) => {
+                  const members = getRoomMembers(room);
+                  return (
+                    <tr key={room.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <span className="font-medium text-gray-800">Room {room.roomNumber}</span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">Floor {room.floor}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full ${getHeaderColor(room.status)}`}
+                              style={{ width: `${(room.occupiedBeds / room.capacity) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-sm text-gray-600">{room.occupiedBeds}/{room.capacity}</span>
                         </div>
-                        <span className="text-sm text-gray-600">{room.members.length}/{room.capacity}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex -space-x-2">
-                        {room.members.slice(0, 3).map((member, index) => (
-                          <Image
-                            key={index}
-                            src={member.avatar}
-                            alt={member.name}
-                            width={28}
-                            height={28}
-                            className="w-7 h-7 rounded-full border-2 border-white"
-                            title={member.name}
-                          />
-                        ))}
-                        {room.members.length > 3 && (
-                          <span className="w-7 h-7 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs text-gray-600">
-                            +{room.members.length - 3}
-                          </span>
-                        )}
-                        {room.members.length === 0 && (
-                          <span className="text-sm text-gray-400">No residents</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(room.status)}`}>
-                        {getStatusLabel(room.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-1">
-                        {room.amenities.map((amenity, index) => (
-                          <span key={index} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                            {amenity}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button 
-                        onClick={() => handleViewRoom(room)}
-                        className="text-[#2D6A4F] hover:underline text-sm font-medium"
-                      >
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex -space-x-2">
+                          {members.slice(0, 3).map((member, index) => (
+                            <Image
+                              key={index}
+                              src={member.avatar}
+                              alt={member.name}
+                              width={28}
+                              height={28}
+                              className="w-7 h-7 rounded-full border-2 border-white"
+                              title={member.name}
+                            />
+                          ))}
+                          {members.length > 3 && (
+                            <span className="w-7 h-7 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs text-gray-600">
+                              +{members.length - 3}
+                            </span>
+                          )}
+                          {members.length === 0 && (
+                            <span className="text-sm text-gray-400">No residents</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(room.status)}`}>
+                          {getStatusLabel(room.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button 
+                          onClick={() => handleViewRoom(room)}
+                          className="text-[#2D6A4F] hover:underline text-sm font-medium"
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
-      {/* Allocation Requests Sidebar */}
-      <div className="w-80 space-y-4">
+      {/* Sidebar - Legend & Quick Stats */}
+      <div className="w-72 space-y-4 hidden lg:block">
+        {/* Occupancy Overview */}
         <div className="bg-white rounded-xl shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-800">Allocation Requests</h2>
-            <span className="px-2 py-0.5 bg-orange-100 text-orange-600 rounded-full text-xs font-medium">
-              {allocationRequests.length} pending
-            </span>
-          </div>
-          <div className="space-y-4">
-            {allocationRequests.map((request) => (
-              <div key={request.id} className="p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3 mb-2">
-                  <Image
-                    src={request.avatar}
-                    alt={request.name}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{request.name}</p>
-                    <p className="text-xs text-gray-500">{request.studentId}</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                  <span>{request.department} • {request.year}</span>
-                  <span>{request.requestDate}</span>
-                </div>
-                {request.preferredRoom && (
-                  <p className="text-xs text-[#2D6A4F] mb-2">Preferred: Room {request.preferredRoom}</p>
-                )}
-                <button 
-                  onClick={() => handleAllocate(request)}
-                  className="w-full px-3 py-2 bg-[#2D6A4F] text-white text-sm rounded-lg hover:bg-[#245840] transition-colors"
-                >
-                  Allocate Room
-                </button>
+          <h3 className="text-sm font-medium text-gray-700 mb-4">Occupancy Overview</h3>
+          <div className="space-y-3">
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-gray-600">Total Occupancy</span>
+                <span className="font-medium">{stats.totalBeds > 0 ? Math.round((stats.occupiedBeds / stats.totalBeds) * 100) : 0}%</span>
               </div>
-            ))}
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-[#2D6A4F] h-2 rounded-full transition-all"
+                  style={{ width: `${stats.totalBeds > 0 ? (stats.occupiedBeds / stats.totalBeds) * 100 : 0}%` }}
+                />
+              </div>
+            </div>
+            <div className="pt-2 border-t border-gray-100">
+              <p className="text-sm text-gray-500">
+                <span className="font-bold text-gray-800">{stats.occupiedBeds}</span> of <span className="font-bold text-gray-800">{stats.totalBeds}</span> beds occupied
+              </p>
+            </div>
           </div>
         </div>
 
@@ -519,20 +582,31 @@ export default function RoomAllocationPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded bg-[#2D6A4F]" />
-              <span className="text-sm text-gray-600">Fully Occupied</span>
+              <span className="text-sm text-gray-600">Fully Occupied ({stats.occupied})</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded bg-[#40E0D0]" />
-              <span className="text-sm text-gray-600">Partially Filled</span>
+              <span className="text-sm text-gray-600">Partially Filled ({stats.partial})</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded bg-green-500" />
-              <span className="text-sm text-gray-600">Vacant</span>
+              <span className="text-sm text-gray-600">Vacant ({stats.vacant})</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded bg-red-400" />
-              <span className="text-sm text-gray-600">Under Maintenance</span>
+              <span className="text-sm text-gray-600">Under Maintenance ({stats.maintenance})</span>
             </div>
+          </div>
+        </div>
+
+        {/* Hall Info */}
+        <div className="bg-white rounded-xl shadow-sm p-5">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Hall Information</h3>
+          <div className="space-y-2 text-sm text-gray-600">
+            <p>Total Floors: <span className="font-medium text-gray-800">8</span></p>
+            <p>Rooms per Floor: <span className="font-medium text-gray-800">20</span></p>
+            <p>Beds per Room: <span className="font-medium text-gray-800">4</span></p>
+            <p>Total Capacity: <span className="font-medium text-gray-800">640 beds</span></p>
           </div>
         </div>
       </div>
@@ -543,7 +617,7 @@ export default function RoomAllocationPage() {
           <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-800">Room {selectedRoom.number}</h2>
+                <h2 className="text-xl font-bold text-gray-800">Room {selectedRoom.roomNumber}</h2>
                 <p className="text-gray-500">Floor {selectedRoom.floor} • Capacity: {selectedRoom.capacity}</p>
               </div>
               <button 
@@ -565,49 +639,72 @@ export default function RoomAllocationPage() {
               </div>
               <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500 mb-1">Occupancy</p>
-                <p className="text-lg font-bold text-gray-800">{selectedRoom.members.length} / {selectedRoom.capacity}</p>
+                <p className="text-lg font-bold text-gray-800">{selectedRoom.occupiedBeds} / {selectedRoom.capacity}</p>
               </div>
             </div>
 
-            <div className="mb-6">
-              <h3 className="font-medium text-gray-800 mb-3">Amenities</h3>
-              <div className="flex flex-wrap gap-2">
-                {selectedRoom.amenities.map((amenity, index) => (
-                  <span key={index} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
-                    {amenity}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <h3 className="font-medium text-gray-800 mb-3">Current Residents</h3>
-              {selectedRoom.members.length === 0 ? (
-                <p className="text-gray-500 text-sm">No residents currently assigned</p>
-              ) : (
-                <div className="space-y-3">
-                  {selectedRoom.members.map((member, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Image
-                          src={member.avatar}
-                          alt={member.name}
-                          width={40}
-                          height={40}
-                          className="w-10 h-10 rounded-full"
-                        />
-                        <div>
-                          <p className="font-medium text-gray-800">{member.name}</p>
-                          <p className="text-sm text-gray-500">{member.studentId}</p>
-                        </div>
-                      </div>
-                      <button className="text-red-500 hover:text-red-700 text-sm">
-                        Remove
-                      </button>
-                    </div>
+            {selectedRoom.amenities.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-medium text-gray-800 mb-3">Amenities</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedRoom.amenities.map((amenity, index) => (
+                    <span key={index} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
+                      {amenity}
+                    </span>
                   ))}
                 </div>
-              )}
+              </div>
+            )}
+
+            <div className="mb-6">
+              <h3 className="font-medium text-gray-800 mb-3">Beds & Residents</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {selectedRoom.beds.map((bed) => (
+                  <div 
+                    key={bed.bedNumber} 
+                    className={`p-4 rounded-lg border-2 ${
+                      bed.isOccupied 
+                        ? "border-[#2D6A4F] bg-green-50" 
+                        : "border-gray-200 bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-gray-800">Bed {bed.bedNumber}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded ${
+                        bed.isOccupied ? "bg-[#2D6A4F] text-white" : "bg-gray-200 text-gray-600"
+                      }`}>
+                        {bed.isOccupied ? "Occupied" : "Vacant"}
+                      </span>
+                    </div>
+                    {bed.student ? (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Image
+                            src="/logos/profile.png"
+                            alt={bed.student.fullName}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded-full"
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">{bed.student.fullName}</p>
+                            <p className="text-xs text-gray-500">{bed.student.studentId}</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => handleRemoveStudent(selectedRoom.id, bed.bedNumber)}
+                          disabled={actionLoading}
+                          className="text-red-500 hover:text-red-700 text-xs disabled:opacity-50"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400">Available for allocation</p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="flex gap-3">
@@ -617,78 +714,23 @@ export default function RoomAllocationPage() {
               >
                 Close
               </button>
-              {(selectedRoom.status === "vacant" || selectedRoom.status === "partial") && (
-                <button className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors">
-                  Add Resident
+              {selectedRoom.status === "maintenance" ? (
+                <button 
+                  onClick={() => handleUpdateRoomStatus(selectedRoom.id, "vacant")}
+                  disabled={actionLoading}
+                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+                >
+                  {actionLoading ? "Updating..." : "Mark as Available"}
+                </button>
+              ) : (
+                <button 
+                  onClick={() => handleUpdateRoomStatus(selectedRoom.id, "maintenance")}
+                  disabled={actionLoading}
+                  className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                >
+                  {actionLoading ? "Updating..." : "Set to Maintenance"}
                 </button>
               )}
-              {selectedRoom.status === "maintenance" && (
-                <button className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
-                  Mark as Available
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Allocate Room Modal */}
-      {showAllocateModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Allocate Room</h2>
-              <button 
-                onClick={() => setShowAllocateModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3 mb-6 p-3 bg-gray-50 rounded-lg">
-              <Image
-                src={selectedRequest.avatar}
-                alt={selectedRequest.name}
-                width={48}
-                height={48}
-                className="w-12 h-12 rounded-full"
-              />
-              <div>
-                <p className="font-medium text-gray-800">{selectedRequest.name}</p>
-                <p className="text-sm text-gray-500">{selectedRequest.studentId} • {selectedRequest.department}</p>
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Room</label>
-              <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white">
-                <option value="">Choose a room...</option>
-                {availableRoomsForAllocation.map((room) => (
-                  <option key={room.number} value={room.number}>
-                    Room {room.number} - {room.capacity - room.members.length} bed(s) available
-                  </option>
-                ))}
-              </select>
-              {selectedRequest.preferredRoom && (
-                <p className="text-sm text-[#2D6A4F] mt-2">
-                  Student preferred: Room {selectedRequest.preferredRoom}
-                </p>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowAllocateModal(false)}
-                className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors">
-                Confirm Allocation
-              </button>
             </div>
           </div>
         </div>

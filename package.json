@@ -12,6 +12,7 @@
     "seed:users": "npx tsx scripts/seeds/users.ts",
     "seed:maintenance": "npx tsx scripts/seeds/maintenance.ts",
     "seed:settings": "npx tsx scripts/seeds/settings.ts",
+    "seed:rooms": "npx tsx scripts/seeds/rooms.ts",
     "seed:clear": "npx tsx scripts/clear.ts",
     "db:reset": "npx tsx scripts/clear.ts --force && npx tsx scripts/seed.ts"
   },

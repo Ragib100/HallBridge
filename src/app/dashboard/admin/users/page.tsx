@@ -16,6 +16,12 @@ interface Student {
   pendingSince?: string;
   joinedDate?: string;
   archivedDate?: string;
+  roomAllocation?: {
+    floor: number;
+    roomNumber: string;
+    bedNumber: number;
+    hallId?: string;
+  };
 }
 
 interface Staff {
@@ -37,12 +43,31 @@ interface StaffFormData {
   phone: string;
 }
 
+interface AvailableRoom {
+  id: string;
+  floor: number;
+  roomNumber: string;
+  displayNumber: string;
+  availableBeds: number[];
+  availableCount: number;
+  hallId?: string;
+}
+
 export default function UserManagementPage() {
   const [activeTab, setActiveTab] = useState<TabType>("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
   const [showStudentDetailsModal, setShowStudentDetailsModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [studentToApprove, setStudentToApprove] = useState<Student | null>(null);
+  const [availableRooms, setAvailableRooms] = useState<AvailableRoom[]>([]);
+  const [selectedFloor, setSelectedFloor] = useState<string>("");
+  const [selectedRoomId, setSelectedRoomId] = useState<string>("");
+  const [selectedBedNumber, setSelectedBedNumber] = useState<number | null>(null);
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [approveError, setApproveError] = useState<string | null>(null);
+  const [roomsLoading, setRoomsLoading] = useState(false);
   
   // Data from database
   const [activeStudents, setActiveStudents] = useState<Student[]>([]);
@@ -71,7 +96,7 @@ export default function UserManagementPage() {
       const activeRes = await fetch("/api/admin/users?type=student&status=active");
       const activeData = await activeRes.json();
       if (activeRes.ok) {
-        setActiveStudents((activeData.users || []).map((u: { id: string; fullName: string; email: string; studentId: string; createdAt: string }) => ({
+        setActiveStudents((activeData.users || []).map((u: { id: string; fullName: string; email: string; studentId: string; createdAt: string; roomAllocation?: { floor: number; roomNumber: string; bedNumber: number; hallId?: string } }) => ({
           id: u.id,
           name: u.fullName,
           email: u.email,
@@ -79,6 +104,7 @@ export default function UserManagementPage() {
           status: "active",
           avatar: "/logos/profile.png",
           joinedDate: new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+          roomAllocation: u.roomAllocation,
         })));
       }
 
@@ -230,26 +256,91 @@ export default function UserManagementPage() {
   };
 
   const handleApproveStudent = async (studentId: string) => {
+    // Find the student and open approval modal
+    const student = pendingStudents.find(s => s.id === studentId);
+    if (!student) return;
+
+    setStudentToApprove(student);
+    setSelectedFloor("");
+    setSelectedRoomId("");
+    setSelectedBedNumber(null);
+    setApproveError(null);
+    setAvailableRooms([]);
+    
+    setShowApproveModal(true);
+  };
+
+  const fetchRoomsByFloor = async (floor: string) => {
+    setRoomsLoading(true);
+    setSelectedRoomId("");
+    setSelectedBedNumber(null);
+    
+    try {
+      const url = floor ? `/api/admin/rooms/available?floor=${floor}` : "/api/admin/rooms/available";
+      const res = await fetch(url);
+      const data = await res.json();
+      if (res.ok) {
+        setAvailableRooms(data.rooms || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch available rooms:", error);
+    } finally {
+      setRoomsLoading(false);
+    }
+  };
+
+  const handleConfirmApprove = async () => {
+    if (!studentToApprove || !selectedRoomId || !selectedBedNumber) {
+      setApproveError("Please select a room and bed for the student");
+      return;
+    }
+
+    setApproveLoading(true);
+    setApproveError(null);
+
     try {
       const response = await fetch("/api/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: studentId, action: "approve" }),
+        body: JSON.stringify({ 
+          id: studentToApprove.id, 
+          action: "approve",
+          roomId: selectedRoomId,
+          bedNumber: selectedBedNumber,
+        }),
       });
 
-      if (response.ok) {
-        const student = pendingStudents.find(s => s.id === studentId);
-        if (student) {
-          setPendingStudents(prev => prev.filter(s => s.id !== studentId));
-          setActiveStudents(prev => [...prev, { ...student, status: "active", joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) }]);
-        }
-        // Show success message
-        alert("Student approved successfully! They can now login using their Student ID as password.");
+      const data = await response.json();
+
+      if (!response.ok) {
+        setApproveError(data.message || "Failed to approve student");
+        return;
       }
+
+      // Update local state
+      const student = pendingStudents.find(s => s.id === studentToApprove.id);
+      if (student) {
+        setPendingStudents(prev => prev.filter(s => s.id !== studentToApprove.id));
+        setActiveStudents(prev => [...prev, { 
+          ...student, 
+          status: "active", 
+          joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+          roomAllocation: data.room,
+        }]);
+      }
+
+      // Close modal and show success
+      setShowApproveModal(false);
+      setStudentToApprove(null);
+      alert(`Student approved and allocated to Room ${data.room.roomNumber}, Bed ${data.room.bedNumber}!`);
     } catch (error) {
-      console.error("Failed to approve student:", error);
+      setApproveError("Something went wrong. Please try again.");
+    } finally {
+      setApproveLoading(false);
     }
   };
+
+  const selectedRoom = availableRooms.find(r => r.id === selectedRoomId);
 
   const handleRejectStudent = async (studentId: string) => {
     if (!confirm("Are you sure you want to reject this student registration? This action cannot be undone.")) return;
@@ -802,14 +893,201 @@ export default function UserManagementPage() {
               </button>
               {selectedStudent.status === "pending" && (
                 <>
-                  <button className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors">
+                  <button 
+                    onClick={() => {
+                      setShowStudentDetailsModal(false);
+                      handleApproveStudent(selectedStudent.id);
+                    }}
+                    className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors"
+                  >
                     Approve
                   </button>
-                  <button className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors">
+                  <button 
+                    onClick={() => {
+                      setShowStudentDetailsModal(false);
+                      handleRejectStudent(selectedStudent.id);
+                    }}
+                    className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                  >
                     Reject
                   </button>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approve with Room Allocation Modal */}
+      {showApproveModal && studentToApprove && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-800">Approve & Allocate Room</h2>
+              <button 
+                onClick={() => {
+                  setShowApproveModal(false);
+                  setStudentToApprove(null);
+                  setApproveError(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Student Info */}
+            <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+              <Image
+                src={studentToApprove.avatar}
+                alt={studentToApprove.name}
+                width={56}
+                height={56}
+                className="w-14 h-14 rounded-full object-cover"
+              />
+              <div>
+                <h3 className="font-bold text-gray-800">{studentToApprove.name}</h3>
+                <p className="text-sm text-gray-500">{studentToApprove.email}</p>
+                <span className="inline-block mt-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-mono">
+                  {studentToApprove.studentId}
+                </span>
+              </div>
+            </div>
+
+            {approveError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {approveError}
+              </div>
+            )}
+
+            {/* Room Selection */}
+            <div className="space-y-4">
+              {/* Floor Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Floor <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedFloor}
+                  onChange={(e) => {
+                    setSelectedFloor(e.target.value);
+                    fetchRoomsByFloor(e.target.value);
+                  }}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white"
+                >
+                  <option value="">Choose a floor...</option>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((floor) => (
+                    <option key={floor} value={floor}>
+                      Floor {floor}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Room Selection */}
+              {selectedFloor && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Room <span className="text-red-500">*</span>
+                  </label>
+                  {roomsLoading ? (
+                    <div className="p-4 text-center text-gray-500">Loading rooms...</div>
+                  ) : (
+                    <>
+                      <select
+                        value={selectedRoomId}
+                        onChange={(e) => {
+                          setSelectedRoomId(e.target.value);
+                          setSelectedBedNumber(null);
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white"
+                      >
+                        <option value="">Choose a room...</option>
+                        {availableRooms.map((room) => (
+                          <option key={room.id} value={room.id}>
+                            Room {room.roomNumber} - {room.availableCount} bed(s) available
+                          </option>
+                        ))}
+                      </select>
+                      {availableRooms.length === 0 && (
+                        <p className="mt-2 text-sm text-amber-600">
+                          ⚠️ No rooms available on Floor {selectedFloor}. Try another floor.
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Bed Selection */}
+              {selectedRoom && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Bed <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[1, 2, 3, 4].map((bedNum) => {
+                      const isAvailable = selectedRoom.availableBeds.includes(bedNum);
+                      const isSelected = selectedBedNumber === bedNum;
+                      return (
+                        <button
+                          key={bedNum}
+                          type="button"
+                          disabled={!isAvailable}
+                          onClick={() => setSelectedBedNumber(bedNum)}
+                          className={`p-3 rounded-lg border-2 text-center transition-all ${
+                            isSelected
+                              ? "border-[#2D6A4F] bg-[#2D6A4F] text-white"
+                              : isAvailable
+                              ? "border-gray-200 hover:border-[#2D6A4F] text-gray-700"
+                              : "border-gray-100 bg-gray-100 text-gray-400 cursor-not-allowed"
+                          }`}
+                        >
+                          <div className="text-lg font-bold">{bedNum}</div>
+                          <div className="text-xs">
+                            {isAvailable ? "Available" : "Occupied"}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Summary */}
+              {selectedRoom && selectedBedNumber && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    <strong>Allocation Summary:</strong><br />
+                    Room {selectedRoom.roomNumber} (Floor {selectedRoom.floor}), Bed #{selectedBedNumber}
+                    {selectedRoom.hallId && ` • Hall: ${selectedRoom.hallId}`}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowApproveModal(false);
+                  setStudentToApprove(null);
+                  setApproveError(null);
+                }}
+                className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmApprove}
+                disabled={approveLoading || !selectedRoomId || !selectedBedNumber}
+                className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {approveLoading ? "Approving..." : "Approve & Allocate"}
+              </button>
             </div>
           </div>
         </div>

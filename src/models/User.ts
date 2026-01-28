@@ -15,6 +15,19 @@ export type StaffRole = (typeof STAFF_ROLES)[number];
 export const APPROVAL_STATUS = ["pending", "approved", "rejected"] as const;
 export type ApprovalStatus = (typeof APPROVAL_STATUS)[number];
 
+// Room allocation schema for students
+const roomAllocationSchema = new Schema(
+  {
+    roomId: { type: Schema.Types.ObjectId, ref: "Room" },
+    floor: { type: Number },
+    roomNumber: { type: String },
+    bedNumber: { type: Number },
+    hallId: { type: String, default: null },
+    allocatedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
 const userSchema = new Schema(
   {
     fullName: { type: String, required: true, trim: true },
@@ -43,6 +56,8 @@ const userSchema = new Schema(
     },
     // Flag to force password change on first login
     mustChangePassword: { type: Boolean, default: false },
+    // Room allocation for students
+    roomAllocation: roomAllocationSchema,
     // Staff-specific fields
     staffRole: {
       type: String,

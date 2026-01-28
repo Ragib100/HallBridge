@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
-import { sendApprovalEmail, sendRejectionEmail } from "@/lib/email";
+import Room from "@/models/Room";
+import { sendRoomAllocationEmail, sendRejectionEmail } from "@/lib/email";
 
 // GET /api/admin/users - Get all users (admin only)
 export async function GET(request: Request) {
@@ -107,7 +108,7 @@ export async function PATCH(request: Request) {
 
     // Handle approval/rejection actions for students
     if (action === "approve" || action === "reject") {
-      const student = await User.findById(id);
+      const student = await User.findById(id).select("fullName email studentId userType approvalStatus");
       
       if (!student) {
         return NextResponse.json({ message: "User not found" }, { status: 404 });
@@ -117,10 +118,54 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ message: "This action is only for students" }, { status: 400 });
       }
 
+      if (!student.studentId) {
+        return NextResponse.json({ message: "Student ID is required for approval. Please update student profile first." }, { status: 400 });
+      }
+
       if (action === "approve") {
+        // Room allocation is required for approval
+        const { roomId, bedNumber } = body;
+        
+        if (!roomId || !bedNumber) {
+          return NextResponse.json(
+            { message: "Room and bed allocation is required for approval" },
+            { status: 400 }
+          );
+        }
+
+        // Find and validate the room
+        const room = await Room.findById(roomId);
+        if (!room) {
+          return NextResponse.json({ message: "Room not found" }, { status: 404 });
+        }
+
+        if (room.status === "maintenance") {
+          return NextResponse.json(
+            { message: "Cannot allocate to a room under maintenance" },
+            { status: 400 }
+          );
+        }
+
+        // Find and validate the bed
+        const bedIndex = room.beds.findIndex((b: { bedNumber: number }) => b.bedNumber === bedNumber);
+        if (bedIndex === -1) {
+          return NextResponse.json({ message: "Bed not found" }, { status: 404 });
+        }
+
+        if (room.beds[bedIndex].isOccupied) {
+          return NextResponse.json({ message: "This bed is already occupied" }, { status: 400 });
+        }
+
         // Set password hash using student ID as initial password
         const passwordHash = await bcrypt.hash(student.studentId, 10);
+
+        // Allocate the bed to student
+        room.beds[bedIndex].studentId = student._id;
+        room.beds[bedIndex].isOccupied = true;
+        room.updateStatus();
+        await room.save();
         
+        // Update student with approval and room allocation
         const updatedStudent = await User.findByIdAndUpdate(
           id,
           {
@@ -128,21 +173,35 @@ export async function PATCH(request: Request) {
             isActive: true,
             passwordHash,
             mustChangePassword: true,
+            roomAllocation: {
+              roomId: room._id,
+              floor: room.floor,
+              roomNumber: room.roomNumber,
+              bedNumber,
+              hallId: room.hallId,
+              allocatedAt: new Date(),
+            },
           },
           { new: true }
-        ).select("fullName email studentId userType approvalStatus isActive");
+        ).select("fullName email studentId userType approvalStatus isActive roomAllocation");
 
-        // Send approval email notification (async, don't wait)
-        sendApprovalEmail(
+        // Send room allocation email notification (async, don't wait)
+        sendRoomAllocationEmail(
           updatedStudent.email,
           updatedStudent.fullName,
-          updatedStudent.studentId
+          updatedStudent.studentId,
+          {
+            floor: room.floor,
+            roomNumber: room.roomNumber,
+            bedNumber,
+            hallId: room.hallId,
+          }
         ).catch((err) => {
-          console.error("Failed to send approval email:", err);
+          console.error("Failed to send room allocation email:", err);
         });
 
         return NextResponse.json({
-          message: "Student approved successfully. They can now login using their Student ID as password.",
+          message: "Student approved and room allocated successfully.",
           user: {
             id: updatedStudent._id,
             fullName: updatedStudent.fullName,
@@ -150,6 +209,12 @@ export async function PATCH(request: Request) {
             studentId: updatedStudent.studentId,
             approvalStatus: updatedStudent.approvalStatus,
             isActive: updatedStudent.isActive,
+            roomAllocation: updatedStudent.roomAllocation,
+          },
+          room: {
+            floor: room.floor,
+            roomNumber: room.roomNumber,
+            bedNumber,
           },
         });
       } else if (action === "reject") {

@@ -18,6 +18,7 @@ import { connectDB, disconnectDB } from "./lib/db";
 import { seedUsers } from "./seeds/users";
 import { seedMaintenanceRequests } from "./seeds/maintenance";
 import { seedSystemSettings } from "./seeds/settings";
+import { seedRooms } from "./seeds/rooms";
 
 interface SeedResult {
   name: string;
@@ -62,6 +63,15 @@ async function seed() {
   } catch (error) {
     console.error("❌ Settings seed failed:", error);
     results.push({ name: "Settings", success: 0, skipped: 0, failed: 0, error: String(error) });
+  }
+
+  // Seed Rooms
+  try {
+    const roomsResult = await seedRooms();
+    results.push({ name: "Rooms", ...roomsResult });
+  } catch (error) {
+    console.error("❌ Rooms seed failed:", error);
+    results.push({ name: "Rooms", success: 0, skipped: 0, failed: 0, error: String(error) });
   }
 
   // Print Summary

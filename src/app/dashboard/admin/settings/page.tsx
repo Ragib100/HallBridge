@@ -58,16 +58,28 @@ export default function SettingsPage() {
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Current Status Stats
+  const [currentStats, setCurrentStats] = useState({
+    totalRooms: 0,
+    activeStudents: 0,
+    staffMembers: 0,
+    occupancyRate: 0,
+    totalBeds: 0,
+    occupiedBeds: 0,
+  });
+
   // helpers
   const markChange = (key: string, value: any) => {
     setChanges((prev) => ({ ...prev, [key]: value }));
   };
 
-  // load settings from API
+  // load settings and stats from API
   useEffect(() => {
     const fetchSettings = async () => {
       try {
         setLoading(true);
+        
+        // Fetch settings
         const res = await fetch("/api/settings");
         if (!res.ok) throw new Error("Failed to load settings");
         const data = await res.json();
@@ -104,6 +116,41 @@ export default function SettingsPage() {
           if (p.id === "4") return { ...p, price: data.wifi_bill ?? p.price };
           return p;
         }));
+
+        // Fetch current stats (rooms and users)
+        try {
+          const [roomsRes, statsRes] = await Promise.all([
+            fetch("/api/admin/rooms?floor=1&limit=1"), // Just to get stats
+            fetch("/api/admin/stats"),
+          ]);
+          
+          if (roomsRes.ok) {
+            const roomsData = await roomsRes.json();
+            const stats = roomsData.stats || {};
+            const totalBeds = stats.totalBeds || 0;
+            const occupiedBeds = stats.occupiedBeds || 0;
+            const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
+            
+            setCurrentStats(prev => ({
+              ...prev,
+              totalRooms: stats.totalRooms || 0,
+              totalBeds,
+              occupiedBeds,
+              occupancyRate,
+            }));
+          }
+          
+          if (statsRes.ok) {
+            const statsData = await statsRes.json();
+            setCurrentStats(prev => ({
+              ...prev,
+              activeStudents: statsData.stats?.students?.total || 0,
+              staffMembers: statsData.stats?.staff?.total || 0,
+            }));
+          }
+        } catch (statsErr) {
+          console.error("Failed to fetch stats:", statsErr);
+        }
 
         setChanges({});
       } catch (err) {
@@ -396,19 +443,33 @@ export default function SettingsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-blue-600">Total Rooms</p>
-                <p className="text-2xl font-bold text-blue-700">120</p>
+                <p className="text-2xl font-bold text-blue-700">{currentStats.totalRooms}</p>
               </div>
               <div className="p-4 bg-green-50 rounded-lg">
                 <p className="text-sm text-green-600">Active Students</p>
-                <p className="text-2xl font-bold text-green-700">450</p>
+                <p className="text-2xl font-bold text-green-700">{currentStats.activeStudents}</p>
               </div>
               <div className="p-4 bg-purple-50 rounded-lg">
                 <p className="text-sm text-purple-600">Staff Members</p>
-                <p className="text-2xl font-bold text-purple-700">12</p>
+                <p className="text-2xl font-bold text-purple-700">{currentStats.staffMembers}</p>
               </div>
               <div className="p-4 bg-orange-50 rounded-lg">
                 <p className="text-sm text-orange-600">Occupancy Rate</p>
-                <p className="text-2xl font-bold text-orange-700">93%</p>
+                <p className="text-2xl font-bold text-orange-700">{currentStats.occupancyRate}%</p>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Total Beds</span>
+                <span className="font-medium text-gray-700">{currentStats.totalBeds}</span>
+              </div>
+              <div className="flex justify-between text-sm mt-2">
+                <span className="text-gray-500">Occupied Beds</span>
+                <span className="font-medium text-gray-700">{currentStats.occupiedBeds}</span>
+              </div>
+              <div className="flex justify-between text-sm mt-2">
+                <span className="text-gray-500">Available Beds</span>
+                <span className="font-medium text-green-600">{currentStats.totalBeds - currentStats.occupiedBeds}</span>
               </div>
             </div>
           </div>

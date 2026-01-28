@@ -131,7 +131,7 @@ export default function AdminMaintenancePage() {
           <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-blue-100">
-          <p className="text-blue-600 text-sm">In Progress</p>
+          <p className="text-blue-600 text-sm whitespace-nowrap">In Progress</p>
           <p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-green-100">
