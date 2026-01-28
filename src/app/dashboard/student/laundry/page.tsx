@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem, SelectLabel } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { getIcon } from '@/components/common/icons';
 
 interface LaundryFormData {
 	pickupDate: string;
@@ -17,15 +15,14 @@ interface LaundryFormData {
 	specialInstructions: string;
 }
 
-interface CardInfo {
+interface ServiceInfo {
 	title: string;
 	price: string;
-	backgroundColor: string;
+	duration: string;
+	icon: string;
 }
 
 export default function StudentLaundryPage() {
-
-
 	const [submitting, setSubmitting] = useState<boolean>(false);
 
 	const [formData, setFormData] = useState<LaundryFormData>({
@@ -36,11 +33,11 @@ export default function StudentLaundryPage() {
 		specialInstructions: ''
 	});
 
-	const cards: CardInfo[] = [
-		{ title: 'Regular Wash (2-3 days)', price: '30/kg', backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-		{ title: 'Express Wash (24 hours)', price: '50/kg', backgroundColor: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
-		{ title: 'Dry Clean (3-4 days)', price: '80/piece', backgroundColor: 'linear-gradient(135deg, #1e88e5 0%, #0078d4 100%)' },
-		{ title: 'Iron Only', price: '5/piece', backgroundColor: 'linear-gradient(135deg, #2ecc71 0%, #16a085 100%)' }
+	const services: ServiceInfo[] = [
+		{ title: 'Regular Wash', price: '৳30/kg', duration: '2-3 days', icon: '🧺' },
+		{ title: 'Express Wash', price: '৳50/kg', duration: '24 hours', icon: '⚡' },
+		{ title: 'Dry Clean', price: '৳80/piece', duration: '3-4 days', icon: '👔' },
+		{ title: 'Iron Only', price: '৳5/piece', duration: 'Same day', icon: '🔥' }
 	];
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -60,106 +57,127 @@ export default function StudentLaundryPage() {
 	}
 
 	return (
-		<Card className="mx-2 md:mx-4 my-6 w-full max-w-full h-full p-4 md:p-6 gap-4 overflow-x-hidden">
-			<CardHeader className="mb-4">
-				<label className="font-bold text-xl md:text-2xl">{getIcon('laundry')} Schedule Laundry Pickup</label>
-			</CardHeader>
+		<div className="space-y-6">
+			{/* Header */}
+			<div className="bg-white rounded-xl p-6 shadow-sm">
+				<h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+					<svg className="w-6 h-6 text-[#2D6A4F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+					</svg>
+					Schedule Laundry Pickup
+				</h1>
+				<p className="text-gray-500 mt-1">Choose a service and schedule your laundry pickup</p>
+			</div>
 
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 w-full gap-4 md:gap-6">
-				{cards.map((card) => (
+			{/* Service Cards */}
+			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+				{services.map((service) => (
 					<div 
-						className="flex flex-col w-full py-8 px-4 items-center justify-center rounded-xl text-center text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border border-white/20" 
-						style={{ backgroundImage: card.backgroundColor }} 
-						key={card.title}
+						className="bg-white rounded-xl p-5 shadow-sm border-2 border-gray-100 hover:border-[#2D6A4F] transition-colors cursor-pointer group" 
+						key={service.title}
 					>
-						<p className="text-base md:text-lg font-bold px-2 mb-2 drop-shadow-md">{card.title}</p>
-						<p className="text-2xl md:text-3xl font-extrabold drop-shadow-md">{getIcon('taka')} {card.price}</p>
+						<div className="text-3xl mb-3">{service.icon}</div>
+						<p className="font-bold text-gray-800 mb-1">{service.title}</p>
+						<p className="text-2xl font-bold text-[#2D6A4F] mb-2">{service.price}</p>
+						<p className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block">
+							{service.duration}
+						</p>
 					</div>
 				))}
 			</div>
 
-			<CardContent>
+			{/* Booking Form */}
+			<div className="bg-white rounded-xl shadow-sm p-6">
+				<h2 className="text-lg font-bold text-gray-800 mb-6">Booking Details</h2>
+				
 				<form
 					onSubmit={(e) => { e.preventDefault(); handle_submit(); }}
-					className="flex flex-col gap-4 px-2 md:px-4 py-6"
+					className="space-y-6"
 				>
-					<div className="flex flex-col md:flex-row gap-4 w-full pb-6">
-						<div className="w-full">
-							<label className="font-bold">Pickup Date *</label>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div className="space-y-2">
+							<label className="text-sm font-medium text-gray-700">Pickup Date *</label>
 							<Input
 								type="date"
 								name="pickupDate"
 								value={formData.pickupDate}
 								onChange={handleInputChange}
-								className="p-2 border rounded-lg"
+								className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 							/>
 						</div>
-						<div className="w-full">
-							<label className="font-bold">Pickup Time *</label>
+						<div className="space-y-2">
+							<label className="text-sm font-medium text-gray-700">Pickup Time *</label>
 							<Input
 								type="time"
 								name="pickupTime"
 								value={formData.pickupTime}
 								onChange={handleInputChange}
-								className="p-2 border rounded-lg"
+								className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 							/>
 						</div>
 					</div>
 
-					<div className="pb-6">
-						<label className="font-bold">Service Type *</label>
+					<div className="space-y-2">
+						<label className="text-sm font-medium text-gray-700">Service Type *</label>
 						<Select
 							value={formData.serviceType}
 							onValueChange={(value) => setFormData({ ...formData, serviceType: value })}
 						>
-							<SelectTrigger className="w-full">
+							<SelectTrigger className="h-11 focus:ring-2 focus:ring-[#2D6A4F]">
 								<SelectValue placeholder="Select Service Type" />
 							</SelectTrigger>
 
 							<SelectContent>
 								<SelectGroup>
-									<SelectLabel className="text-lg">Service Types</SelectLabel>
+									<SelectLabel>Service Types</SelectLabel>
 									<SelectItem value="regular">Regular Wash (2-3 days)</SelectItem>
 									<SelectItem value="express">Express Wash (24 hours)</SelectItem>
 									<SelectItem value="dry-clean">Dry Clean (3-4 days)</SelectItem>
-									<SelectItem value="iron-only">Iron Only</SelectItem>
+									<SelectItem value="iron-only">Iron Only (Same day)</SelectItem>
 								</SelectGroup>
 							</SelectContent>
 						</Select>
 					</div>
 
-					<div className="pb-6">
-						<label className="font-bold">Estimated Item Count or Weight</label>
+					<div className="space-y-2">
+						<label className="text-sm font-medium text-gray-700">Estimated Item Count or Weight</label>
 						<Input
 							type="text"
 							name="itemCount"
 							value={formData.itemCount}
 							onChange={handleInputChange}
 							placeholder="e.g., 10 items or 5 kg"
+							className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 						/>
 					</div>
 
-					<div className="pb-6">
-						<label className="font-bold">Special Instructions (optional)</label>
+					<div className="space-y-2">
+						<label className="text-sm font-medium text-gray-700">Special Instructions (optional)</label>
 						<Textarea
 							name="specialInstructions"
 							value={formData.specialInstructions}
 							onChange={handleInputChange}
 							placeholder="Any special care instructions..."
-							className="py-8"
+							className="min-h-[100px] focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 						/>
 					</div>
 
 					<Button
-						className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold mt-2 py-6 cursor-pointer"
-						onClick={() => { setSubmitting(true) }}
+						type="submit"
+						className="w-full h-12 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium cursor-pointer"
 						disabled={submitting}
 					>
-						{submitting ? <Spinner /> : "📝 Schedule Pickup"}
+						{submitting ? <Spinner /> : (
+							<span className="flex items-center gap-2">
+								<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+								</svg>
+								Schedule Pickup
+							</span>
+						)}
 					</Button>
-
 				</form>
-			</CardContent>
-		</Card>
+			</div>
+		</div>
 	);
 }

@@ -193,7 +193,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#f5f5f5] rounded-tl-3xl overflow-hidden">
+      <main className="flex-1 bg-[#f5f5f5] rounded-tl-3xl overflow-hidden flex flex-col">
         {/* Header */}
         <header className="bg-white px-8 py-4 flex items-center justify-between border-b border-gray-100">
           <div>
@@ -211,7 +211,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </header>
 
         {/* Page Content */}
-        <div className="p-8 overflow-auto h-[calc(100vh-80px)]">
+        <div className="flex-1 p-8 overflow-auto">
           {children}
         </div>
       </main>

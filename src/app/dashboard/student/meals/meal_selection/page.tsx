@@ -3,7 +3,7 @@ import GuestMeal from "@/components/student/guest_meal";
 
 export default function MealSelection() {
     return (
-        <div>
+        <div className="space-y-6">
             <TomorrowMeals />
             <GuestMeal />
         </div>

@@ -1,7 +1,5 @@
 "use client";
 
-import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "../ui/card";
-import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import Rating from "../ui/rating";
 import { useState } from "react";
@@ -18,6 +16,12 @@ interface VoteForMealProps {
     onSubmit: (mealTime: 'breakfast' | 'lunch' | 'dinner') => void;
 }
 
+const mealIcons: Record<string, string> = {
+    breakfast: '🍳',
+    lunch: '🍛',
+    dinner: '🍽️'
+};
+
 export default function VoteForMeal( {mealinfo, onSubmit}: VoteForMealProps ) {
     
     const [rating, setRating] = useState<number>(0);
@@ -25,10 +29,8 @@ export default function VoteForMeal( {mealinfo, onSubmit}: VoteForMealProps ) {
     const { user } = useCurrentUser();
 
     const handleSubmitReview = async () => {
-        // console.log(user);
         try {
             if(!user) {
-                // console.error("No user logged in.");
                 return;
             }
             const url = `/api/student/meals/vote-for-meals?studentId=${user.id}`;
@@ -48,7 +50,6 @@ export default function VoteForMeal( {mealinfo, onSubmit}: VoteForMealProps ) {
                 console.error("Error submitting meal review:", errorData?.message || "Unknown error");
                 return;
             }
-            // console.log("Meal review submitted successfully.");
 
             onSubmit(mealinfo.mealTime);
         }
@@ -58,28 +59,46 @@ export default function VoteForMeal( {mealinfo, onSubmit}: VoteForMealProps ) {
     };
 
     return (
-        <Card className="rounded-lg">
-            <CardHeader>
-                <CardTitle className="font-medium text-muted-foreground">Menu Items: </CardTitle>
-                <CardDescription>
-                    <span className="font-bold">{mealinfo.mealTime.charAt(0).toUpperCase() + mealinfo.mealTime.slice(1)}:</span> {mealinfo.menuItems.join(', ')}
-                </CardDescription>
+        <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center gap-3 mb-4">
+                <span className="text-2xl">{mealIcons[mealinfo.mealTime]}</span>
+                <h3 className="text-lg font-semibold text-gray-800">
+                    {mealinfo.mealTime.charAt(0).toUpperCase() + mealinfo.mealTime.slice(1)}
+                </h3>
+            </div>
+            
+            <div className="space-y-4">
+                <div>
+                    <label className="text-sm font-medium text-gray-700">Menu Items</label>
+                    <p className="mt-1 text-gray-600">{mealinfo.menuItems.join(', ')}</p>
+                </div>
                 
-                <CardTitle className="font-medium text-muted-foreground mt-4">Rate this meal</CardTitle>
-                <Rating value={rating} onChange={setRating} />
+                <div>
+                    <label className="text-sm font-medium text-gray-700">Rate this meal</label>
+                    <div className="mt-2">
+                        <Rating value={rating} onChange={setRating} />
+                    </div>
+                </div>
 
-                <CardTitle className="font-medium text-muted-foreground mt-4">Additional comments (optional)</CardTitle>
-                <Textarea placeholder="Write your comments here..." className="mt-2" value={comments} onChange={(e) => setComments(e.target.value)} />
+                <div>
+                    <label className="text-sm font-medium text-gray-700">Additional comments (optional)</label>
+                    <Textarea 
+                        placeholder="Write your comments here..." 
+                        className="mt-2 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]" 
+                        value={comments} 
+                        onChange={(e) => setComments(e.target.value)} 
+                    />
+                </div>
 
-                <CardFooter className="mt-4 flex justify-end">
-                    <Button
-                        className="bg-blue-500 hover:bg-blue-600 cursor-pointer"
+                <div className="flex justify-end pt-2">
+                    <button
+                        className="h-11 px-6 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium rounded-lg transition-colors cursor-pointer"
                         onClick={handleSubmitReview}
                     >
                         Submit Review
-                    </Button>
-                </CardFooter>
-            </CardHeader>
-        </Card>
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }

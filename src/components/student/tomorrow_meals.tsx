@@ -1,7 +1,6 @@
 'use client'
 
 import Toggle from "@/components/student/toggle_button";
-import { getIcon } from "../common/icons";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -19,11 +18,8 @@ export default function TomorrowMeals() {
         const fetchMeal = async () => {
             if (!user?.id) return;
 
-            // console.log("User ID:", user.id);
-
             try {
                 const url = `/api/student/meals/meal-selection/tomorrow-meal?studentId=${user.id}`;
-                // console.log('Fetching meal selection from:', url);
 
                 const response = await fetch(url, {
                     method: "GET",
@@ -31,8 +27,6 @@ export default function TomorrowMeals() {
                         "Content-Type": "application/json",
                     }
                 })
-
-                // console.log('Response status:', response.status);
 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -91,7 +85,6 @@ export default function TomorrowMeals() {
                 return;
             }
 
-            // const data = await response.json() as { meal: MealDocument };
             console.log('Saved meal successfully');
         } catch (error) {
             console.error('Error saving:', error);
@@ -101,32 +94,39 @@ export default function TomorrowMeals() {
     };
 
     return (
-        <div className="flex bg-white m-5 flex-col px-4 py-8 rounded-lg shadow-md justify-between">
-            <div className="font-bold text-lg">
-                {getIcon("meals")} Tomorrow's Meals
+        <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-6">
+                <svg className="w-5 h-5 text-[#2D6A4F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h2 className="text-lg font-bold text-gray-800">Tomorrow&apos;s Meals</h2>
             </div>
-            <div>
+            
+            <div className="space-y-4 mb-6">
                 <Toggle value={breakfast} onChange={setBreakfast} mealtype="Breakfast" />
                 <Toggle value={lunch} onChange={setLunch} mealtype="Lunch" />
                 <Toggle value={dinner} onChange={setDinner} mealtype="Dinner" />
             </div>
 
-            <div className="flex items-end justify-end mt-4">
-                <Button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="flex w-[50%] h-full border border-blue-800 bg-blue-500 text-white hover:bg-blue-600 cursor-pointer rounded-lg"
-                >
-                    {isSaving ? (
-                        <>
-                            <Spinner />
-                            Saving...
-                        </>
-                    ) : (
-                        'Save'
-                    )}
-                </Button>
-            </div>
+            <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="w-full h-11 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium cursor-pointer"
+            >
+                {isSaving ? (
+                    <>
+                        <Spinner className="mr-2" />
+                        Saving...
+                    </>
+                ) : (
+                    <span className="flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save Changes
+                    </span>
+                )}
+            </Button>
         </div>
     );
 }

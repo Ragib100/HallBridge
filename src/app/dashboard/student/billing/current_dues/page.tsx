@@ -1,100 +1,171 @@
 'use client';
 
-import { useState } from "react";
-import { getIcon } from "@/components/common/icons";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import PayNow from "@/components/student/pay_now";
 import { generateInvoicePDF } from "@/lib/generate-invoice-pdf";
+import { Spinner } from "@/components/ui/spinner";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 interface Bill {
     seatrent: number;
     messbill: number;
+    laundry: number;
     othercharges: number;
 }
 
-interface Invoice {
+interface BillData {
     invoice_id: string;
     month: string;
     billinfo: Bill;
     amount: number;
-    media?: "Bkash" | "Nagad" | "Rocket" | "Card";
+    dueDate: string;
+    isPaid: boolean;
 }
 
 export default function CurrentDuesPage() {
+    const [billdata, setBilldata] = useState<BillData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const { user } = useCurrentUser();
 
-    const [billdata, setBillData] = useState<Invoice>({
-        month: 'December 2025', invoice_id: 'INV-2025-12', billinfo: { seatrent: 200, messbill: 150, othercharges: 100 }, amount: 450
-    });
+    useEffect(() => {
+        const fetchBillingData = async () => {
+            try {
+                const response = await fetch('/api/billing');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch billing data');
+                }
+                const data = await response.json();
+                setBilldata(data.currentBill);
+            } catch (err) {
+                console.error('Error fetching billing:', err);
+                setError('Failed to load billing information');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const gradients: string[] = [
-        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
-    ];
+        fetchBillingData();
+    }, []);
 
     const handleDownloadInvoice = () => {
+        if (!billdata) return;
         generateInvoicePDF(
-            billdata,
-            "Dec 31, 2025",
             {
-                name: "Student Name",
-                studentId: "2021-123456",
-                hallName: "Hall Name",
-                roomNo: "101"
+                invoice_id: billdata.invoice_id,
+                month: billdata.month,
+                billinfo: {
+                    seatrent: billdata.billinfo.seatrent,
+                    messbill: billdata.billinfo.messbill,
+                    othercharges: billdata.billinfo.othercharges + billdata.billinfo.laundry,
+                },
+                amount: billdata.amount,
+            },
+            billdata.dueDate,
+            {
+                name: user?.fullName || "Student",
+                studentId: user?.studentId || "N/A",
+                hallName: "Shahid Zia Hall",
+                roomNo: user?.roomAllocation?.roomNumber || "N/A"
             }
         );
     };
 
+    const billItems = [
+        { key: 'seatrent', label: 'Seat Rent', icon: '🏠', color: 'bg-[#2D6A4F]/10 text-[#2D6A4F]' },
+        { key: 'messbill', label: 'Mess Bill', icon: '🍽️', color: 'bg-blue-50 text-blue-600' },
+        { key: 'laundry', label: 'Laundry', icon: '🧺', color: 'bg-orange-50 text-orange-600' },
+        { key: 'othercharges', label: 'Other Charges', icon: '📋', color: 'bg-purple-50 text-purple-600' },
+    ];
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Spinner className="w-6 h-6 text-[#2D6A4F]" />
+            </div>
+        );
+    }
+
+    if (error || !billdata) {
+        return (
+            <div className="bg-white rounded-xl p-6 shadow-sm text-center">
+                <p className="text-red-600">{error || 'No billing data available'}</p>
+            </div>
+        );
+    }
+
     return (
-        <div className="gap-8 py-6 max-w-full overflow-x-hidden">
-            <div className="flex flex-col px-2 md:px-4 py-4">
-                <p className="text-lg font-bold">{getIcon('bills')} Current Dues Overview</p>
-                <p className="">Due Date: Dec 31, 2025</p>
-            </div>
-
-            <div className="flex flex-col md:flex-row gap-4 px-2 md:px-4">
-                {Object.entries(billdata.billinfo).map(([key, value], index) => (
-                    <div 
-                        key={key} 
-                        className="rounded-xl py-6 md:py-8 items-center justify-center flex flex-col w-full shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-1 cursor-pointer" 
-                        style={{background: gradients[index]}}
-                    >
-                        <p className="capitalize text-sm md:text-base text-white font-medium mb-2">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
-                        <div className="text-3xl md:text-4xl font-bold text-white flex items-center gap-1">{getIcon('taka')} {value}</div>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <svg className="w-6 h-6 text-[#2D6A4F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                            Current Dues Overview
+                        </h1>
+                        <p className="text-gray-500 mt-1">Invoice: {billdata.invoice_id} • {billdata.month}</p>
                     </div>
-                ))}
+                    <div className="text-right">
+                        <p className="text-sm text-gray-500">Due Date</p>
+                        <p className="font-bold text-red-600">{billdata.dueDate}</p>
+                    </div>
+                </div>
             </div>
 
-            <div className="px-2 md:px-4 py-8 my-4">
-                <h3 className="text-lg font-bold mb-4">Payment Breakdown</h3>
-                {Object.entries(billdata.billinfo).map(([key, value]) => (
-                    <div key={key} className="px-2 md:px-4 border-t py-2">
-                        <div className="flex justify-between items-center">
-                            <p className="font-semibold capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
-                            <p className="flex items-center">{getIcon('taka')} {value}</p>
+            {/* Bill Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {billItems.map((item) => (
+                    <div key={item.key} className="bg-white rounded-xl p-6 shadow-sm">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className={`w-12 h-12 ${item.color} rounded-xl flex items-center justify-center text-2xl`}>
+                                {item.icon}
+                            </div>
+                            <span className="text-gray-600 font-medium text-sm">{item.label}</span>
                         </div>
+                        <p className="text-2xl font-bold text-gray-800">
+                            ৳{billdata.billinfo[item.key as keyof Bill]}
+                        </p>
                     </div>
                 ))}
+            </div>
 
-                <div className="px-2 md:px-4 border-t-2 border-black py-3 mt-2">
-                    <div className="flex justify-between items-center">
-                        <p className="font-bold text-lg">Total Amount</p>
-                        <p className="flex items-center font-bold text-lg">{getIcon('taka')} {billdata.amount}</p>
-                    </div>
+            {/* Payment Breakdown */}
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                    <h2 className="text-lg font-bold text-gray-800">Payment Breakdown</h2>
+                </div>
+                <div className="divide-y divide-gray-100">
+                    {billItems.map((item) => (
+                        <div key={item.key} className="px-6 py-4 flex justify-between items-center hover:bg-gray-50">
+                            <div className="flex items-center gap-3">
+                                <span className="text-xl">{item.icon}</span>
+                                <span className="font-medium text-gray-700">{item.label}</span>
+                            </div>
+                            <span className="font-semibold text-gray-800">৳{billdata.billinfo[item.key as keyof Bill]}</span>
+                        </div>
+                    ))}
+                </div>
+                <div className="px-6 py-4 bg-gray-50 flex justify-between items-center border-t-2 border-gray-200">
+                    <span className="font-bold text-lg text-gray-800">Total Amount</span>
+                    <span className="font-bold text-2xl text-[#2D6A4F]">৳{billdata.amount}</span>
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row w-full gap-2 md:gap-0 justify-between px-2 md:px-0">
-                <div className="w-full md:w-[49%]">
-                    <PayNow amount={billdata.amount} dueDate="Dec 31, 2025" />
-                </div>
+            {/* Action Buttons */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <PayNow amount={billdata.amount} dueDate={billdata.dueDate} />
                 <Button 
-                    className="w-full md:w-[49%] h-10 cursor-pointer" 
-                    style={{backgroundColor:"gray"}}
+                    className="w-full h-12 bg-gray-600 hover:bg-gray-700 text-white font-medium cursor-pointer flex items-center justify-center gap-2" 
                     onClick={handleDownloadInvoice}
                 >
-                    {getIcon('download')} Download Invoice
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download Invoice
                 </Button>
             </div>
         </div>
