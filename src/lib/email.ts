@@ -293,3 +293,151 @@ If you have any questions, please contact the hall administration office.
     text,
   });
 }
+
+/**
+ * Send password reset OTP email
+ */
+export async function sendPasswordResetOTPEmail(
+  email: string,
+  fullName: string,
+  otp: string
+): Promise<boolean> {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Password Reset OTP</title>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #2D6A4F 0%, #245840 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
+      </div>
+      
+      <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #374151; margin-top: 0;">Password Reset Request</h2>
+        
+        <p>Hello <strong>${fullName}</strong>,</p>
+        
+        <p>We received a request to reset your password. Use the OTP code below to verify your identity:</p>
+        
+        <div style="background: #f3f4f6; padding: 25px; border-radius: 8px; margin: 25px 0; text-align: center;">
+          <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">Your One-Time Password (OTP)</p>
+          <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #2D6A4F; font-family: monospace;">
+            ${otp}
+          </div>
+        </div>
+        
+        <div style="background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0;">
+          <p style="margin: 0; color: #92400e; font-size: 14px;">
+            <strong>⏰ This code expires in 10 minutes.</strong><br>
+            Do not share this code with anyone.
+          </p>
+        </div>
+        
+        <p style="color: #6b7280; font-size: 14px;">If you didn't request a password reset, please ignore this email or contact support if you have concerns.</p>
+      </div>
+      
+      <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+        <p>© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `
+Password Reset Request
+
+Hello ${fullName},
+
+We received a request to reset your password. Use the OTP code below to verify your identity:
+
+Your OTP: ${otp}
+
+This code expires in 10 minutes. Do not share this code with anyone.
+
+If you didn't request a password reset, please ignore this email.
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `🔐 Password Reset OTP - ${APP_NAME}`,
+    html,
+    text,
+  });
+}
+
+/**
+ * Send password reset success confirmation email
+ */
+export async function sendPasswordResetSuccessEmail(
+  email: string,
+  fullName: string
+): Promise<boolean> {
+  const loginUrl = `${APP_URL}/auth/login`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Password Reset Successful</title>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #2D6A4F 0%, #245840 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
+      </div>
+      
+      <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="width: 60px; height: 60px; background: #d1fae5; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
+            <span style="font-size: 30px;">✓</span>
+          </div>
+        </div>
+        
+        <h2 style="color: #2D6A4F; margin-top: 0; text-align: center;">Password Reset Successful!</h2>
+        
+        <p>Hello <strong>${fullName}</strong>,</p>
+        
+        <p>Your password has been successfully reset. You can now log in with your new password.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${loginUrl}" style="background: #2D6A4F; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Log In Now</a>
+        </div>
+        
+        <div style="background: #fef2f2; padding: 15px; border-radius: 8px; border-left: 4px solid #ef4444; margin: 20px 0;">
+          <p style="margin: 0; color: #991b1b; font-size: 14px;">
+            <strong>⚠️ Security Notice:</strong> If you did not make this change, please contact support immediately.
+          </p>
+        </div>
+      </div>
+      
+      <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+        <p>© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `
+Password Reset Successful!
+
+Hello ${fullName},
+
+Your password has been successfully reset. You can now log in with your new password.
+
+Log in here: ${loginUrl}
+
+Security Notice: If you did not make this change, please contact support immediately.
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `✅ Password Reset Successful - ${APP_NAME}`,
+    html,
+    text,
+  });
+}
+
