@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Select, SelectTrigger, SelectValue , SelectContent, SelectGroup, SelectLabel, SelectItem} from '@/components/ui/select';
+import { useMemo, useState, useEffect } from 'react';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -12,7 +12,7 @@ export default function StudentGatePassPage() {
 	const [purposeDetails, setPurposeDetails] = useState<string>('');
 	const [destination, setDestination] = useState<string>('');
 	const [outDate, setOutDate] = useState<string>(getCurrentDateBD());
-	const [outTime, setOutTime] = useState<string>(new Date(new Date().getTime() + 60 * 60 * 1000).toTimeString().substring(0,5));
+	const [outTime, setOutTime] = useState<string>(new Date(new Date().getTime() + 60 * 60 * 1000).toTimeString().substring(0, 5));
 	const [returnDate, setReturnDate] = useState<string>(new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
 	const [returnTime, setReturnTime] = useState<string>('12:00');
 	const [contactNumber, setContactNumber] = useState<string>('');
@@ -32,6 +32,19 @@ export default function StudentGatePassPage() {
 	};
 
 	const today = useMemo(() => getCurrentDateBD(), []);
+	const minReturnDate = useMemo(() => {
+		const d = new Date(outDate);
+		d.setDate(d.getDate() + 1);
+		return d.toISOString().split('T')[0];
+	}, [outDate]);
+
+	useEffect(() => {
+		// If current returnDate is less than minReturnDate, adjust it
+		if (returnDate < minReturnDate) {
+			setReturnDate(minReturnDate);
+		}
+	}, [outDate, minReturnDate]);
+
 	const returnTimeMin = useMemo(
 		() => (returnDate === outDate ? addMinutes(outTime, 1) : undefined),
 		[returnDate, outDate, outTime]
@@ -49,21 +62,6 @@ export default function StudentGatePassPage() {
 
 		if (purpose === 'other' && !purposeDetails.trim()) {
 			setError('Please enter your purpose.');
-			return;
-		}
-
-		if (outDate < today) {
-			setError('Out date cannot be before today.');
-			return;
-		}
-
-		if (returnDate < outDate) {
-			setError('Return date cannot be before out date.');
-			return;
-		}
-
-		if (returnDate === outDate && returnTime <= outTime) {
-			setError('Return time must be after out time.');
 			return;
 		}
 
@@ -99,7 +97,7 @@ export default function StudentGatePassPage() {
 			setPurposeDetails('');
 			setDestination('');
 			setOutDate(today);
-			setOutTime(new Date(new Date().getTime() + 60 * 60 * 1000).toTimeString().substring(0,5));
+			setOutTime(new Date(new Date().getTime() + 60 * 60 * 1000).toTimeString().substring(0, 5));
 			const nextDay = new Date();
 			nextDay.setDate(nextDay.getDate() + 1);
 			setReturnDate(nextDay.toISOString().split('T')[0]);
@@ -151,7 +149,7 @@ export default function StudentGatePassPage() {
 						<Select
 							name="purpose"
 							value={purpose}
-							onValueChange={(value)=>{
+							onValueChange={(value) => {
 								setPurpose(value);
 								if (value !== 'other') {
 									setPurposeDetails('');
@@ -159,7 +157,7 @@ export default function StudentGatePassPage() {
 							}}
 						>
 							<SelectTrigger className="h-11 focus:ring-2 focus:ring-[#2D6A4F]">
-								<SelectValue placeholder="Select purpose"/>
+								<SelectValue placeholder="Select purpose" />
 							</SelectTrigger>
 
 							<SelectContent>
@@ -183,7 +181,7 @@ export default function StudentGatePassPage() {
 								name="purposeDetails"
 								placeholder="Enter your purpose"
 								value={purposeDetails}
-								onChange={(e)=>{setPurposeDetails(e.target.value)}}
+								onChange={(e) => { setPurposeDetails(e.target.value) }}
 								className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 							/>
 						</div>
@@ -196,7 +194,7 @@ export default function StudentGatePassPage() {
 							name="destination"
 							placeholder="Enter destination"
 							value={destination}
-							onChange={(e)=>{setDestination(e.target.value)}}
+							onChange={(e) => { setDestination(e.target.value) }}
 							className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 						/>
 					</div>
@@ -209,7 +207,7 @@ export default function StudentGatePassPage() {
 								name="outDate"
 								value={outDate}
 								min={today}
-								onChange={(e)=>{
+								onChange={(e) => {
 									const newOutDate = e.target.value;
 									setOutDate(newOutDate);
 									if (returnDate < newOutDate) {
@@ -225,7 +223,7 @@ export default function StudentGatePassPage() {
 								type="time"
 								name="outTime"
 								value={outTime}
-								onChange={(e)=>{
+								onChange={(e) => {
 									const newOutTime = e.target.value;
 									setOutTime(newOutTime);
 									if (returnDate === outDate && returnTime <= newOutTime) {
@@ -244,13 +242,10 @@ export default function StudentGatePassPage() {
 								type="date"
 								name="returnDate"
 								value={returnDate}
-								min={outDate}
-								onChange={(e)=>{
+								min={minReturnDate}
+								onChange={(e) => {
 									const newReturnDate = e.target.value;
 									setReturnDate(newReturnDate);
-									if (newReturnDate === outDate && returnTime <= outTime) {
-										setReturnTime(addMinutes(outTime, 1));
-									}
 								}}
 								className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 							/>
@@ -262,7 +257,7 @@ export default function StudentGatePassPage() {
 								name="returnTime"
 								value={returnTime}
 								min={returnTimeMin}
-								onChange={(e)=>{setReturnTime(e.target.value)}}
+								onChange={(e) => { setReturnTime(e.target.value) }}
 								className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 							/>
 						</div>
@@ -270,32 +265,21 @@ export default function StudentGatePassPage() {
 
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 						<div className="space-y-2">
-							<label className="text-sm font-medium text-gray-700">Contact Number *</label>
-							<Input
-								type="tel"
-								name="contactNumber"
-								value={contactNumber}
-								onChange={(e)=>{setContactNumber(e.target.value)}}
-								placeholder="Your contact number"
-								className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
-							/>
-						</div>
-						<div className="space-y-2">
 							<label className="text-sm font-medium text-gray-700">Emergency Contact *</label>
 							<Input
 								type="tel"
 								name="emergencyContact"
 								value={emergencyContact}
-								onChange={(e)=>{setEmergencyContact(e.target.value)}}
+								onChange={(e) => { setEmergencyContact(e.target.value) }}
 								placeholder="Emergency contact number"
 								className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 							/>
 						</div>
 					</div>
 
-					<Button 
-						className="w-full h-12 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium cursor-pointer" 
-						disabled={isSubmitting} 
+					<Button
+						className="w-full h-12 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium cursor-pointer"
+						disabled={isSubmitting}
 						type="submit"
 					>
 						{isSubmitting ? <Spinner /> : (

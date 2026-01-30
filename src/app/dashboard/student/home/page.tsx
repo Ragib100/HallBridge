@@ -31,36 +31,46 @@ export default function HomePage() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [tomorrowMeals, setTomorrowMeals] = useState<MealStatus>({
-    breakfast: true,
-    lunch: true,
-    dinner: true,
+    breakfast: false,
+    lunch: false,
+    dinner: false,
   });
   const [recentRequests, setRecentRequests] = useState<MaintenanceRequest[]>([]);
-  const [currentBill, setCurrentBill] = useState<number>(0);
+  const [currentBill, setCurrentBill] = useState<number>(10000);
 
   // Fetch user info
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [userRes, mealsRes, maintenanceRes, billingRes] = await Promise.all([
-          fetch("/api/auth/me"),
-          fetch("/api/student/meals/tomorrow").catch(() => null),
+        const userRes = await fetch("/api/auth/me");
+
+        if (!userRes.ok) {
+          throw new Error("Failed to fetch user info");
+        }
+        const userData = await userRes.json();
+
+        if (!userData.user) {
+          throw new Error("User not found");
+        }
+
+        setUserInfo({
+          fullName: userData.user.fullName,
+          studentId: userData.user.studentId,
+          roomAllocation: userData.user.roomAllocation,
+        });
+
+        // console.log("User data:", userData.user);
+
+        const [mealsRes, maintenanceRes, billingRes] = await Promise.all([
+          fetch(`/api/student/meals/meal-selection/tomorrow-meal?studentId=${userData.user.id}`).catch(() => null),
           fetch("/api/maintenance?limit=3").catch(() => null),
           fetch("/api/billing").catch(() => null),
         ]);
 
-        if (userRes.ok) {
-          const userData = await userRes.json();
-          setUserInfo({
-            fullName: userData.user.fullName,
-            studentId: userData.user.studentId,
-            roomAllocation: userData.user.roomAllocation,
-          });
-        }
-
         if (mealsRes?.ok) {
           const mealsData = await mealsRes.json();
-          setTomorrowMeals(mealsData.meals || tomorrowMeals);
+          // console.log("Tomorrow's meals data:", mealsData);
+          setTomorrowMeals(mealsData.meal || tomorrowMeals);
         }
 
         if (maintenanceRes?.ok) {
@@ -86,7 +96,7 @@ export default function HomePage() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-[#2D6A4F] to-[#40916C] rounded-2xl p-6 text-white">
+      <div className="bg-linear-to-r from-[#2D6A4F] to-[#40916C] rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold mb-1">
@@ -172,16 +182,56 @@ export default function HomePage() {
         </div>
 
         {/* Current Due */}
-        <div className="bg-white rounded-xl p-4 shadow-sm">
+        <div
+          className={`rounded-xl p-4 shadow-sm border
+            ${currentBill >= 10000
+              ? "bg-red-50 border-red-300"
+              : "bg-white border-transparent"
+            }`}
+        >
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            <div
+              className={`w-10 h-10 rounded-lg flex items-center justify-center
+                ${currentBill >= 10000 ? "bg-red-100" : "bg-red-50"}
+              `}
+            >
+              <svg
+                className={`w-5 h-5 ${currentBill >= 10000 ? "text-red-700" : "text-red-600"}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                />
               </svg>
             </div>
-            <span className="text-sm text-gray-500">Current Due</span>
+
+            <span
+              className={`text-sm font-medium
+                ${currentBill >= 10000 ? "text-red-700" : "text-gray-500"}
+              `}
+            >
+              Current Due
+            </span>
           </div>
-          <p className="text-2xl font-bold text-gray-800">৳{currentBill}</p>
+
+          <p
+            className={`text-2xl font-bold
+              ${currentBill >= 10000 ? "text-red-800" : "text-gray-800"}
+            `}
+          >
+            ৳{currentBill}
+          </p>
+
+          {currentBill >= 10000 && (
+            <p className="mt-2 text-sm text-red-700 font-medium">
+              ⚠️ Your due is very high. Please clear the payment as soon as possible.
+            </p>
+          )}
         </div>
       </div>
 
@@ -340,21 +390,20 @@ export default function HomePage() {
           </div>
           {recentRequests.length > 0 ? (
             <div className="space-y-3">
-              {recentRequests.map((request) => (
-                <div key={request._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              {recentRequests.map((request, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
                     <p className="font-medium text-gray-800 capitalize">{request.category}</p>
                     <p className="text-xs text-gray-500">
                       {new Date(request.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                    request.status === "completed" ? "bg-green-100 text-green-700" :
-                    request.status === "in-progress" ? "bg-blue-100 text-blue-700" :
-                    "bg-yellow-100 text-yellow-700"
-                  }`}>
-                    {request.status === "in-progress" ? "In Progress" : 
-                     request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${request.status === "completed" ? "bg-green-100 text-green-700" :
+                      request.status === "in-progress" ? "bg-blue-100 text-blue-700" :
+                        "bg-yellow-100 text-yellow-700"
+                    }`}>
+                    {request.status === "in-progress" ? "In Progress" :
+                      request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                   </span>
                 </div>
               ))}

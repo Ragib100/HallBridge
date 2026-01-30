@@ -175,7 +175,7 @@ export default function NewRequestPage() {
                             value={formData.description}
                             onChange={handleInputChange}
                             placeholder="Describe the issue in detail..."
-                            className="min-h-[120px] focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
+                            className="min-h-30 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
                         />
                     </div>
 
