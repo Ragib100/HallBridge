@@ -13,7 +13,7 @@ export default function MealsLayout( { children } : { children: React.ReactNode 
 
     return(
         <StaffRoleGuard allowedRoles={['mess_manager']}>
-            <div className="px-4 md:px-8 py-4 max-w-full overflow-x-hidden">
+            <div className="space-y-6">
                 <TopNavigation navItems={nav_items} />
                 {children}
             </div>

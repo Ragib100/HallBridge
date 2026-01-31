@@ -1,6 +1,5 @@
 'use client';
 
-import '../staff.css';
 import { useState, useEffect } from 'react';
 import { ViewIssueDialog } from '@/components/staff/view_issue';
 import { StaffRoleGuard } from '@/components/staff/role-guard';
@@ -34,11 +33,21 @@ const categoryLabels: Record<string, string> = {
 
 type TagType = 'emergency' | 'water' | 'electrical' | 'general';
 
-const priorityConfig: Record<string, { label: string; type: TagType }> = {
-  'urgent': { label: 'Emergency', type: 'emergency' },
-  'high': { label: 'High', type: 'water' },
-  'normal': { label: 'Normal', type: 'general' },
-  'low': { label: 'Low', type: 'general' },
+const priorityConfig: Record<string, { label: string; type: TagType; color: string }> = {
+  'urgent': { label: 'Emergency', type: 'emergency', color: 'bg-red-100 text-red-700' },
+  'high': { label: 'High', type: 'water', color: 'bg-orange-100 text-orange-700' },
+  'normal': { label: 'Normal', type: 'general', color: 'bg-blue-100 text-blue-700' },
+  'low': { label: 'Low', type: 'general', color: 'bg-gray-100 text-gray-700' },
+};
+
+const categoryColors: Record<string, string> = {
+  'electrical': 'bg-yellow-100 text-yellow-700',
+  'plumbing': 'bg-cyan-100 text-cyan-700',
+  'furniture': 'bg-amber-100 text-amber-700',
+  'ac-heating': 'bg-indigo-100 text-indigo-700',
+  'doors-windows': 'bg-purple-100 text-purple-700',
+  'internet': 'bg-green-100 text-green-700',
+  'other': 'bg-gray-100 text-gray-700',
 };
 
 export default function MaintenancePage() {
@@ -57,7 +66,6 @@ export default function MaintenancePage() {
       const data = await response.json();
       
       if (response.ok) {
-        // Transform API response to match component interface
         const transformedTasks = (data.requests || []).map((r: {
           id: string;
           requestId: string;
@@ -107,7 +115,6 @@ export default function MaintenancePage() {
       });
 
       if (response.ok) {
-        // Update local state
         setTasks(prev => prev.map(task => 
           task.id === taskId 
             ? { ...task, status: newStatus, completedAt: newStatus === 'completed' ? new Date().toISOString() : task.completedAt }
@@ -139,24 +146,22 @@ export default function MaintenancePage() {
     return `${diffDays} days ago`;
   };
 
-  const getPriorityTag = (priority: string): { label: string; type: TagType } => {
-    const config = priorityConfig[priority] || { label: priority, type: 'general' as TagType };
-    return { label: config.label, type: config.type };
+  const getPriorityTag = (priority: string) => {
+    return priorityConfig[priority] || { label: priority, type: 'general' as TagType, color: 'bg-gray-100 text-gray-700' };
   };
 
-  const getCategoryTag = (category: string): { label: string; type: TagType } => {
+  const getCategoryTag = (category: string) => {
     const label = categoryLabels[category] || category;
+    const color = categoryColors[category] || 'bg-gray-100 text-gray-700';
     const type: TagType = category === 'plumbing' ? 'water' : category === 'electrical' ? 'electrical' : 'general';
-    return { label, type };
+    return { label, type, color };
   };
 
   if (loading) {
     return (
       <StaffRoleGuard allowedRoles={['maintenance_staff']}>
-        <div className="staff-page">
-          <div className="staff-content" style={{ textAlign: 'center', padding: '40px' }}>
-            Loading maintenance requests...
-          </div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-gray-500">Loading maintenance requests...</div>
         </div>
       </StaffRoleGuard>
     );
@@ -164,115 +169,150 @@ export default function MaintenancePage() {
 
   return (
     <StaffRoleGuard allowedRoles={['maintenance_staff']}>
-      <div className="staff-page">
-        <div className="staff-content">
-          <div className="staff-tabs">
-            <button
-              className={`staff-tab ${activeTab === 'pending' ? 'active' : ''}`}
-              onClick={() => setActiveTab('pending')}
-            >
-              Pending ({pendingCount})
-            </button>
-            <button
-              className={`staff-tab ${activeTab === 'in-progress' ? 'active' : ''}`}
-              onClick={() => setActiveTab('in-progress')}
-            >
-              In Progress ({inProgressCount})
-            </button>
-            <button
-              className={`staff-tab ${activeTab === 'completed' ? 'active' : ''}`}
-              onClick={() => setActiveTab('completed')}
-            >
-              Completed ({completedCount})
-            </button>
+      <div className="space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-gray-500 text-sm">Pending</p>
+                <p className="text-2xl font-bold text-gray-800">{pendingCount}</p>
+              </div>
+            </div>
           </div>
-
-          <div className="tab-content">
-            {activeTab === 'pending' && pendingCount > 0 && (
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1a1a2e', marginBottom: '16px' }}>
-                  Pending Tasks ({pendingCount})
-                </h3>
+          
+          <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
               </div>
-            )}
-
-            {filteredTasks.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-icon">📋</div>
-                <p className="empty-state-text">No tasks in this category</p>
+              <div className="flex-1">
+                <p className="text-gray-500 text-sm">In Progress</p>
+                <p className="text-2xl font-bold text-gray-800">{inProgressCount}</p>
               </div>
-            ) : (
-              filteredTasks.map(task => (
-                <div key={task.id} className="task-card">
-                  <div className="task-header">
-                    <div className="task-title">{task.location} - {categoryLabels[task.category] || task.category}</div>
-                    <div className="task-meta">
-                      Reported by: {task.reporter?.fullName || 'Unknown'} • {getTimeAgo(task.createdAt)}
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-gray-500 text-sm">Completed</p>
+                <p className="text-2xl font-bold text-gray-800">{completedCount}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('pending')}
+            className={`px-6 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'pending'
+                ? 'text-[#2D6A4F] border-b-2 border-[#2D6A4F]'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Pending ({pendingCount})
+          </button>
+          <button
+            onClick={() => setActiveTab('in-progress')}
+            className={`px-6 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'in-progress'
+                ? 'text-[#2D6A4F] border-b-2 border-[#2D6A4F]'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            In Progress ({inProgressCount})
+          </button>
+          <button
+            onClick={() => setActiveTab('completed')}
+            className={`px-6 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'completed'
+                ? 'text-[#2D6A4F] border-b-2 border-[#2D6A4F]'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Completed ({completedCount})
+          </button>
+        </div>
+
+        {/* Task Cards */}
+        <div className="bg-white rounded-xl shadow-sm">
+          {filteredTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+              <span className="text-5xl mb-4">📋</span>
+              <p className="text-lg font-medium">No tasks in this category</p>
+              <p className="text-sm">Tasks will appear here when available</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {filteredTasks.map(task => (
+                <div key={task.id} className="p-5 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      {/* Header */}
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-gray-800">
+                          {task.location} - {categoryLabels[task.category] || task.category}
+                        </h3>
+                        <span className="text-xs text-gray-400">#{task.requestId}</span>
+                      </div>
+                      
+                      {/* Tags */}
+                      <div className="flex gap-2 mb-3">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityTag(task.priority).color}`}>
+                          {getPriorityTag(task.priority).label}
+                        </span>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryTag(task.category).color}`}>
+                          {getCategoryTag(task.category).label}
+                        </span>
+                      </div>
+                      
+                      {/* Description */}
+                      <p className="text-sm text-gray-600 mb-3">{task.description}</p>
+                      
+                      {/* Meta */}
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span>Reported by: {task.reporter?.fullName || 'Unknown'}</span>
+                        <span>•</span>
+                        <span>{getTimeAgo(task.createdAt)}</span>
+                      </div>
                     </div>
-                    <div className="task-meta" style={{ marginTop: '4px' }}>
-                      Request ID: {task.requestId}
-                    </div>
-                  </div>
-
-                  <div className="task-tags">
-                    <span className={`task-tag ${getPriorityTag(task.priority).type}`}>
-                      {getPriorityTag(task.priority).label}
-                    </span>
-                    <span className={`task-tag ${getCategoryTag(task.category).type}`}>
-                      {getCategoryTag(task.category).label}
-                    </span>
-                  </div>
-
-                  <div style={{ fontSize: '14px', color: '#666', margin: '8px 0' }}>
-                    {task.description}
-                  </div>
-
-                  <div className="task-actions">
-                    {activeTab === 'pending' && (
-                      <>
+                    
+                    {/* Actions */}
+                    <div className="flex flex-col gap-2">
+                      {activeTab === 'pending' && (
                         <button 
-                          className="task-btn primary"
+                          className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245a42] transition-colors disabled:opacity-50"
                           disabled={updating === task.id}
                           onClick={() => handleStatusUpdate(task.id, 'in-progress')}
                         >
                           {updating === task.id ? 'Starting...' : 'Start Task'}
                         </button>
-                        <ViewIssueDialog task={{
-                          id: task.id,
-                          title: task.description,
-                          room: task.location,
-                          reporter: task.reporter?.fullName || 'Unknown',
-                          time: getTimeAgo(task.createdAt),
-                          tags: [getPriorityTag(task.priority), getCategoryTag(task.category)],
-                          status: task.status,
-                        }}>
-                          <button className="task-btn secondary">View Details</button>
-                        </ViewIssueDialog>
-                      </>
-                    )}
-                    {activeTab === 'in-progress' && (
-                      <>
+                      )}
+                      {activeTab === 'in-progress' && (
                         <button 
-                          className="task-btn success"
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
                           disabled={updating === task.id}
                           onClick={() => handleStatusUpdate(task.id, 'completed')}
                         >
                           {updating === task.id ? 'Completing...' : 'Mark Complete'}
                         </button>
-                        <ViewIssueDialog task={{
-                          id: task.id,
-                          title: task.description,
-                          room: task.location,
-                          reporter: task.reporter?.fullName || 'Unknown',
-                          time: getTimeAgo(task.createdAt),
-                          tags: [getPriorityTag(task.priority), getCategoryTag(task.category)],
-                          status: task.status,
-                        }}>
-                          <button className="task-btn secondary">View Details</button>
-                        </ViewIssueDialog>
-                      </>
-                    )}
-                    {activeTab === 'completed' && (
+                      )}
                       <ViewIssueDialog task={{
                         id: task.id,
                         title: task.description,
@@ -282,14 +322,16 @@ export default function MaintenancePage() {
                         tags: [getPriorityTag(task.priority), getCategoryTag(task.category)],
                         status: task.status,
                       }}>
-                        <button className="task-btn secondary">View Details</button>
+                        <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+                          View Details
+                        </button>
                       </ViewIssueDialog>
-                    )}
+                    </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </StaffRoleGuard>

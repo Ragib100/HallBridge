@@ -1,185 +1,328 @@
 'use client';
 
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem, SelectLabel } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { getNextDateBD } from '@/lib/dates';
 
-interface LaundryFormData {
-	pickupDate: string;
-	pickupTime: string;
-	serviceType: string;
-	itemCount: string;
-	specialInstructions: string;
+interface LaundryItem {
+  type: string;
+  quantity: number;
+  notes?: string;
 }
 
-interface ServiceInfo {
-	title: string;
-	price: string;
-	duration: string;
-	icon: string;
+interface LaundryRequest {
+  id: string;
+  requestId: string;
+  items: LaundryItem[];
+  totalItems: number;
+  status: string;
+  expectedDelivery: string;
+  actualDelivery?: string;
+  createdAt: string;
+  staffNotes?: string;
 }
+
+const ITEM_TYPES = [
+  { value: 'shirt', label: 'Shirt', icon: '👕' },
+  { value: 'pant', label: 'Pant', icon: '👖' },
+  { value: 'bedsheet', label: 'Bedsheet', icon: '🛏️' },
+  { value: 'towel', label: 'Towel', icon: '🧴' },
+  { value: 'other', label: 'Other', icon: '👔' },
+];
+
+const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Pending Pickup' },
+  collected: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Collected' },
+  washing: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Washing' },
+  ready: { bg: 'bg-green-100', text: 'text-green-700', label: 'Ready for Delivery' },
+  delivered: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Delivered' },
+};
 
 export default function StudentLaundryPage() {
-	const [submitting, setSubmitting] = useState<boolean>(false);
+  const [requests, setRequests] = useState<LaundryRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
-	const [formData, setFormData] = useState<LaundryFormData>({
-		pickupDate: getNextDateBD(),
-		pickupTime: "10:00",
-		serviceType: '',
-		itemCount: '',
-		specialInstructions: ''
-	});
+  // Form state
+  const [items, setItems] = useState<LaundryItem[]>([{ type: 'shirt', quantity: 1 }]);
+  const [studentNotes, setStudentNotes] = useState('');
 
-	const services: ServiceInfo[] = [
-		{ title: 'Regular Wash', price: '৳30/kg', duration: '2-3 days', icon: '🧺' },
-		{ title: 'Express Wash', price: '৳50/kg', duration: '24 hours', icon: '⚡' },
-		{ title: 'Dry Clean', price: '৳80/piece', duration: '3-4 days', icon: '👔' },
-		{ title: 'Iron Only', price: '৳5/piece', duration: 'Same day', icon: '🔥' }
-	];
+  const fetchRequests = async () => {
+    try {
+      const response = await fetch('/api/common/laundry?studentOnly=true');
+      const data = await response.json();
+      
+      if (response.ok) {
+        setRequests(data.requests);
+      } else {
+        setError(data.message);
+      }
+    } catch {
+      setError('Failed to fetch laundry requests');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-		setFormData({
-			...formData,
-			[e.target.name]: e.target.value
-		});
-	};
+  useEffect(() => {
+    fetchRequests();
+  }, []);
 
-	const handle_submit = async () => {
-		setSubmitting(true);
+  const addItem = () => {
+    setItems([...items, { type: 'shirt', quantity: 1 }]);
+  };
 
-		setTimeout(() => {
-			alert('Laundry pickup scheduled successfully!');
-			setSubmitting(false);
-		}, 2000);
-	}
+  const removeItem = (index: number) => {
+    if (items.length > 1) {
+      setItems(items.filter((_, i) => i !== index));
+    }
+  };
 
-	return (
-		<div className="space-y-6">
-			{/* Header */}
-			<div className="bg-white rounded-xl p-6 shadow-sm">
-				<h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-					<svg className="w-6 h-6 text-[#2D6A4F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-					</svg>
-					Schedule Laundry Pickup
-				</h1>
-				<p className="text-gray-500 mt-1">Choose a service and schedule your laundry pickup</p>
-			</div>
+  const updateItem = (index: number, field: keyof LaundryItem, value: string | number) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
+  };
 
-			{/* Service Cards */}
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-				{services.map((service) => (
-					<div 
-						className="bg-white rounded-xl p-5 shadow-sm border-2 border-gray-100 hover:border-[#2D6A4F] transition-colors cursor-pointer group" 
-						key={service.title}
-					>
-						<div className="text-3xl mb-3">{service.icon}</div>
-						<p className="font-bold text-gray-800 mb-1">{service.title}</p>
-						<p className="text-2xl font-bold text-[#2D6A4F] mb-2">{service.price}</p>
-						<p className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block">
-							{service.duration}
-						</p>
-					</div>
-				))}
-			</div>
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
 
-			{/* Booking Form */}
-			<div className="bg-white rounded-xl shadow-sm p-6">
-				<h2 className="text-lg font-bold text-gray-800 mb-6">Booking Details</h2>
-				
-				<form
-					onSubmit={(e) => { e.preventDefault(); handle_submit(); }}
-					className="space-y-6"
-				>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-						<div className="space-y-2">
-							<label className="text-sm font-medium text-gray-700">Pickup Date *</label>
-							<Input
-								type="date"
-								name="pickupDate"
-								value={formData.pickupDate}
-								min={getNextDateBD()}
-								onChange={handleInputChange}
-								className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
-							/>
-						</div>
-						<div className="space-y-2">
-							<label className="text-sm font-medium text-gray-700">Pickup Time *</label>
-							<Input
-								type="time"
-								name="pickupTime"
-								value={formData.pickupTime}
-								onChange={handleInputChange}
-								className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
-							/>
-						</div>
-					</div>
+    try {
+      const response = await fetch('/api/common/laundry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          studentNotes,
+        }),
+      });
 
-					<div className="space-y-2">
-						<label className="text-sm font-medium text-gray-700">Service Type *</label>
-						<Select
-							value={formData.serviceType}
-							onValueChange={(value) => setFormData({ ...formData, serviceType: value })}
-						>
-							<SelectTrigger className="h-11 focus:ring-2 focus:ring-[#2D6A4F]">
-								<SelectValue placeholder="Select Service Type" />
-							</SelectTrigger>
+      const data = await response.json();
 
-							<SelectContent>
-								<SelectGroup>
-									<SelectLabel>Service Types</SelectLabel>
-									<SelectItem value="regular">Regular Wash (2-3 days)</SelectItem>
-									<SelectItem value="express">Express Wash (24 hours)</SelectItem>
-									<SelectItem value="dry-clean">Dry Clean (3-4 days)</SelectItem>
-									<SelectItem value="iron-only">Iron Only (Same day)</SelectItem>
-								</SelectGroup>
-							</SelectContent>
-						</Select>
-					</div>
+      if (response.ok) {
+        setShowForm(false);
+        setItems([{ type: 'shirt', quantity: 1 }]);
+        setStudentNotes('');
+        fetchRequests();
+      } else {
+        setError(data.message);
+      }
+    } catch {
+      setError('Failed to submit request');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-					<div className="space-y-2">
-						<label className="text-sm font-medium text-gray-700">Estimated Item Count or Weight</label>
-						<Input
-							type="text"
-							name="itemCount"
-							value={formData.itemCount}
-							onChange={handleInputChange}
-							placeholder="e.g., 10 items or 5 kg"
-							className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
-						/>
-					</div>
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
-					<div className="space-y-2">
-						<label className="text-sm font-medium text-gray-700">Special Instructions (optional)</label>
-						<Textarea
-							name="specialInstructions"
-							value={formData.specialInstructions}
-							onChange={handleInputChange}
-							placeholder="Any special care instructions..."
-							className="min-h-25 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
-						/>
-					</div>
+  const activeRequests = requests.filter(r => r.status !== 'delivered');
+  const pastRequests = requests.filter(r => r.status === 'delivered');
 
-					<Button
-						type="submit"
-						className="w-full h-12 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium cursor-pointer"
-						disabled={submitting}
-					>
-						{submitting ? <Spinner /> : (
-							<span className="flex items-center gap-2">
-								<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-								</svg>
-								Schedule Pickup
-							</span>
-						)}
-					</Button>
-				</form>
-			</div>
-		</div>
-	);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Spinner className="w-6 h-6 text-[#2D6A4F]" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-xl p-6 shadow-sm flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <span className="text-2xl">🧺</span>
+            Laundry Service
+          </h1>
+          <p className="text-gray-500 mt-1">Submit laundry requests and track their status</p>
+        </div>
+        <Button
+          onClick={() => setShowForm(!showForm)}
+          className="bg-[#2D6A4F] hover:bg-[#245a42] text-white"
+        >
+          {showForm ? 'Cancel' : '+ New Request'}
+        </Button>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+          {error}
+          <button onClick={() => setError(null)} className="float-right">&times;</button>
+        </div>
+      )}
+
+      {/* New Request Form */}
+      {showForm && (
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">New Laundry Request</h2>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">Items</label>
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="text-sm text-[#2D6A4F] hover:underline"
+                >
+                  + Add Item
+                </button>
+              </div>
+              
+              {items.map((item, index) => (
+                <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-xl">
+                    {ITEM_TYPES.find(t => t.value === item.type)?.icon || '👔'}
+                  </span>
+                  <select
+                    value={item.type}
+                    onChange={(e) => updateItem(index, 'type', e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                  >
+                    {ITEM_TYPES.map(type => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    value={item.quantity}
+                    onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                    min="1"
+                    max="50"
+                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                  />
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Special Instructions (Optional)</label>
+              <textarea
+                value={studentNotes}
+                onChange={(e) => setStudentNotes(e.target.value)}
+                placeholder="Any special care instructions..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] min-h-[80px]"
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+              <span className="text-gray-700">Total Items:</span>
+              <span className="text-xl font-bold text-[#2D6A4F]">
+                {items.reduce((sum, item) => sum + item.quantity, 0)}
+              </span>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-12 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium"
+              disabled={submitting}
+            >
+              {submitting ? <Spinner /> : 'Submit Request'}
+            </Button>
+          </form>
+        </div>
+      )}
+
+      {/* Active Requests */}
+      {activeRequests.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Active Requests</h2>
+          <div className="space-y-4">
+            {activeRequests.map(request => {
+              const statusStyle = STATUS_STYLES[request.status] || STATUS_STYLES.pending;
+              return (
+                <div key={request.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-medium text-gray-800">{request.requestId}</span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
+                      {statusStyle.label}
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {request.items.map((item, idx) => (
+                      <span key={idx} className="bg-gray-100 px-2 py-1 rounded text-sm text-gray-600">
+                        {ITEM_TYPES.find(t => t.value === item.type)?.icon} {item.quantity}x {item.type}
+                      </span>
+                    ))}
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>Submitted: {formatDate(request.createdAt)}</span>
+                    <span>Expected: {formatDate(request.expectedDelivery)}</span>
+                  </div>
+                  
+                  {request.staffNotes && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-700">
+                      <strong>Staff Note:</strong> {request.staffNotes}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Past Requests */}
+      {pastRequests.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Past Requests</h2>
+          <div className="divide-y divide-gray-100">
+            {pastRequests.slice(0, 10).map(request => (
+              <div key={request.id} className="py-3 flex items-center justify-between">
+                <div>
+                  <span className="font-medium text-gray-800">{request.requestId}</span>
+                  <span className="text-gray-500 text-sm ml-2">
+                    {request.totalItems} items
+                  </span>
+                </div>
+                <span className="text-gray-500 text-sm">
+                  Delivered: {formatDate(request.actualDelivery || request.createdAt)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {requests.length === 0 && !showForm && (
+        <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+          <span className="text-5xl mb-4 block">🧺</span>
+          <p className="text-lg font-medium text-gray-800 mb-2">No laundry requests yet</p>
+          <p className="text-gray-500 mb-4">Submit your first laundry request to get started</p>
+          <Button
+            onClick={() => setShowForm(true)}
+            className="bg-[#2D6A4F] hover:bg-[#245a42] text-white"
+          >
+            Create Request
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 }

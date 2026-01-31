@@ -102,28 +102,28 @@ export default function GuestMeal() {
 
     if (loading) {
         return (
-            <div className="container mx-auto py-8 px-2 md:px-4 max-w-full">
-                <div className="text-center text-gray-600">Loading weekly menu from database...</div>
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center text-gray-500">Loading weekly menu...</div>
             </div>
         )
     }
     
     return (
-        <div className="container mx-auto py-8 px-2 md:px-4 max-w-full overflow-x-hidden">
-            <div className="mb-8 text-center">
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">Weekly Meal Menu</h1>
-                <p className="text-gray-600">Check out this week's meal schedule</p>
+        <div className="space-y-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h1 className="text-2xl font-bold text-gray-800 mb-1">Weekly Meal Menu</h1>
+                <p className="text-gray-500">Manage this week's meal schedule</p>
             </div>
 
-            <div className="rounded-lg border border-gray-200 shadow-lg bg-white overflow-x-auto">
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <Table className="min-w-full">
                     <TableHeader>
-                        <TableRow className="bg-blue-600 hover:bg-blue-800">
-                            <TableHead className="text-white font-bold text-base pl-4">Day</TableHead>
-                            <TableHead className="text-white font-bold text-base">{getIcon("breakfast")} Breakfast</TableHead>
-                            <TableHead className="text-white font-bold text-base">{getIcon("lunch")} Lunch</TableHead>
-                            <TableHead className="text-white font-bold text-base">{getIcon("dinner")} Dinner</TableHead>
-                            <TableHead className="text-white font-bold text-base text-center">Actions</TableHead>
+                        <TableRow className="bg-[#2D6A4F]">
+                            <TableHead className="text-white font-semibold text-sm pl-4">Day</TableHead>
+                            <TableHead className="text-white font-semibold text-sm">{getIcon("breakfast")} Breakfast</TableHead>
+                            <TableHead className="text-white font-semibold text-sm">{getIcon("lunch")} Lunch</TableHead>
+                            <TableHead className="text-white font-semibold text-sm">{getIcon("dinner")} Dinner</TableHead>
+                            <TableHead className="text-white font-semibold text-sm text-center">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -137,14 +137,14 @@ export default function GuestMeal() {
                                     key={meal.day}
                                     className={`transition-colors ${
                                         isToday 
-                                            ? "bg-yellow-100 hover:bg-yellow-200 border-l-4 border-yellow-500" 
-                                            : "hover:bg-blue-100 bg-white"
+                                            ? "bg-green-50 hover:bg-green-100 border-l-4 border-[#2D6A4F]" 
+                                            : "hover:bg-gray-50 bg-white"
                                     }`}
                                 >
-                                    <TableCell className={`font-bold text-base pl-4 ${
-                                        isToday ? "text-yellow-700" : "text-blue-700"
+                                    <TableCell className={`font-semibold text-sm pl-4 ${
+                                        isToday ? "text-[#2D6A4F]" : "text-gray-700"
                                     }`}>
-                                        {meal.day} {isToday && <span className="text-xs ml-2">(Today)</span>}
+                                        {meal.day} {isToday && <span className="text-xs ml-2 text-[#40916C]">(Today)</span>}
                                     </TableCell>
                                     <TableCell className="text-gray-700">
                                         {isEditing ? (
@@ -185,7 +185,7 @@ export default function GuestMeal() {
                                                 <Button
                                                     onClick={handleSave}
                                                     size="sm"
-                                                    className="bg-green-600 hover:bg-green-700 cursor-pointer"
+                                                    className="bg-[#2D6A4F] hover:bg-[#1B4332] cursor-pointer"
                                                 >
                                                     Save
                                                 </Button>
@@ -193,7 +193,7 @@ export default function GuestMeal() {
                                                     onClick={handleCancel}
                                                     size="sm"
                                                     variant="outline"
-                                                    className="bg-red-600 hover:bg-red-700 text-white hover:text-white cursor-pointer"
+                                                    className="border-gray-300 text-gray-600 hover:bg-gray-100 cursor-pointer"
                                                 >
                                                     Cancel
                                                 </Button>
@@ -203,11 +203,11 @@ export default function GuestMeal() {
                                                 onClick={() => handleEdit(meal)}
                                                 size="sm"
                                                 disabled={isToday}
-                                                className={`${
+                                                className={`cursor-pointer ${
                                                     isToday 
-                                                        ? "bg-gray-300 cursor-not-allowed" 
-                                                        : "bg-blue-600 hover:bg-blue-700"
-                                                }`+' cursor-pointer'}
+                                                        ? "bg-gray-300 cursor-not-allowed text-gray-500" 
+                                                        : "bg-[#2D6A4F] hover:bg-[#1B4332] text-white"
+                                                }`}
                                             >
                                                 {isToday ? "Can't Edit Today" : "Edit"}
                                             </Button>

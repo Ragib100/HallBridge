@@ -21,10 +21,29 @@ interface Invoice {
     isPaid?: boolean;
 }
 
+interface PaymentHistory {
+    id: string;
+    paymentId: string;
+    type: string;
+    amount: number;
+    status: string;
+    billingMonth: number;
+    billingYear: number;
+    paidDate: string | null;
+    createdAt: string;
+}
+
 export default function InvoicesPage() {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [paymentHistory, setPaymentHistory] = useState<PaymentHistory[]>([]);
     const [loading, setLoading] = useState(true);
     const { user } = useCurrentUser();
+
+    const getMonthName = (month: number, year: number) => {
+        const monthNames = ["January", "February", "March", "April", "May", "June", 
+                           "July", "August", "September", "October", "November", "December"];
+        return `${monthNames[month - 1]} ${year}`;
+    };
 
     useEffect(() => {
         const fetchBillingData = async () => {
@@ -49,6 +68,11 @@ export default function InvoicesPage() {
                         isPaid: data.currentBill.isPaid,
                     };
                     setInvoices([currentInvoice]);
+                }
+
+                // Store payment history
+                if (data.paymentHistory) {
+                    setPaymentHistory(data.paymentHistory);
                 }
             } catch (err) {
                 console.error('Error fetching invoices:', err);
@@ -151,6 +175,67 @@ export default function InvoicesPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <p className="text-gray-500">No invoices available</p>
+                </div>
+            )}
+
+            {/* Payment History */}
+            {paymentHistory.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-gray-100">
+                        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-[#2D6A4F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Payment History
+                        </h2>
+                    </div>
+                    <table className="w-full">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="text-left px-6 py-3 text-sm font-medium text-gray-500">Payment ID</th>
+                                <th className="text-left px-6 py-3 text-sm font-medium text-gray-500">Period</th>
+                                <th className="text-left px-6 py-3 text-sm font-medium text-gray-500">Type</th>
+                                <th className="text-left px-6 py-3 text-sm font-medium text-gray-500">Status</th>
+                                <th className="text-left px-6 py-3 text-sm font-medium text-gray-500">Paid Date</th>
+                                <th className="text-right px-6 py-3 text-sm font-medium text-gray-500">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {paymentHistory.map((payment) => (
+                                <tr key={payment.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 text-sm font-mono text-gray-600">{payment.paymentId}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-600">
+                                        {getMonthName(payment.billingMonth, payment.billingYear)}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                                            {payment.type.replace('_', ' ')}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                            payment.status === 'completed' 
+                                                ? 'bg-green-100 text-green-700' 
+                                                : payment.status === 'pending'
+                                                ? 'bg-yellow-100 text-yellow-700'
+                                                : 'bg-red-100 text-red-700'
+                                        }`}>
+                                            {payment.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-600">
+                                        {payment.paidDate 
+                                            ? new Date(payment.paidDate).toLocaleDateString('en-US', { 
+                                                month: 'short', day: 'numeric', year: 'numeric' 
+                                              })
+                                            : '-'
+                                        }
+                                    </td>
+                                    <td className="px-6 py-4 text-right font-bold text-gray-800">৳{payment.amount.toLocaleString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             )}
         </div>

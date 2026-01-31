@@ -30,6 +30,11 @@ const settingsData = [
   { key: "laundry_fee", value: "400" },
   { key: "maintenance_fee", value: "100" },
   { key: "wifi_fee", value: "100" },
+  // Meal prices
+  { key: "breakfast_price", value: "30" },
+  { key: "lunch_price", value: "60" },
+  { key: "dinner_price", value: "50" },
+  { key: "guest_meal_price", value: "80" },
 ];
 
 export async function seedSystemSettings(): Promise<{ success: number; skipped: number; failed: number }> {
