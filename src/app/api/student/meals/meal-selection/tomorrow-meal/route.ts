@@ -1,15 +1,42 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import connectDB from "@/lib/db";
 import Meal from "@/models/Meal";
+import User from "@/models/User";
 import { getCurrentDateBD, getNextDateBD } from "@/lib/dates";
 
 export async function PUT(req: Request) {
     try {
-        const { searchParams } = new URL(req.url);
-        const studentId = searchParams.get("studentId");
-        const { breakfast, lunch, dinner } = await req.json();
+        await connectDB();
 
-        // console.log("Received data:", { studentId, breakfast, lunch, dinner });
+        // Auth check
+        const cookieStore = await cookies();
+        const session = cookieStore.get("hb_session")?.value;
+        if (!session) {
+            return NextResponse.json(
+                { message: "Not authenticated" },
+                { status: 401 }
+            );
+        }
+
+        const user = await User.findById(session);
+        if (!user) {
+            return NextResponse.json(
+                { message: "User not found" },
+                { status: 404 }
+            );
+        }
+
+        if (user.role !== "student") {
+            return NextResponse.json(
+                { message: "Only students can update meal selection" },
+                { status: 403 }
+            );
+        }
+
+        // Use authenticated user's studentId instead of query param
+        const studentId = user.studentId;
+        const { breakfast, lunch, dinner } = await req.json();
 
         if (
             !studentId ||
@@ -22,8 +49,6 @@ export async function PUT(req: Request) {
                 { status: 400 }
             );
         }
-
-        await connectDB();
 
         const tomorrowDate = getNextDateBD();
 
@@ -72,19 +97,36 @@ export async function PUT(req: Request) {
     }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
-        const { searchParams } = new URL(req.url);
-        const studentId = searchParams.get("studentId");
+        await connectDB();
 
-        if (!studentId) {
+        // Auth check
+        const cookieStore = await cookies();
+        const session = cookieStore.get("hb_session")?.value;
+        if (!session) {
             return NextResponse.json(
-                { message: "Student ID is required" },
-                { status: 400 }
+                { message: "Not authenticated" },
+                { status: 401 }
             );
         }
 
-        await connectDB();
+        const user = await User.findById(session);
+        if (!user) {
+            return NextResponse.json(
+                { message: "User not found" },
+                { status: 404 }
+            );
+        }
+
+        if (user.role !== "student") {
+            return NextResponse.json(
+                { message: "Only students can access meal selection" },
+                { status: 403 }
+            );
+        }
+
+        const studentId = user.studentId;
 
         const tomorrowDate = getNextDateBD();
         // console.log("Tomorrow's Date (UTC):", tomorrowDate);

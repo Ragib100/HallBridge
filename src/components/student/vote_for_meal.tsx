@@ -33,7 +33,7 @@ export default function VoteForMeal( {mealinfo, onSubmit}: VoteForMealProps ) {
             if(!user) {
                 return;
             }
-            const url = `/api/student/meals/vote-for-meals?studentId=${user.id}`;
+            const url = `/api/student/meals/vote-for-meals`;
             const response = await fetch(url, {
                 method: "POST",
                 headers: {

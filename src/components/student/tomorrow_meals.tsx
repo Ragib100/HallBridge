@@ -19,7 +19,7 @@ export default function TomorrowMeals() {
             if (!user?.id) return;
 
             try {
-                const url = `/api/student/meals/meal-selection/tomorrow-meal?studentId=${user.id}`;
+                const url = `/api/student/meals/meal-selection/tomorrow-meal`;
 
                 const response = await fetch(url, {
                     method: "GET",
@@ -65,7 +65,7 @@ export default function TomorrowMeals() {
         }
 
         try {
-            const url = `/api/student/meals/meal-selection/tomorrow-meal?studentId=${user.id}`;
+            const url = `/api/student/meals/meal-selection/tomorrow-meal`;
             
             const response = await fetch(url, {
                 method: "PUT",

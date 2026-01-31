@@ -1,12 +1,41 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import connectDB from "@/lib/db";
 import GuestMeal from "@/models/GuestMeal";
+import User from "@/models/User";
 import { getNextDateBD } from "@/lib/dates";
 
 export async function PUT(req: Request) {
     try {
-        const { searchParams } = new URL(req.url);
-        const studentId = searchParams.get("studentId");
+        await connectDB();
+
+        // Auth check
+        const cookieStore = await cookies();
+        const session = cookieStore.get("hb_session")?.value;
+        if (!session) {
+            return NextResponse.json(
+                { message: "Not authenticated" },
+                { status: 401 }
+            );
+        }
+
+        const user = await User.findById(session);
+        if (!user) {
+            return NextResponse.json(
+                { message: "User not found" },
+                { status: 404 }
+            );
+        }
+
+        if (user.role !== "student") {
+            return NextResponse.json(
+                { message: "Only students can add guest meals" },
+                { status: 403 }
+            );
+        }
+
+        // Use authenticated user's studentId
+        const studentId = user.studentId;
         const { name, id, department, phone, breakfast, lunch, dinner } = await req.json();
 
         if (
@@ -20,8 +49,6 @@ export async function PUT(req: Request) {
                 { status: 400 }
             );
         }
-
-        await connectDB();
 
         const tomorrowDate = getNextDateBD();
 

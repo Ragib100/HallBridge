@@ -49,7 +49,7 @@ export default function GuestMeal() {
 		
 		try {
 			
-			const url = `/api/student/meals/meal-selection/guest-meal?studentId=${user.id}`;
+			const url = `/api/student/meals/meal-selection/guest-meal`;
 			const response = await fetch(url,{
 				method: "PUT",
 				headers: {

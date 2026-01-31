@@ -1,11 +1,40 @@
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
 import connectDB from "@/lib/db"
 import VoteMeal from "@/models/VoteMeal"
 import Meal from "@/models/Meal"
+import User from "@/models/User"
 
 export async function GET(req: Request) {
     try {
         await connectDB()
+
+        // Auth check
+        const cookieStore = await cookies();
+        const session = cookieStore.get("hb_session")?.value;
+        if (!session) {
+            return NextResponse.json(
+                { message: "Not authenticated" },
+                { status: 401 }
+            );
+        }
+
+        const user = await User.findById(session);
+        if (!user) {
+            return NextResponse.json(
+                { message: "User not found" },
+                { status: 404 }
+            );
+        }
+
+        // Only allow staff members
+        const staffRoles = ["admin", "mess_manager", "maintenance_staff", "financial_staff", "security_guard"];
+        if (!staffRoles.includes(user.role)) {
+            return NextResponse.json(
+                { message: "Forbidden - Staff access only" },
+                { status: 403 }
+            );
+        }
 
         // Get today's meals
         const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })

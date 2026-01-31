@@ -1,24 +1,50 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import connectDB from "@/lib/db";
 import Meal, { MealDocument} from "@/models/Meal";
 import WeeklyMeal, { WeeklyMealDocument } from "@/models/WeeklyMeal";
 import VoteMeal from "@/models/VoteMeal";
+import User from "@/models/User";
 import mongoose from "mongoose";
 import { getCurrentDateBD, getDayFromDateBD } from "@/lib/dates";
 
 export async function POST(req: Request) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    const dbSession = await mongoose.startSession();
+    dbSession.startTransaction();
 
     try {
-        const { searchParams } = new URL(req.url);
-        const studentId = searchParams.get("studentId");
+        await connectDB();
+
+        // Auth check
+        const cookieStore = await cookies();
+        const session = cookieStore.get("hb_session")?.value;
+        if (!session) {
+            return NextResponse.json(
+                { message: "Not authenticated" },
+                { status: 401 }
+            );
+        }
+
+        const user = await User.findById(session);
+        if (!user) {
+            return NextResponse.json(
+                { message: "User not found" },
+                { status: 404 }
+            );
+        }
+
+        if (user.role !== "student") {
+            return NextResponse.json(
+                { message: "Only students can vote for meals" },
+                { status: 403 }
+            );
+        }
+
+        // Use authenticated user's studentId
+        const studentId = user.studentId;
         const {mealTime, rating, comments } = await req.json();
 
-        // console.log({studentId, mealTime, rating, comments});
-
         if (
-            !studentId ||
             typeof rating !== "number" ||
             rating < 0 || rating > 5 ||
             (mealTime !== "breakfast" && mealTime !== "lunch" && mealTime !== "dinner")
@@ -29,8 +55,6 @@ export async function POST(req: Request) {
             );
         }
 
-        await connectDB();
-
         const currentDate = getCurrentDateBD();
 
         const voteMeal = new VoteMeal({
@@ -40,10 +64,10 @@ export async function POST(req: Request) {
             date: currentDate,
         });
 
-        const savedVoteMeal = await voteMeal.save({ session });
+        const savedVoteMeal = await voteMeal.save({ session: dbSession });
 
         if(!savedVoteMeal) {
-            await session.abortTransaction();
+            await dbSession.abortTransaction();
             return NextResponse.json(
                 { message: "Failed to save meal vote" },
                 { status: 500 }
@@ -53,19 +77,19 @@ export async function POST(req: Request) {
         const mealUpdate = await Meal.findOneAndUpdate(
             { studentId, date: currentDate },
             { [`${mealTime}_rating`]: savedVoteMeal._id },
-            { session, new: true }
+            { session: dbSession, new: true }
         );
 
         if(!mealUpdate) {
-            await session.abortTransaction();
+            await dbSession.abortTransaction();
             return NextResponse.json(
                 { message: "Meal record not found" },
                 { status: 404 }
             );
         }
 
-        await session.commitTransaction();
-        session.endSession();
+        await dbSession.commitTransaction();
+        dbSession.endSession();
 
         return NextResponse.json(
             {
@@ -76,8 +100,8 @@ export async function POST(req: Request) {
         );
     }
     catch (error) {
-        await session.abortTransaction();
-        session.endSession();
+        await dbSession.abortTransaction();
+        dbSession.endSession();
 
         console.error("Error submitting meal vote:", error);
         return NextResponse.json(
@@ -88,19 +112,36 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-
-    const { searchParams } = new URL(req.url);
-    const studentId = searchParams.get("studentId");
-
-    await connectDB();
-
     try {
-        if (!studentId) {
+        await connectDB();
+
+        // Auth check
+        const cookieStore = await cookies();
+        const session = cookieStore.get("hb_session")?.value;
+        if (!session) {
             return NextResponse.json(
-                { message: "Student ID is required" },
-                { status: 400 }
+                { message: "Not authenticated" },
+                { status: 401 }
             );
         }
+
+        const user = await User.findById(session);
+        if (!user) {
+            return NextResponse.json(
+                { message: "User not found" },
+                { status: 404 }
+            );
+        }
+
+        if (user.role !== "student") {
+            return NextResponse.json(
+                { message: "Only students can access voting" },
+                { status: 403 }
+            );
+        }
+
+        // Use authenticated user's studentId
+        const studentId = user.studentId;
 
         const currentDate = getCurrentDateBD();
         const meal = await Meal.findOne({ studentId, date: currentDate }).lean<MealDocument>();
@@ -124,9 +165,6 @@ export async function GET(req: Request) {
         }
 
         const mealsForToday = [];
-
-        // console.log(menu);
-        // console.log(meal);
 
         if (meal.breakfast_rating==null && meal.breakfast) {
             mealsForToday.push({

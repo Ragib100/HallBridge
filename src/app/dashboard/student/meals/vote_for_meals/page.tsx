@@ -18,7 +18,7 @@ export default function VoteForMealsPage() {
     useEffect(() => {
         const mealInfo = async () => {
             if(!user) return;
-            const url = `/api/student/meals/vote-for-meals?studentId=${user.id}`;
+            const url = `/api/student/meals/vote-for-meals`;
             try {
                 const response = await fetch(url, {
                     method: "GET",

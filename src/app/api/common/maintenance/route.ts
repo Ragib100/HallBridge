@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import MaintenanceRequest from "@/models/MaintenanceRequest";
+import { notifyMaintenanceCreated, notifyMaintenanceUpdated } from "@/lib/notifications";
 
 // GET /api/maintenance - Get maintenance requests
 // Query params: status, studentId (optional)
@@ -114,6 +115,15 @@ export async function POST(request: Request) {
       status: "pending",
     });
 
+    // Notify maintenance staff about new request
+    await notifyMaintenanceCreated(
+      maintenanceRequest.requestId,
+      maintenanceRequest._id.toString(),
+      category,
+      priority,
+      location
+    );
+
     return NextResponse.json(
       {
         message: "Maintenance request submitted successfully",
@@ -200,6 +210,20 @@ export async function PATCH(request: Request) {
 
     if (!updatedRequest) {
       return NextResponse.json({ message: "Request not found" }, { status: 404 });
+    }
+
+    // Notify student about status update
+    if (status && updatedRequest.student) {
+      const studentId = typeof updatedRequest.student === 'object' && '_id' in updatedRequest.student 
+        ? updatedRequest.student._id.toString() 
+        : updatedRequest.student.toString();
+      
+      await notifyMaintenanceUpdated(
+        studentId,
+        updatedRequest.requestId,
+        updatedRequest._id.toString(),
+        status
+      );
     }
 
     return NextResponse.json({

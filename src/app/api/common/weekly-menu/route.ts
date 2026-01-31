@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
 import connectDB from "@/lib/db"
 import WeeklyMenu from "@/models/WeeklyMeal"
+import User from "@/models/User"
 
 const meals = [
     {
@@ -47,10 +49,27 @@ const meals = [
     },
 ];
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
-
         await connectDB()
+
+        // Auth check - any authenticated user can view menu
+        const cookieStore = await cookies()
+        const session = cookieStore.get("hb_session")?.value
+        if (!session) {
+            return NextResponse.json(
+                { message: "Not authenticated" },
+                { status: 401 }
+            )
+        }
+
+        const user = await User.findById(session)
+        if (!user) {
+            return NextResponse.json(
+                { message: "User not found" },
+                { status: 404 }
+            )
+        }
 
         let weeklyMenu = await WeeklyMenu.find().lean()
 
@@ -83,6 +102,33 @@ export async function GET(req: Request) {
 
 export async function PUT(req: Request) {
     try {
+        await connectDB()
+
+        // Auth check - only mess_manager or admin can update menu
+        const cookieStore = await cookies()
+        const session = cookieStore.get("hb_session")?.value
+        if (!session) {
+            return NextResponse.json(
+                { message: "Not authenticated" },
+                { status: 401 }
+            )
+        }
+
+        const user = await User.findById(session)
+        if (!user) {
+            return NextResponse.json(
+                { message: "User not found" },
+                { status: 404 }
+            )
+        }
+
+        if (user.role !== "admin" && user.role !== "mess_manager") {
+            return NextResponse.json(
+                { message: "Only mess manager or admin can update menu" },
+                { status: 403 }
+            )
+        }
+
         const { day, breakfast, lunch, dinner } = await req.json()
 
         if (!day) {
@@ -91,8 +137,6 @@ export async function PUT(req: Request) {
                 { status: 400 }
             )
         }
-
-        await connectDB()
 
         const updatedMeal = await WeeklyMenu.findOneAndUpdate(
             { day },

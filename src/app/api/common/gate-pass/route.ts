@@ -5,6 +5,7 @@ import User from "@/models/User";
 import GatePass from "@/models/GatePass";
 import { getCurrentDateBD } from "@/lib/dates";
 import mongoose from "mongoose";
+import { notifyGatePassUpdated } from "@/lib/notifications";
 
 // GET /api/gate-pass - Get user's gate passes
 export async function GET() {
@@ -210,6 +211,14 @@ export async function PATCH(request: Request) {
           approvedAt: now
         });
         
+        // Notify student about approval
+        await notifyGatePassUpdated(
+          gatePass.studentId.toString(),
+          gatePass.passId,
+          gatePass._id.toString(),
+          "approved"
+        );
+        
         return NextResponse.json(
           {
             message: "Gate pass approved successfully",
@@ -287,6 +296,14 @@ export async function PATCH(request: Request) {
           status: "rejected",
           rejectionReason: body.reason || "Not specified"
         });
+        
+        // Notify student about rejection
+        await notifyGatePassUpdated(
+          gatePass.studentId.toString(),
+          gatePass.passId,
+          gatePass._id.toString(),
+          "rejected"
+        );
         
         return NextResponse.json(
           {
