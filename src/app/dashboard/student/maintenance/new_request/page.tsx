@@ -54,7 +54,7 @@ export default function NewRequestPage() {
         setError(null);
 
         try {
-            const response = await fetch('/api/maintenance', {
+            const response = await fetch('/api/common/maintenance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),

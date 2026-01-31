@@ -68,7 +68,7 @@ export default function StudentGatePassPage() {
 		setIsSubmitting(true);
 
 		try {
-			const response = await fetch('/api/gate-pass', {
+			const response = await fetch('/api/common/gate-pass', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

@@ -3,14 +3,27 @@
 import { useCallback, useEffect, useState } from "react";
 import type { StaffRole } from "@/types";
 
+type RoomAllocation = {
+  roomId: string;
+  roomNumber: string;
+  floor: number;
+};
+
 export type CurrentUser = {
   id: string;
   fullName: string;
   email: string;
   userType: "student" | "staff" | "admin";
+
+  studentId?: string;
+  roomAllocation?: RoomAllocation;
+
   staffRole?: StaffRole;
+
   phone?: string;
   isActive?: boolean;
+  approvalStatus?: "pending" | "approved" | "rejected";
+  mustChangePassword?: boolean;
   createdAt?: string;
 };
 

@@ -47,7 +47,7 @@ export default function MyRequestsPage() {
 
     const fetchRequests = async () => {
         try {
-            const response = await fetch('/api/maintenance?studentOnly=true');
+            const response = await fetch('/api/common/maintenance?studentOnly=true');
             const data = await response.json();
             
             if (response.ok) {

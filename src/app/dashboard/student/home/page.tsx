@@ -63,8 +63,8 @@ export default function HomePage() {
 
         const [mealsRes, maintenanceRes, billingRes] = await Promise.all([
           fetch(`/api/student/meals/meal-selection/tomorrow-meal?studentId=${userData.user.id}`).catch(() => null),
-          fetch("/api/maintenance?limit=3").catch(() => null),
-          fetch("/api/billing").catch(() => null),
+          fetch("/api/common/maintenance?limit=3").catch(() => null),
+          fetch("/api/student/billing").catch(() => null),
         ]);
 
         if (mealsRes?.ok) {

@@ -56,7 +56,7 @@ export default function SecurityPage() {
   const fetchGatePasses = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/gate-pass');
+      const response = await fetch('/api/common/gate-pass');
       if (!response.ok) {
         throw new Error('Failed to fetch gate passes');
       }
@@ -71,7 +71,7 @@ export default function SecurityPage() {
 
   const handleAction = async (passId: string, action: string) => {
     try {
-      const response = await fetch('/api/gate-pass', {
+      const response = await fetch('/api/common/gate-pass', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

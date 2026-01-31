@@ -53,7 +53,7 @@ export default function MaintenancePage() {
 
   const fetchTasks = async () => {
     try {
-      const response = await fetch('/api/maintenance');
+      const response = await fetch('/api/common/maintenance');
       const data = await response.json();
       
       if (response.ok) {
@@ -100,7 +100,7 @@ export default function MaintenancePage() {
   const handleStatusUpdate = async (taskId: string, newStatus: 'in-progress' | 'completed') => {
     setUpdating(taskId);
     try {
-      const response = await fetch('/api/maintenance', {
+      const response = await fetch('/api/common/maintenance', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: taskId, status: newStatus }),

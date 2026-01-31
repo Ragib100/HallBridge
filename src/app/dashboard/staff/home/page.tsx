@@ -167,7 +167,7 @@ export default function StaffHomePage() {
 
     const fetchSecurityStats = async () => {
         try {
-            const response = await fetch('/api/gate-pass')
+            const response = await fetch('/api/common/gate-pass')
             if (!response.ok) {
                 throw new Error('Failed to fetch gate pass stats')
             }

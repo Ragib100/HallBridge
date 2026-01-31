@@ -17,7 +17,7 @@ export default function VotingResultPage() {
     useEffect(() => {
         const fetchVotingResults = async () => {
             try {
-                const response = await fetch('/api/meals/voting-results')
+                const response = await fetch('/api/staff/meals/voting-results')
                 const data = await response.json()
                 if (data.mealRatings) {
                     setMealRatings(data.mealRatings)

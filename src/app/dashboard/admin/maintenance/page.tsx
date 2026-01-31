@@ -53,7 +53,7 @@ export default function AdminMaintenancePage() {
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch("/api/maintenance");
+      const response = await fetch("/api/common/maintenance");
       const data = await response.json();
 
       if (response.ok) {

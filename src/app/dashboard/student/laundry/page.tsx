@@ -6,6 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectI
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { getNextDateBD } from '@/lib/dates';
 
 interface LaundryFormData {
 	pickupDate: string;
@@ -26,8 +27,8 @@ export default function StudentLaundryPage() {
 	const [submitting, setSubmitting] = useState<boolean>(false);
 
 	const [formData, setFormData] = useState<LaundryFormData>({
-		pickupDate: '',
-		pickupTime: "10:00:00",
+		pickupDate: getNextDateBD(),
+		pickupTime: "10:00",
 		serviceType: '',
 		itemCount: '',
 		specialInstructions: ''
@@ -101,6 +102,7 @@ export default function StudentLaundryPage() {
 								type="date"
 								name="pickupDate"
 								value={formData.pickupDate}
+								min={getNextDateBD()}
 								onChange={handleInputChange}
 								className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 							/>
@@ -158,7 +160,7 @@ export default function StudentLaundryPage() {
 							value={formData.specialInstructions}
 							onChange={handleInputChange}
 							placeholder="Any special care instructions..."
-							className="min-h-[100px] focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
+							className="min-h-25 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 						/>
 					</div>
 

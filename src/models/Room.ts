@@ -1,4 +1,4 @@
-import mongoose, { Schema, type InferSchemaType } from "mongoose";
+import mongoose, { Schema, type InferSchemaType, Model } from "mongoose";
 
 export type RoomStatus = "occupied" | "vacant" | "partial" | "maintenance";
 
@@ -66,6 +66,22 @@ roomSchema.methods.updateStatus = function () {
   }
 };
 
+// Type for the stats returned by getStats
+export type RoomStats = {
+  totalRooms: number;
+  occupied: number;
+  partial: number;
+  vacant: number;
+  maintenance: number;
+  totalBeds: number;
+  occupiedBeds: number;
+};
+
+// Interface for Room model statics
+interface RoomModel extends Model<RoomDocument> {
+  getStats(): Promise<RoomStats>;
+}
+
 // Static method to get room statistics
 roomSchema.statics.getStats = async function () {
   const stats = await this.aggregate([
@@ -110,6 +126,7 @@ export type RoomDocument = InferSchemaType<typeof roomSchema> & {
   updateStatus: () => void;
 };
 
-const Room = mongoose.models.Room || mongoose.model("Room", roomSchema);
+
+const Room = (mongoose.models.Room as RoomModel) || mongoose.model<RoomDocument, RoomModel>("Room", roomSchema);
 
 export default Room;

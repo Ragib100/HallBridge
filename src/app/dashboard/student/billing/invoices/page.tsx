@@ -29,7 +29,7 @@ export default function InvoicesPage() {
     useEffect(() => {
         const fetchBillingData = async () => {
             try {
-                const response = await fetch('/api/billing');
+                const response = await fetch('/api/student/billing');
                 if (!response.ok) {
                     throw new Error('Failed to fetch billing data');
                 }

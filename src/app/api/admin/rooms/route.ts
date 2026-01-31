@@ -63,17 +63,27 @@ export async function GET(request: Request) {
         status: room.status,
         amenities: room.amenities,
         hallId: room.hallId,
-        beds: room.beds.map((bed: { bedNumber: number; studentId: { _id: mongoose.Types.ObjectId; fullName: string; studentId: string } | null; isOccupied: boolean }) => ({
-          bedNumber: bed.bedNumber,
-          isOccupied: bed.isOccupied,
-          student: bed.studentId
-            ? {
-                id: bed.studentId._id,
-                fullName: bed.studentId.fullName,
-                studentId: bed.studentId.studentId,
-              }
-            : null,
-        })),
+        beds: room.beds.map((bed: any) => {
+          let student = null;
+          if (
+            bed.studentId &&
+            typeof bed.studentId === "object" &&
+            "_id" in bed.studentId &&
+            "fullName" in bed.studentId &&
+            "studentId" in bed.studentId
+          ) {
+            student = {
+              id: bed.studentId._id,
+              fullName: bed.studentId.fullName,
+              studentId: bed.studentId.studentId,
+            };
+          }
+          return {
+            bedNumber: bed.bedNumber,
+            isOccupied: bed.isOccupied,
+            student,
+          };
+        }),
         availableBeds: room.beds.filter((b: { isOccupied: boolean }) => !b.isOccupied).length,
         occupiedBeds: room.beds.filter((b: { isOccupied: boolean }) => b.isOccupied).length,
       })),

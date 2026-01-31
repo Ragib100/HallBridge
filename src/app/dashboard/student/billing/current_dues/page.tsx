@@ -32,7 +32,7 @@ export default function CurrentDuesPage() {
     useEffect(() => {
         const fetchBillingData = async () => {
             try {
-                const response = await fetch('/api/billing');
+                const response = await fetch('/api/student/billing');
                 if (!response.ok) {
                     throw new Error('Failed to fetch billing data');
                 }
@@ -51,6 +51,7 @@ export default function CurrentDuesPage() {
 
     const handleDownloadInvoice = () => {
         if (!billdata) return;
+        console.log(user);
         generateInvoicePDF(
             {
                 invoice_id: billdata.invoice_id,
