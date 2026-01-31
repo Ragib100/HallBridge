@@ -80,7 +80,7 @@ export default function SettingsPage() {
         setLoading(true);
         
         // Fetch settings
-        const res = await fetch("/api/settings");
+        const res = await fetch("/api/admin/settings");
         if (!res.ok) throw new Error("Failed to load settings");
         const data = await res.json();
 

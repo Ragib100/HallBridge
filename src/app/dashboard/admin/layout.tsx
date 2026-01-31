@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { NotificationDropdown } from "@/components/common/notification_dropdown";
+import { useState, useEffect } from "react";
 
 const navItems = [
   { name: "Overview", path: "/dashboard/admin", icon: "grid" },
@@ -93,6 +94,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pageInfo = getPageTitle(pathname);
   const { user, loading } = useCurrentUser();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Close sidebar when route changes (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
 
   const displayName = loading ? "Loading..." : user?.fullName || "Unknown User";
   const displayRole = loading
@@ -118,8 +125,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen bg-[#1a1d21]">
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-48 bg-[#1a1d21] flex flex-col">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50
+        w-64 bg-[#1a1d21] flex flex-col
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        {/* Close button */}
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="absolute top-4 right-4 text-gray-400 hover:text-white"
+        >
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
         {/* Logo */}
         <div className="p-4">
           <Image
@@ -158,49 +188,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         {/* Bottom Section */}
-        <div className="p-4 space-y-4">
-          {/* Logout Button */}
-          <button 
-            onClick={handleLogout}
-            className="group flex items-center gap-3 w-full px-4 py-2.5 rounded-xl border border-red-500 text-red-500 bg-[#1f1f23] shadow-sm transition-all duration-200 hover:bg-[#2b0f0f] hover:border-red-400 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500/40"
-          >
-            <svg className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            <span className="text-sm font-medium">Logout</span>
-          </button>
-
-          {/* User Profile */}
-          <button
-            onClick={handleProfile}
-            className="flex items-center gap-3 bg-[#252a30] rounded-lg p-3 w-full hover:bg-[#2d3238] transition-colors"
-          >
-            <Image
-              src="/logos/profile.png"
-              alt="Profile"
-              width={40}
-              height={40}
-              className="w-10 h-10 rounded-full object-cover"
-            />
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-white text-sm font-medium truncate">{displayName}</p>
-              <p className="text-gray-500 text-xs truncate">{displayRole}</p>
-            </div>
-          </button>
+        <div className="p-4">
+          {/* App Info */}
+          <div className="text-center text-gray-500 text-xs">
+            <p>HallBridge v1.0</p>
+            <p className="mt-1">© 2026 All rights reserved</p>
+          </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#f5f5f5] rounded-tl-3xl overflow-hidden">
+      <main className="flex-1 bg-[#f5f5f5] overflow-hidden">
         {/* Header */}
-        <header className="bg-white px-8 py-4 flex items-center justify-between border-b border-gray-100">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">{pageInfo.title}</h1>
-            <p className="text-gray-500 text-sm">{formatDate()}</p>
-          </div>
+        <header className="bg-white px-4 md:px-8 py-4 flex items-center justify-between border-b border-gray-100">
           <div className="flex items-center gap-4">
+            {/* Menu Toggle Button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-800">{pageInfo.title}</h1>
+              <p className="text-gray-500 text-xs md:text-sm hidden sm:block">{formatDate()}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 md:gap-4">
             <NotificationDropdown />
-            <div className="relative">
+            <div className="relative hidden md:block">
               <input
                 type="text"
                 placeholder="Search students, rooms, reports..."
@@ -210,11 +228,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
+            {/* Profile */}
+            <button
+              onClick={handleProfile}
+              className="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1.5 transition-colors"
+            >
+              <Image
+                src="/logos/profile.png"
+                alt="Profile"
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+              <span className="hidden md:block text-sm font-medium text-gray-700">{displayName}</span>
+            </button>
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              title="Logout"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="p-8 overflow-auto h-[calc(100vh-80px)]">
+        <div className="p-4 md:p-8 overflow-auto h-[calc(100vh-80px)]">
           {children}
         </div>
       </main>
