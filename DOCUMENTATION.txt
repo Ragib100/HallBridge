@@ -1,0 +1,1792 @@
+================================================================================
+                     HALLBRIDGE - COMPLETE SYSTEM DOCUMENTATION
+                     Hall/Hostel Management System
+                     Version: 1.0.0
+                     Date: January 31, 2026
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+1. SYSTEM OVERVIEW
+2. USER ROLES AND PERMISSIONS
+3. DATA MODELS (For ER Diagram / Class Diagram)
+4. USE CASES
+5. ACTIVITY DIAGRAMS
+6. SEQUENCE DIAGRAMS
+7. CONTEXT DIAGRAM (DFD Level 0)
+8. DATA FLOW DIAGRAMS
+9. API ENDPOINTS
+10. SYSTEM WORKFLOWS
+
+================================================================================
+1. SYSTEM OVERVIEW
+================================================================================
+
+HallBridge is a comprehensive web-based Hall/Hostel Management System designed 
+for university/college residential halls. It manages student accommodations, 
+meals, gate passes, laundry services, maintenance requests, and financial 
+operations.
+
+TECHNOLOGY STACK:
+-----------------
+- Frontend: Next.js 14 (App Router), React, TypeScript, Tailwind CSS
+- Backend: Next.js API Routes
+- Database: MongoDB with Mongoose ODM
+- Authentication: Session-based (HTTP-only cookies)
+- Email: Nodemailer with SMTP
+
+KEY FEATURES:
+-------------
+1. Student seat request and room allocation
+2. Daily meal selection and guest meal booking
+3. Gate pass management with entry/exit tracking
+4. Laundry service requests
+5. Maintenance request submission and tracking
+6. Payment and billing management
+7. Admin dashboard with statistics
+8. Role-based access control
+9. Real-time notifications
+10. Weekly meal menu management
+
+================================================================================
+2. USER ROLES AND PERMISSIONS
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              USER TYPES                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ADMIN                                                                      │
+│  ├── Full system access                                                     │
+│  ├── User management (approve/reject students, create staff)                │
+│  ├── Room allocation                                                        │
+│  ├── System settings                                                        │
+│  ├── View all reports and statistics                                        │
+│  └── Override any staff action                                              │
+│                                                                             │
+│  STAFF (5 roles)                                                            │
+│  ├── Mess Manager                                                           │
+│  │   ├── Manage weekly meal menu                                            │
+│  │   ├── View meal counts and statistics                                    │
+│  │   └── View meal voting results                                           │
+│  │                                                                          │
+│  ├── Financial Staff                                                        │
+│  │   ├── Record expenses                                                    │
+│  │   ├── View financial reports                                             │
+│  │   └── Process payments (manual)                                          │
+│  │                                                                          │
+│  ├── Maintenance Staff                                                      │
+│  │   ├── View maintenance requests                                          │
+│  │   ├── Update request status                                              │
+│  │   └── Mark requests as completed                                         │
+│  │                                                                          │
+│  ├── Laundry Manager                                                        │
+│  │   ├── View laundry requests                                              │
+│  │   ├── Update laundry status                                              │
+│  │   └── Track pickup/delivery                                              │
+│  │                                                                          │
+│  └── Security Guard                                                         │
+│      ├── Approve/reject gate passes                                         │
+│      ├── Record student entry/exit                                          │
+│      └── View gate pass list                                                │
+│                                                                             │
+│  STUDENT                                                                    │
+│  ├── Submit seat request (registration)                                     │
+│  ├── Select daily meals                                                     │
+│  ├── Book guest meals                                                       │
+│  ├── Submit gate pass requests                                              │
+│  ├── Submit laundry requests                                                │
+│  ├── Submit maintenance requests                                            │
+│  ├── View and pay bills                                                     │
+│  └── Rate meals                                                             │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+APPROVAL STATUS (Students only):
+- pending  → Waiting for admin approval
+- approved → Approved and room allocated
+- rejected → Application rejected
+
+================================================================================
+3. DATA MODELS (For ER Diagram / Class Diagram)
+================================================================================
+
+=======================================
+ENTITY: User
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - fullName: String (required)
+  - email: String (required, unique)
+  - phone: String (unique, sparse)
+  - password: String
+  - userType: Enum ['student', 'staff', 'admin'] (required)
+  - approvalStatus: Enum ['pending', 'approved', 'rejected'] (default: pending)
+  - isVerified: Boolean (default: false)
+  - roomAllocation: {
+      roomId: ObjectId (FK → Room)
+      bedNumber: Number
+      floorNumber: String
+      roomNumber: Number
+      studentId: String
+      allocatedAt: Date
+    }
+  - staffRole: Enum ['mess_manager', 'financial_staff', 'maintenance_staff', 
+                     'laundry_manager', 'security_guard']
+  - studentId: String
+  - isActive: Boolean (default: true)
+  - googleId: String (sparse)
+  - createdAt: Date
+  - updatedAt: Date
+
+Relationships:
+  - Has One: Room (via roomAllocation.roomId)
+  - Has Many: Meal, GuestMeal, VoteMeal, Payment, GatePass, Laundry,
+              MaintenanceRequest, Notification, EntryExitLog
+
+=======================================
+ENTITY: Room
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - floorNumber: Number (1-8, required)
+  - roomNumber: String (required)
+  - roomName: String (required)
+  - capacity: Number (default: 4)
+  - beds: [{
+      bedNumber: Number (required)
+      occupant: ObjectId (FK → User, nullable)
+      isReserved: Boolean (default: false)
+    }]
+  - status: Enum ['occupied', 'vacant', 'partial', 'maintenance'] (default: vacant)
+  - amenities: Array of Enum ['AC', 'Fan', 'Attached Bath', 'Common Bath', 
+                              'Balcony', 'WiFi']
+  - notes: String
+
+Relationships:
+  - Has Many: User (via beds[].occupant)
+
+Indexes:
+  - {floorNumber, roomNumber}: unique
+
+=======================================
+ENTITY: Meal
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - studentId: ObjectId (FK → User, required)
+  - date: Date (required)
+  - breakfast: Boolean (default: false)
+  - lunch: Boolean (default: false)
+  - dinner: Boolean (default: false)
+  - isLocked: Boolean (default: false)
+  - lockedAt: Date
+  - breakfast_rating: String
+  - lunch_rating: String
+  - dinner_rating: String
+  - createdAt: Date
+  - updatedAt: Date
+
+Relationships:
+  - Belongs To: User (via studentId)
+
+=======================================
+ENTITY: GuestMeal
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - studentId: ObjectId (FK → User, required)
+  - name: String (required) - Guest's name
+  - id: String (required) - Guest's ID
+  - department: String (required)
+  - phone: String (required)
+  - date: Date (required)
+  - breakfast: Boolean (default: false)
+  - lunch: Boolean (default: false)
+  - dinner: Boolean (default: false)
+  - createdAt: Date
+  - updatedAt: Date
+
+Relationships:
+  - Belongs To: User (via studentId)
+
+=======================================
+ENTITY: VoteMeal
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - studentId: ObjectId (FK → User, required)
+  - rating: Number (0-5, required)
+  - comments: String (default: "")
+  - createdAt: Date
+  - updatedAt: Date
+
+Relationships:
+  - Belongs To: User (via studentId)
+
+=======================================
+ENTITY: WeeklyMeal
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - day: Enum ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 
+               'Thursday', 'Friday'] (required)
+  - breakfast: String (required)
+  - lunch: String (required)
+  - dinner: String (required)
+  - createdAt: Date
+  - updatedAt: Date
+
+Relationships: None (standalone configuration)
+
+=======================================
+ENTITY: Payment
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - paymentId: String (required, unique) - Format: PAY-YYYYMM-XXXXX
+  - student: ObjectId (FK → User, required)
+  - type: Enum ['hall_fee', 'mess_fee', 'laundry_fee', 'fine', 'other'] (required)
+  - amount: Number (min: 0, required)
+  - status: Enum ['pending', 'completed', 'failed', 'refunded'] (default: pending)
+  - billingMonth: Number (1-12, required)
+  - billingYear: Number (required)
+  - dueDate: Date (required)
+  - paidDate: Date
+  - paymentMethod: Enum ['cash', 'card', 'online', 'bank_transfer']
+  - transactionRef: String
+  - processedBy: ObjectId (FK → User)
+  - description: String
+  - lateFee: Number (default: 0)
+  - discount: Number (default: 0)
+  - finalAmount: Number (required)
+  - createdAt: Date
+  - updatedAt: Date
+
+Relationships:
+  - Belongs To: User (via student)
+  - Belongs To: User (via processedBy)
+
+=======================================
+ENTITY: GatePass
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - passId: String (required, unique) - Format: GP-YYYY-XXXX
+  - studentId: ObjectId (FK → User, required)
+  - reason: Enum ['home', 'medical', 'personal', 'family', 'academic', 'other']
+  - otherReason: String
+  - destination: String (required)
+  - leaveDate: Date (required)
+  - leaveTime: String (required)
+  - returnDate: Date (required)
+  - contactPhone: String (required)
+  - emergencyContact: String (required)
+  - emergencyPhone: String (required)
+  - status: Enum ['pending', 'approved', 'rejected', 'active', 'completed', 'late']
+            (default: pending)
+  - actualDeparture: Date
+  - actualReturn: Date
+  - checkedOutBy: ObjectId (FK → User)
+  - checkedInBy: ObjectId (FK → User)
+  - approvedBy: ObjectId (FK → User)
+  - approvedAt: Date
+  - approverNotes: String
+  - rejectionReason: String
+  - createdAt: Date
+  - updatedAt: Date
+
+Relationships:
+  - Belongs To: User (via studentId)
+  - Belongs To: User (via checkedOutBy, checkedInBy, approvedBy)
+  - Has Many: EntryExitLog
+
+=======================================
+ENTITY: EntryExitLog
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - logId: String (required, unique) - Format: LOG-YYYYMM-XXXX
+  - student: ObjectId (FK → User, required)
+  - type: Enum ['entry', 'exit'] (required)
+  - timestamp: Date (required, default: now)
+  - gatePass: ObjectId (FK → GatePass)
+  - loggedBy: ObjectId (FK → User, required)
+  - notes: String
+  - isLate: Boolean (default: false)
+  - createdAt: Date
+  - updatedAt: Date
+
+Relationships:
+  - Belongs To: User (via student, loggedBy)
+  - Belongs To: GatePass (via gatePass)
+
+=======================================
+ENTITY: MaintenanceRequest
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - requestId: String (required, unique) - Format: MT-YYYY-XXX
+  - student: ObjectId (FK → User, required)
+  - category: Enum ['electrical', 'plumbing', 'furniture', 'ac-heating', 
+                    'doors-windows', 'internet', 'other'] (required)
+  - priority: Enum ['urgent', 'high', 'normal', 'low'] (required)
+  - title: String (required)
+  - location: String (required)
+  - description: String
+  - status: Enum ['pending', 'in-progress', 'completed', 'cancelled'] 
+            (default: pending)
+  - assignedTo: ObjectId (FK → User)
+  - assignedAt: Date
+  - completedAt: Date
+  - staffNotes: String
+  - createdAt: Date
+  - updatedAt: Date
+
+Relationships:
+  - Belongs To: User (via student, assignedTo)
+
+=======================================
+ENTITY: Laundry
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - requestId: String (required, unique) - Format: LND-YYYY-XXX
+  - student: ObjectId (FK → User, required)
+  - items: [{
+      type: Enum ['shirt', 'pant', 'bedsheet', 'towel', 'other'] (required)
+      quantity: Number (min: 1, required)
+      notes: String
+    }]
+  - totalItems: Number (min: 1, required)
+  - status: Enum ['pending', 'collected', 'washing', 'ready', 'delivered']
+            (default: pending)
+  - pickupDate: Date
+  - expectedDelivery: Date
+  - actualDelivery: Date
+  - handledBy: ObjectId (FK → User)
+  - staffNotes: String
+  - studentNotes: String
+  - cost: Number (default: 0)
+  - createdAt: Date
+  - updatedAt: Date
+
+Relationships:
+  - Belongs To: User (via student, handledBy)
+
+=======================================
+ENTITY: Expense
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - expenseId: String (required, unique) - Format: EXP-YYYYMM-XXXX
+  - category: Enum ['market', 'utilities', 'maintenance', 'salary', 
+                    'equipment', 'other'] (required)
+  - amount: Number (min: 0, required)
+  - description: String (required)
+  - date: Date (required, default: now)
+  - addedBy: ObjectId (FK → User, required)
+  - receipt: String
+  - vendor: String
+  - notes: String
+  - createdAt: Date
+  - updatedAt: Date
+
+Relationships:
+  - Belongs To: User (via addedBy)
+
+=======================================
+ENTITY: Notification
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - userId: ObjectId (FK → User, required)
+  - type: Enum ['meal', 'payment', 'gatepass', 'maintenance', 'notice', 
+                'system', 'laundry'] (required)
+  - title: String (maxlength: 200, required)
+  - message: String (maxlength: 1000, required)
+  - priority: Enum ['low', 'normal', 'high'] (default: normal)
+  - metadata: {
+      relatedType: Enum ['user', 'payment', 'gatepass', 'maintenance', 
+                         'laundry', 'meal']
+      relatedId: ObjectId
+    }
+  - isRead: Boolean (default: false)
+  - readAt: Date
+  - createdAt: Date (TTL: 30 days)
+
+Relationships:
+  - Belongs To: User (via userId)
+
+=======================================
+ENTITY: PasswordResetToken
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - userId: ObjectId (FK → User, required)
+  - email: String (required, lowercase)
+  - otp: String (required, 6 digits)
+  - expiresAt: Date (required, TTL: 10 minutes)
+  - attempts: Number (default: 0, max: 5)
+  - isVerified: Boolean (default: false)
+
+Relationships:
+  - Belongs To: User (via userId)
+
+=======================================
+ENTITY: SystemSettings
+=======================================
+Attributes:
+  - _id: ObjectId (PK)
+  - key: String (required, unique)
+  - value: Mixed (required)
+  - category: String (default: 'operations')
+  - description: String
+
+Default Settings:
+  - hall_name, institution_address, admin_email, admin_phone
+  - emergency_contact, meal_cutoff_time, gate_pass_duration
+  - gate_pass_unit, max_gate_pass_days
+  - laundry_pickup_day, laundry_delivery_days
+  - check_in_time, late_entry_fine, max_laundry_items
+  - bill_generation_date, payment_due_days, late_fee_percent
+  - monthly_rent, laundry_fee, maintenance_fee, wifi_fee
+  - breakfast_price, lunch_price, dinner_price, guest_meal_price
+
+
+================================================================================
+ENTITY RELATIONSHIP DIAGRAM (ERD) - TEXT REPRESENTATION
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│                              ┌──────────────┐                               │
+│         ┌────────────────────│     USER     │────────────────────┐          │
+│         │                    └──────┬───────┘                    │          │
+│         │                           │                            │          │
+│    ┌────▼────┐              ┌───────▼───────┐              ┌─────▼─────┐    │
+│    │  ROOM   │              │   STUDENT     │              │   STAFF   │    │
+│    │  BEDS   │◄─────────────│  ALLOCATION   │              │   ROLES   │    │
+│    └─────────┘              └───────────────┘              └───────────┘    │
+│                                                                             │
+│    Student Creates:                       Staff Manages:                    │
+│    ┌───────────────┐                      ┌───────────────┐                 │
+│    │     Meal      │                      │    Expense    │                 │
+│    │  GuestMeal    │                      │ WeeklyMeal    │                 │
+│    │   VoteMeal    │                      │EntryExitLog   │                 │
+│    │   Payment     │                      └───────────────┘                 │
+│    │   GatePass    │                                                        │
+│    │   Laundry     │         System Manages:                                │
+│    │ Maintenance   │         ┌───────────────┐                              │
+│    └───────────────┘         │ Notification  │                              │
+│                              │ SystemSettings│                              │
+│    ┌───────────────┐         │ PasswordReset │                              │
+│    │   GatePass    │◄────────└───────────────┘                              │
+│    └───────┬───────┘                                                        │
+│            │                                                                │
+│    ┌───────▼───────┐                                                        │
+│    │ EntryExitLog  │                                                        │
+│    └───────────────┘                                                        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+CARDINALITY:
+- User (1) ─── (0..n) Meal
+- User (1) ─── (0..n) GuestMeal
+- User (1) ─── (0..n) VoteMeal
+- User (1) ─── (0..n) Payment
+- User (1) ─── (0..n) GatePass
+- User (1) ─── (0..n) Laundry
+- User (1) ─── (0..n) MaintenanceRequest
+- User (1) ─── (0..n) Notification
+- User (1) ─── (0..n) EntryExitLog
+- User (1) ─── (0..1) Room (via roomAllocation)
+- Room (1) ─── (0..4) User (via beds)
+- GatePass (1) ─── (0..n) EntryExitLog
+
+
+================================================================================
+4. USE CASES
+================================================================================
+
+=======================================
+ACTORS
+=======================================
+1. STUDENT (Primary)
+   - Registered hall resident
+   
+2. ADMIN (Primary)
+   - Hall administrator with full access
+   
+3. MESS MANAGER (Staff)
+   - Manages meal menu and meal statistics
+   
+4. FINANCIAL STAFF (Staff)
+   - Manages expenses and financial reports
+   
+5. MAINTENANCE STAFF (Staff)
+   - Handles maintenance requests
+   
+6. LAUNDRY MANAGER (Staff)
+   - Manages laundry service
+   
+7. SECURITY GUARD (Staff)
+   - Manages gate passes and entry/exit
+
+8. SYSTEM (Secondary)
+   - Automated processes (notifications, TTL cleanup)
+
+9. EMAIL SERVICE (External)
+   - Sends notification emails
+
+=======================================
+USE CASE LIST
+=======================================
+
+UC01: Register for Hall Seat
+  Actor: Student (Prospective)
+  Description: Student submits application for hall seat
+  Precondition: Student is not registered
+  Postcondition: Application submitted with pending status
+  Flow:
+    1. Student fills registration form
+    2. System validates data
+    3. System creates user with pending status
+    4. System sends confirmation email
+    5. Student waits for admin approval
+
+UC02: Login
+  Actor: Student, Staff, Admin
+  Description: User authenticates to access the system
+  Precondition: User has valid credentials
+  Postcondition: User logged in with session created
+  Flow:
+    1. User enters email and password
+    2. System validates credentials
+    3. System checks approval status (students)
+    4. System creates session cookie
+    5. User redirected to dashboard
+
+UC03: Login with Google
+  Actor: Student, Staff, Admin
+  Description: User authenticates via Google OAuth
+  Precondition: User has Google account
+  Postcondition: User logged in or registered
+  Flow:
+    1. User clicks "Login with Google"
+    2. System redirects to Google OAuth
+    3. User authorizes application
+    4. System creates/finds user account
+    5. System creates session
+    6. User redirected to dashboard
+
+UC04: Reset Password
+  Actor: Student, Staff, Admin
+  Description: User resets forgotten password
+  Precondition: User has registered email
+  Postcondition: Password updated
+  Flow:
+    1. User requests password reset
+    2. System generates 6-digit OTP
+    3. System sends OTP via email
+    4. User enters OTP (max 5 attempts)
+    5. System verifies OTP
+    6. User enters new password
+    7. System updates password
+
+UC05: Approve/Reject Student Application
+  Actor: Admin
+  Description: Admin reviews and approves/rejects student applications
+  Precondition: Student application exists with pending status
+  Postcondition: Student approved (with room) or rejected
+  Flow:
+    1. Admin views pending applications
+    2. Admin selects application
+    3. Admin assigns room and bed (if approving)
+    4. Admin submits decision
+    5. System updates student status
+    6. System sends notification email
+
+UC06: Allocate Room
+  Actor: Admin
+  Description: Admin allocates room to approved student
+  Precondition: Student is approved, room has available bed
+  Postcondition: Student assigned to room
+  Flow:
+    1. Admin selects student
+    2. Admin views available rooms
+    3. Admin selects room and bed
+    4. System updates room occupancy
+    5. System updates student roomAllocation
+
+UC07: Select Daily Meals
+  Actor: Student
+  Description: Student selects meals for tomorrow
+  Precondition: Student is approved, before cutoff time (11 PM)
+  Postcondition: Meal selection saved
+  Flow:
+    1. Student opens meal selection
+    2. System shows tomorrow's menu
+    3. Student toggles breakfast/lunch/dinner
+    4. System saves selection
+  Alternate: After 11 PM, selection is locked
+
+UC08: Book Guest Meal
+  Actor: Student
+  Description: Student books meals for a guest
+  Precondition: Student is approved
+  Postcondition: Guest meal booked
+  Flow:
+    1. Student opens guest meal form
+    2. Student enters guest details
+    3. Student selects meals
+    4. System saves guest meal
+
+UC09: Rate Meal
+  Actor: Student
+  Description: Student rates today's meal
+  Precondition: Student has eaten today's meal
+  Postcondition: Rating submitted
+  Flow:
+    1. Student opens rating page
+    2. Student selects rating (1-5 stars)
+    3. Student optionally adds comment
+    4. System saves vote
+
+UC10: Manage Weekly Menu
+  Actor: Mess Manager, Admin
+  Description: Update weekly meal menu
+  Precondition: User has mess_manager role or is admin
+  Postcondition: Menu updated
+  Flow:
+    1. Staff opens weekly menu
+    2. Staff edits meals for each day
+    3. Staff saves changes
+    4. System updates WeeklyMeal records
+
+UC11: View Meal Statistics
+  Actor: Mess Manager, Admin
+  Description: View meal counts and voting results
+  Precondition: User has appropriate role
+  Postcondition: Statistics displayed
+  Flow:
+    1. Staff opens meal statistics
+    2. System calculates breakfast/lunch/dinner counts
+    3. System calculates average ratings
+    4. System displays statistics
+
+UC12: Submit Gate Pass Request
+  Actor: Student
+  Description: Student requests permission to leave hall
+  Precondition: Student is approved
+  Postcondition: Gate pass created with pending status
+  Flow:
+    1. Student fills gate pass form
+    2. Student enters dates, times, contacts
+    3. System creates gate pass
+    4. Security notified
+
+UC13: Approve/Reject Gate Pass
+  Actor: Security Guard, Admin
+  Description: Review and approve gate pass requests
+  Precondition: Gate pass exists with pending status
+  Postcondition: Gate pass approved or rejected
+  Flow:
+    1. Security views pending passes
+    2. Security reviews request
+    3. Security approves/rejects with notes
+    4. Student notified
+
+UC14: Record Student Exit
+  Actor: Security Guard
+  Description: Record when student leaves the hall
+  Precondition: Student has approved gate pass
+  Postcondition: Exit logged, gate pass marked active
+  Flow:
+    1. Security selects student/gate pass
+    2. Security confirms exit
+    3. System records timestamp
+    4. System updates gate pass to "active"
+
+UC15: Record Student Entry
+  Actor: Security Guard
+  Description: Record when student returns to hall
+  Precondition: Student has active gate pass
+  Postcondition: Entry logged, gate pass completed
+  Flow:
+    1. Security selects student
+    2. Security confirms entry
+    3. System records timestamp
+    4. System checks if late (past return time)
+    5. System updates gate pass to "completed" or "late"
+
+UC16: Submit Laundry Request
+  Actor: Student
+  Description: Student submits laundry for washing
+  Precondition: Student is approved
+  Postcondition: Laundry request created
+  Flow:
+    1. Student lists items (shirts, pants, etc.)
+    2. Student adds notes if needed
+    3. System creates request
+    4. System calculates expected delivery (+2 days)
+
+UC17: Process Laundry
+  Actor: Laundry Manager, Admin
+  Description: Update laundry request status
+  Precondition: Laundry request exists
+  Postcondition: Status updated
+  Flow:
+    1. Staff views laundry requests
+    2. Staff updates status (collected → washing → ready → delivered)
+    3. Student notified at each step
+
+UC18: Submit Maintenance Request
+  Actor: Student
+  Description: Student reports maintenance issue
+  Precondition: Student is approved
+  Postcondition: Maintenance request created
+  Flow:
+    1. Student fills request form
+    2. Student selects category and priority
+    3. Student describes issue and location
+    4. System creates request with auto-ID
+    5. Maintenance staff notified
+
+UC19: Handle Maintenance Request
+  Actor: Maintenance Staff, Admin
+  Description: Update maintenance request status
+  Precondition: Maintenance request exists
+  Postcondition: Request status updated
+  Flow:
+    1. Staff views pending requests
+    2. Staff assigns to self
+    3. Staff marks as in-progress
+    4. Staff completes work
+    5. Staff marks as completed
+    6. Student notified
+
+UC20: View Billing
+  Actor: Student
+  Description: Student views monthly bill breakdown
+  Precondition: Student is approved
+  Postcondition: Bill displayed
+  Flow:
+    1. Student opens billing page
+    2. System calculates meals consumed
+    3. System adds rent, fees, guest meals
+    4. System applies late fees if applicable
+    5. Bill breakdown displayed
+
+UC21: Make Payment
+  Actor: Student
+  Description: Student pays bill
+  Precondition: Student has outstanding balance
+  Postcondition: Payment recorded
+  Flow:
+    1. Student views pending payments
+    2. Student initiates payment
+    3. System processes payment
+    4. System records transaction
+    5. Receipt generated
+
+UC22: Record Expense
+  Actor: Financial Staff, Admin
+  Description: Record hall expense
+  Precondition: User has financial role
+  Postcondition: Expense recorded
+  Flow:
+    1. Staff fills expense form
+    2. Staff selects category
+    3. Staff enters amount and details
+    4. System creates expense record
+
+UC23: View Financial Reports
+  Actor: Financial Staff, Admin
+  Description: View income/expense reports
+  Precondition: User has financial role
+  Postcondition: Reports displayed
+  Flow:
+    1. Staff opens financials page
+    2. Staff selects date range
+    3. System calculates totals
+    4. System displays charts and summaries
+
+UC24: Manage Staff
+  Actor: Admin
+  Description: Create/update/delete staff accounts
+  Precondition: Admin is logged in
+  Postcondition: Staff account managed
+  Flow:
+    1. Admin opens staff management
+    2. Admin creates/edits staff
+    3. Admin assigns role
+    4. System creates/updates account
+
+UC25: Configure System Settings
+  Actor: Admin
+  Description: Update system configuration
+  Precondition: Admin is logged in
+  Postcondition: Settings updated
+  Flow:
+    1. Admin opens settings
+    2. Admin modifies values
+    3. System saves settings
+    4. Changes take effect immediately
+
+UC26: View Dashboard Statistics
+  Actor: Admin
+  Description: View overall hall statistics
+  Precondition: Admin is logged in
+  Postcondition: Statistics displayed
+  Flow:
+    1. Admin opens dashboard
+    2. System calculates:
+       - Total students, rooms, occupancy
+       - Today's meals
+       - Pending requests
+       - Financial summary
+    3. Statistics displayed
+
+UC27: Receive Notification
+  Actor: Student, Staff, Admin
+  Description: User receives system notification
+  Precondition: Triggering event occurs
+  Postcondition: Notification created and displayed
+  Flow:
+    1. Event triggers notification
+    2. System creates notification
+    3. System marks notification as unread
+    4. User sees notification count
+    5. User opens notification
+    6. System marks as read
+
+
+================================================================================
+5. ACTIVITY DIAGRAMS
+================================================================================
+
+=======================================
+ACTIVITY: Student Registration & Approval
+=======================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│    [Start]                                                                  │
+│       │                                                                     │
+│       ▼                                                                     │
+│  ┌─────────────────┐                                                        │
+│  │ Student Opens   │                                                        │
+│  │ Registration    │                                                        │
+│  │ Page            │                                                        │
+│  └────────┬────────┘                                                        │
+│           │                                                                 │
+│           ▼                                                                 │
+│  ┌─────────────────┐                                                        │
+│  │ Fill Form:      │                                                        │
+│  │ - Name, Email   │                                                        │
+│  │ - Phone, ID     │                                                        │
+│  │ - Password      │                                                        │
+│  └────────┬────────┘                                                        │
+│           │                                                                 │
+│           ▼                                                                 │
+│      ◇ Validate ◇─── Invalid ───► [Display Error] ──────┐                   │
+│           │                                              │                  │
+│         Valid                                            │                  │
+│           │                                              │                  │
+│           ▼                                              │                  │
+│  ┌─────────────────┐                                     │                  │
+│  │ Create User     │                                     │                  │
+│  │ (status=pending)│                                     │                  │
+│  └────────┬────────┘                                     │                  │
+│           │                                              │                  │
+│           ▼                                              │                  │
+│  ┌─────────────────┐                                     │                  │
+│  │ Send Confirm    │                                     │                  │
+│  │ Email           │                                     │                  │
+│  └────────┬────────┘                                     │                  │
+│           │                                              │                  │
+│           ▼                                              │                  │
+│  ┌─────────────────┐      ┌─────────────────┐           │                  │
+│  │ Waiting for     │ ────►│ Admin Reviews   │           │                  │
+│  │ Approval        │      │ Application     │           │                  │
+│  └─────────────────┘      └────────┬────────┘           │                  │
+│                                    │                     │                  │
+│                               ◇ Decision ◇               │                  │
+│                              ╱           ╲               │                  │
+│                         Approve        Reject            │                  │
+│                            │              │              │                  │
+│                            ▼              ▼              │                  │
+│               ┌─────────────────┐  ┌─────────────────┐  │                  │
+│               │ Select Room &   │  │ Status=rejected │  │                  │
+│               │ Bed             │  │ Send Rejection  │  │                  │
+│               └────────┬────────┘  │ Email           │  │                  │
+│                        │           └────────┬────────┘  │                  │
+│                        ▼                    │           │                  │
+│               ┌─────────────────┐           │           │                  │
+│               │ Allocate Room   │           │           │                  │
+│               │ Status=approved │           │           │                  │
+│               └────────┬────────┘           │           │                  │
+│                        │                    │           │                  │
+│                        ▼                    │           │                  │
+│               ┌─────────────────┐           │           │                  │
+│               │ Send Approval   │           │           │                  │
+│               │ Email           │           │           │                  │
+│               └────────┬────────┘           │           │                  │
+│                        │                    │           │                  │
+│                        ▼                    ▼           │                  │
+│                    [End: Success]     [End: Rejected]◄──┘                  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=======================================
+ACTIVITY: Meal Selection
+=======================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│    [Start]                                                                  │
+│       │                                                                     │
+│       ▼                                                                     │
+│  ┌─────────────────┐                                                        │
+│  │ Student Opens   │                                                        │
+│  │ Meal Page       │                                                        │
+│  └────────┬────────┘                                                        │
+│           │                                                                 │
+│           ▼                                                                 │
+│  ┌─────────────────┐                                                        │
+│  │ System Loads    │                                                        │
+│  │ Tomorrow's Menu │                                                        │
+│  └────────┬────────┘                                                        │
+│           │                                                                 │
+│           ▼                                                                 │
+│      ◇ Check Time ◇                                                         │
+│      ╱            ╲                                                         │
+│  Before 11PM    After 11PM                                                  │
+│      │              │                                                       │
+│      ▼              ▼                                                       │
+│  ┌─────────┐   ┌─────────────────┐                                          │
+│  │ Enable  │   │ Display "Locked"│                                          │
+│  │ Toggles │   │ Message         │                                          │
+│  └────┬────┘   └────────┬────────┘                                          │
+│       │                 │                                                   │
+│       ▼                 │                                                   │
+│  ┌─────────────────┐    │                                                   │
+│  │ Student Toggles │    │                                                   │
+│  │ B/L/D Options   │    │                                                   │
+│  └────────┬────────┘    │                                                   │
+│           │             │                                                   │
+│           ▼             │                                                   │
+│  ┌─────────────────┐    │                                                   │
+│  │ Save Selection  │    │                                                   │
+│  └────────┬────────┘    │                                                   │
+│           │             │                                                   │
+│           ▼             │                                                   │
+│  ┌─────────────────┐    │                                                   │
+│  │ Show Success    │    │                                                   │
+│  │ Message         │    │                                                   │
+│  └────────┬────────┘    │                                                   │
+│           │             │                                                   │
+│           ▼             ▼                                                   │
+│         [End]                                                               │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=======================================
+ACTIVITY: Gate Pass Workflow
+=======================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│  STUDENT                 SYSTEM                 SECURITY                    │
+│     │                      │                       │                        │
+│     ▼                      │                       │                        │
+│  [Submit                   │                       │                        │
+│   Request]                 │                       │                        │
+│     │                      │                       │                        │
+│     ├──────────────────────►                       │                        │
+│     │                      ▼                       │                        │
+│     │               [Create GatePass               │                        │
+│     │                status=pending]               │                        │
+│     │                      │                       │                        │
+│     │                      ├───────────────────────►                        │
+│     │                      │                       ▼                        │
+│     │                      │                 [Review Request]               │
+│     │                      │                       │                        │
+│     │                      │                  ◇ Decision ◇                  │
+│     │                      │                 ╱           ╲                  │
+│     │                      │            Approve        Reject               │
+│     │                      │               │              │                 │
+│     │                      │               ▼              ▼                 │
+│     │                      │        [status=approved] [status=rejected]     │
+│     │                      ◄───────────────┤              │                 │
+│     ◄──────────────────────┤               │              │                 │
+│     │                      │               │              │                 │
+│  [Notified]                │               │         [End: Rejected]        │
+│     │                      │               │                                │
+│     ▼                      │               │                                │
+│  [Arrive at Gate           │               │                                │
+│   on Leave Date]           │               │                                │
+│     │                      │               ▼                                │
+│     ├─────────────────────────────────────►[Verify & Record Exit]           │
+│     │                      │               │                                │
+│     │                      ◄───────────────┤                                │
+│     │                 [status=active]      │                                │
+│     │                 [actualDeparture]    │                                │
+│     │                      │               │                                │
+│     ▼                      │               │                                │
+│  [Student                  │               │                                │
+│   Away]                    │               │                                │
+│     │                      │               │                                │
+│     ▼                      │               │                                │
+│  [Return to Hall]          │               │                                │
+│     │                      │               ▼                                │
+│     ├─────────────────────────────────────►[Record Entry]                   │
+│     │                      │               │                                │
+│     │                      │          ◇ Check Return Time ◇                 │
+│     │                      │          ╱                   ╲                 │
+│     │                      │      On Time               Late                │
+│     │                      │         │                    │                 │
+│     │                      │         ▼                    ▼                 │
+│     │                      │   [status=completed]  [status=late]            │
+│     │                      │         │                    │                 │
+│     │                      ◄─────────┴────────────────────┘                 │
+│     ◄──────────────────────┤                                                │
+│     │                      │                                                │
+│  [End]                     │                                                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=======================================
+ACTIVITY: Laundry Processing
+=======================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│  STUDENT                 LAUNDRY MANAGER                                    │
+│     │                          │                                            │
+│     ▼                          │                                            │
+│  [Submit Request]              │                                            │
+│  - List items                  │                                            │
+│  - Add notes                   │                                            │
+│     │                          │                                            │
+│     ├──────────────────────────►                                            │
+│     │                          ▼                                            │
+│     │                    [status=pending]                                   │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                    [Collect Items]                                    │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                    [status=collected]                                 │
+│     │                    [pickupDate set]                                   │
+│     ◄──────────────────────────┤ (Notification)                             │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                    [Start Washing]                                    │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                    [status=washing]                                   │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                    [Finish Washing]                                   │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                    [status=ready]                                     │
+│     ◄──────────────────────────┤ (Notification: Ready for pickup)           │
+│     │                          │                                            │
+│     ▼                          │                                            │
+│  [Collect Laundry]             │                                            │
+│     │                          │                                            │
+│     ├──────────────────────────►                                            │
+│     │                          ▼                                            │
+│     │                    [status=delivered]                                 │
+│     │                    [actualDelivery set]                               │
+│     │                          │                                            │
+│     ▼                          ▼                                            │
+│   [End]                      [End]                                          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=======================================
+ACTIVITY: Maintenance Request
+=======================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│  STUDENT                 MAINTENANCE STAFF                                  │
+│     │                          │                                            │
+│     ▼                          │                                            │
+│  [Submit Request]              │                                            │
+│  - Category                    │                                            │
+│  - Priority                    │                                            │
+│  - Location                    │                                            │
+│  - Description                 │                                            │
+│     │                          │                                            │
+│     ├──────────────────────────► [Notification]                             │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                    [status=pending]                                   │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                    [Assign to Self]                                   │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                    [status=in-progress]                               │
+│     │                    [assignedTo set]                                   │
+│     ◄──────────────────────────┤ (Notification)                             │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                    [Perform Work]                                     │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                    [status=completed]                                 │
+│     │                    [completedAt set]                                  │
+│     ◄──────────────────────────┤ (Notification)                             │
+│     │                          │                                            │
+│     ▼                          ▼                                            │
+│   [End]                      [End]                                          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=======================================
+ACTIVITY: Payment Processing
+=======================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│  STUDENT                    SYSTEM                                          │
+│     │                          │                                            │
+│     ▼                          │                                            │
+│  [View Billing]                │                                            │
+│     │                          │                                            │
+│     ├──────────────────────────►                                            │
+│     │                          ▼                                            │
+│     │                    [Calculate Bill]                                   │
+│     │                    - Meals consumed                                   │
+│     │                    - Guest meals                                      │
+│     │                    - Monthly rent                                     │
+│     │                    - Laundry fee                                      │
+│     │                    - Other fees                                       │
+│     │                          │                                            │
+│     │                          ▼                                            │
+│     │                     ◇ Past Due? ◇                                     │
+│     │                    ╱           ╲                                      │
+│     │                  Yes            No                                    │
+│     │                   │              │                                    │
+│     │                   ▼              │                                    │
+│     │            [Add Late Fee]        │                                    │
+│     │                   │              │                                    │
+│     │                   ▼              │                                    │
+│     ◄───────────────────┴──────────────┘                                    │
+│     │                                                                       │
+│     ▼                                                                       │
+│  [View Bill Breakdown]                                                      │
+│     │                                                                       │
+│     ▼                                                                       │
+│  [Initiate Payment]                                                         │
+│     │                                                                       │
+│     ├──────────────────────────►                                            │
+│     │                          ▼                                            │
+│     │                    [Process Payment]                                  │
+│     │                          │                                            │
+│     │                     ◇ Success? ◇                                      │
+│     │                    ╱           ╲                                      │
+│     │                  Yes            No                                    │
+│     │                   │              │                                    │
+│     │                   ▼              ▼                                    │
+│     │          [status=completed] [status=failed]                           │
+│     │          [paidDate set]          │                                    │
+│     │                   │              │                                    │
+│     ◄───────────────────┴──────────────┘                                    │
+│     │                                                                       │
+│     ▼                                                                       │
+│  [Download Receipt]                                                         │
+│     │                                                                       │
+│     ▼                                                                       │
+│   [End]                                                                     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+6. SEQUENCE DIAGRAMS (Text Representation)
+================================================================================
+
+=======================================
+SEQUENCE: User Login
+=======================================
+
+Student          Frontend         API/Backend       Database
+   │                │                  │                │
+   │  Enter Email/  │                  │                │
+   │  Password      │                  │                │
+   │───────────────►│                  │                │
+   │                │ POST /api/auth/  │                │
+   │                │ login            │                │
+   │                │─────────────────►│                │
+   │                │                  │ Find User by   │
+   │                │                  │ Email          │
+   │                │                  │───────────────►│
+   │                │                  │◄───────────────│
+   │                │                  │                │
+   │                │                  │ Verify Password│
+   │                │                  │ (bcrypt)       │
+   │                │                  │                │
+   │                │                  │ Check Approval │
+   │                │                  │ Status         │
+   │                │                  │                │
+   │                │                  │ Create Session │
+   │                │                  │ Cookie         │
+   │                │◄─────────────────│                │
+   │                │ Set-Cookie:      │                │
+   │                │ hb_session       │                │
+   │◄───────────────│                  │                │
+   │                │                  │                │
+   │  Redirect to   │                  │                │
+   │  Dashboard     │                  │                │
+   │                │                  │                │
+
+=======================================
+SEQUENCE: Meal Selection
+=======================================
+
+Student          Frontend         API/Backend       Database
+   │                │                  │                │
+   │  Open Meal     │                  │                │
+   │  Page          │                  │                │
+   │───────────────►│                  │                │
+   │                │ GET /api/student/│                │
+   │                │ meals/tomorrow   │                │
+   │                │─────────────────►│                │
+   │                │                  │ Verify Session │
+   │                │                  │───────────────►│
+   │                │                  │◄───────────────│
+   │                │                  │                │
+   │                │                  │ Get Weekly Menu│
+   │                │                  │ for Tomorrow   │
+   │                │                  │───────────────►│
+   │                │                  │◄───────────────│
+   │                │                  │                │
+   │                │                  │ Find/Create    │
+   │                │                  │ Meal Record    │
+   │                │                  │───────────────►│
+   │                │                  │◄───────────────│
+   │                │◄─────────────────│                │
+   │◄───────────────│                  │                │
+   │                │                  │                │
+   │  Toggle Meals  │                  │                │
+   │───────────────►│                  │                │
+   │                │ PUT /api/student/│                │
+   │                │ meals/tomorrow   │                │
+   │                │─────────────────►│                │
+   │                │                  │ Check Cutoff   │
+   │                │                  │ (11:00 PM)     │
+   │                │                  │                │
+   │                │                  │ Update Meal    │
+   │                │                  │───────────────►│
+   │                │                  │◄───────────────│
+   │                │◄─────────────────│                │
+   │◄───────────────│ Success          │                │
+   │                │                  │                │
+
+=======================================
+SEQUENCE: Gate Pass Approval
+=======================================
+
+Student       Security       Frontend      API/Backend     Database
+   │             │              │               │              │
+   │  Submit     │              │               │              │
+   │  Request    │              │               │              │
+   │─────────────────────────────►              │              │
+   │             │              │ POST /api/    │              │
+   │             │              │ common/       │              │
+   │             │              │ gate-pass     │              │
+   │             │              │──────────────►│              │
+   │             │              │               │ Create       │
+   │             │              │               │ GatePass     │
+   │             │              │               │─────────────►│
+   │             │              │               │◄─────────────│
+   │             │              │               │              │
+   │             │              │               │ Notify       │
+   │             │              │               │ Security     │
+   │             │              │               │─────────────►│
+   │             │              │◄──────────────│              │
+   │◄────────────────────────────│              │              │
+   │             │              │               │              │
+   │             │  Review      │               │              │
+   │             │  Request     │               │              │
+   │             │──────────────►               │              │
+   │             │              │ PATCH /api/   │              │
+   │             │              │ common/       │              │
+   │             │              │ gate-pass     │              │
+   │             │              │ {action:      │              │
+   │             │              │  approve}     │              │
+   │             │              │──────────────►│              │
+   │             │              │               │ Update       │
+   │             │              │               │ Status       │
+   │             │              │               │─────────────►│
+   │             │              │               │◄─────────────│
+   │             │              │               │              │
+   │             │              │               │ Notify       │
+   │             │              │               │ Student      │
+   │             │              │               │─────────────►│
+   │             │◄─────────────│◄──────────────│              │
+   │  Notification              │               │              │
+   │◄────────────────────────────               │              │
+   │             │              │               │              │
+
+
+================================================================================
+7. CONTEXT DIAGRAM (DFD Level 0)
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│                          EXTERNAL ENTITIES                                  │
+│                                                                             │
+│   ┌───────────┐    ┌───────────┐    ┌───────────┐    ┌───────────┐         │
+│   │  Student  │    │   Admin   │    │   Staff   │    │   Email   │         │
+│   │           │    │           │    │           │    │  Service  │         │
+│   └─────┬─────┘    └─────┬─────┘    └─────┬─────┘    └─────┬─────┘         │
+│         │                │                │                │               │
+│         │                │                │                │               │
+│    ┌────┴────┐      ┌────┴────┐      ┌────┴────┐      ┌────┴────┐          │
+│    │Register │      │Manage   │      │Process  │      │Receive  │          │
+│    │Meal Sel.│      │Users    │      │Requests │      │Notifi-  │          │
+│    │Gate Pass│      │Rooms    │      │Update   │      │cations  │          │
+│    │Laundry  │      │Settings │      │Status   │      │         │          │
+│    │Maint.   │      │Reports  │      │Record   │      │         │          │
+│    │Billing  │      │         │      │Logs     │      │         │          │
+│    └────┬────┘      └────┬────┘      └────┬────┘      └────┬────┘          │
+│         │                │                │                │               │
+│         ▼                ▼                ▼                ▼               │
+│    ┌─────────────────────────────────────────────────────────────┐         │
+│    │                                                             │         │
+│    │                       HALLBRIDGE                            │         │
+│    │                  Hall Management System                     │         │
+│    │                                                             │         │
+│    │  ┌─────────────────────────────────────────────────────┐   │         │
+│    │  │                    PROCESSES                         │   │         │
+│    │  │                                                      │   │         │
+│    │  │  • User Authentication & Authorization               │   │         │
+│    │  │  • Room Allocation Management                        │   │         │
+│    │  │  • Meal Selection & Menu Management                  │   │         │
+│    │  │  • Gate Pass Processing                              │   │         │
+│    │  │  • Laundry Request Handling                          │   │         │
+│    │  │  • Maintenance Request Management                    │   │         │
+│    │  │  • Payment & Billing Processing                      │   │         │
+│    │  │  • Notification Management                           │   │         │
+│    │  │  • Entry/Exit Logging                                │   │         │
+│    │  │  • Expense Recording                                 │   │         │
+│    │  │  • Statistics & Reporting                            │   │         │
+│    │  │                                                      │   │         │
+│    │  └─────────────────────────────────────────────────────┘   │         │
+│    │                                                             │         │
+│    │                           │                                 │         │
+│    │                           ▼                                 │         │
+│    │                  ┌────────────────┐                         │         │
+│    │                  │    MongoDB     │                         │         │
+│    │                  │   Database     │                         │         │
+│    │                  └────────────────┘                         │         │
+│    │                                                             │         │
+│    └─────────────────────────────────────────────────────────────┘         │
+│                                                                             │
+│                          DATA FLOWS                                         │
+│                                                                             │
+│   Student → System:                                                         │
+│   • Registration data                                                       │
+│   • Meal selections                                                         │
+│   • Gate pass requests                                                      │
+│   • Laundry/Maintenance requests                                            │
+│   • Payment information                                                     │
+│                                                                             │
+│   System → Student:                                                         │
+│   • Approval status                                                         │
+│   • Meal menus                                                              │
+│   • Request status updates                                                  │
+│   • Bills and receipts                                                      │
+│   • Notifications                                                           │
+│                                                                             │
+│   Admin → System:                                                           │
+│   • User management commands                                                │
+│   • Room allocations                                                        │
+│   • System settings                                                         │
+│   • Staff accounts                                                          │
+│                                                                             │
+│   System → Admin:                                                           │
+│   • Statistics and reports                                                  │
+│   • Pending requests                                                        │
+│   • Financial summaries                                                     │
+│                                                                             │
+│   Staff → System:                                                           │
+│   • Status updates                                                          │
+│   • Entry/Exit logs                                                         │
+│   • Expense records                                                         │
+│   • Menu updates                                                            │
+│                                                                             │
+│   System → Staff:                                                           │
+│   • Pending requests                                                        │
+│   • Work assignments                                                        │
+│   • Statistics                                                              │
+│                                                                             │
+│   System → Email Service:                                                   │
+│   • Registration confirmations                                              │
+│   • Approval/Rejection notices                                              │
+│   • Password reset OTPs                                                     │
+│   • Status update notifications                                             │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+8. DATA FLOW DIAGRAMS
+================================================================================
+
+=======================================
+DFD Level 1: Main Processes
+=======================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│                                                                             │
+│   [Student]                                                                 │
+│       │                                                                     │
+│       │ Registration Data                                                   │
+│       ▼                                                                     │
+│   ┌───────────────────┐                     ┌───────────────────┐          │
+│   │  1.0 User         │   Approval Status   │  2.0 Room         │          │
+│   │  Management       │◄────────────────────│  Management       │          │
+│   │                   │────────────────────►│                   │          │
+│   └─────────┬─────────┘   Room Allocation   └───────────────────┘          │
+│             │                                         ▲                     │
+│             │ User Data                               │                     │
+│             ▼                                         │ Room Data           │
+│   ┌─────────────────────────────────────────────────┐│                     │
+│   │                   D1: Users                     ││                     │
+│   └─────────────────────────────────────────────────┘│                     │
+│             │                               ┌────────┴───────┐             │
+│             │                               │  D2: Rooms     │             │
+│             │                               └────────────────┘             │
+│   ┌─────────┴─────────┐                                                    │
+│   │  3.0 Meal         │◄───────── Meal Selection ──────────[Student]       │
+│   │  Management       │                                                    │
+│   │                   │────────── Menu Data ───────────────►[Student]      │
+│   └─────────┬─────────┘                                                    │
+│             │                                                              │
+│             │ Meal Records                                                 │
+│             ▼                                                              │
+│   ┌─────────────────────────────────────────────────┐                      │
+│   │                   D3: Meals                     │                      │
+│   └─────────────────────────────────────────────────┘                      │
+│                                                                             │
+│   [Student]                                                                 │
+│       │                                                                     │
+│       │ Gate Pass Request                                                   │
+│       ▼                                                                     │
+│   ┌───────────────────┐   Approval ┌───────────────────┐                   │
+│   │  4.0 Gate Pass    │◄──────────►│  5.0 Security     │                   │
+│   │  Management       │            │  Management       │                   │
+│   └─────────┬─────────┘            └─────────┬─────────┘                   │
+│             │                                │                              │
+│             │ Pass Data                      │ Entry/Exit Data              │
+│             ▼                                ▼                              │
+│   ┌─────────────────────────────────────────────────┐                      │
+│   │           D4: GatePasses / EntryExitLogs        │                      │
+│   └─────────────────────────────────────────────────┘                      │
+│                                                                             │
+│   [Student]                                                                 │
+│       │                                                                     │
+│       │ Service Requests                                                    │
+│       ▼                                                                     │
+│   ┌───────────────────┐         ┌───────────────────┐                      │
+│   │  6.0 Laundry      │         │  7.0 Maintenance  │                      │
+│   │  Management       │         │  Management       │                      │
+│   └─────────┬─────────┘         └─────────┬─────────┘                      │
+│             │                             │                                 │
+│             │                             │                                 │
+│             ▼                             ▼                                 │
+│   ┌─────────────────────┐     ┌─────────────────────┐                      │
+│   │  D5: Laundry        │     │ D6: Maintenance     │                      │
+│   └─────────────────────┘     └─────────────────────┘                      │
+│                                                                             │
+│   [Student]                                                                 │
+│       │                                                                     │
+│       │ Payment                                                             │
+│       ▼                                                                     │
+│   ┌───────────────────┐         ┌───────────────────┐                      │
+│   │  8.0 Billing &    │◄───────►│  9.0 Expense      │◄────[Financial       │
+│   │  Payment          │  Data   │  Management       │      Staff]          │
+│   └─────────┬─────────┘         └─────────┬─────────┘                      │
+│             │                             │                                 │
+│             ▼                             ▼                                 │
+│   ┌─────────────────────┐     ┌─────────────────────┐                      │
+│   │  D7: Payments       │     │  D8: Expenses       │                      │
+│   └─────────────────────┘     └─────────────────────┘                      │
+│                                                                             │
+│   [All Users]                                                               │
+│       │                                                                     │
+│       │ Actions                                                             │
+│       ▼                                                                     │
+│   ┌───────────────────┐                                                    │
+│   │  10.0 Notification│──────── Notifications ─────────►[All Users]        │
+│   │  Management       │                                                    │
+│   └─────────┬─────────┘                                                    │
+│             │                                                              │
+│             ▼                                                              │
+│   ┌─────────────────────────────────────────────────┐                      │
+│   │               D9: Notifications                 │                      │
+│   └─────────────────────────────────────────────────┘                      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+DATA STORES:
+  D1: Users          - User accounts and profiles
+  D2: Rooms          - Room inventory and allocations
+  D3: Meals          - Meal selections, weekly menu, votes
+  D4: GatePasses     - Gate pass records, entry/exit logs
+  D5: Laundry        - Laundry requests
+  D6: Maintenance    - Maintenance requests
+  D7: Payments       - Payment records
+  D8: Expenses       - Expense records
+  D9: Notifications  - User notifications
+
+
+================================================================================
+9. API ENDPOINTS SUMMARY
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          API ENDPOINT REFERENCE                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  AUTHENTICATION (9 endpoints)                                               │
+│  ─────────────────────────────                                              │
+│  POST   /api/auth/login              - User login                           │
+│  POST   /api/auth/register           - Student registration                 │
+│  GET    /api/auth/me                 - Get current user                     │
+│  PATCH  /api/auth/me                 - Update profile                       │
+│  POST   /api/auth/forgot-password    - Request password reset               │
+│  POST   /api/auth/verify-otp         - Verify OTP                           │
+│  POST   /api/auth/reset-password     - Reset password                       │
+│  POST   /api/auth/change-password    - Change password                      │
+│  GET    /api/auth/google             - Google OAuth                         │
+│  GET    /api/auth/google/callback    - Google OAuth callback                │
+│                                                                             │
+│  ADMIN (12 endpoints)                                                       │
+│  ─────────────────────                                                      │
+│  GET    /api/admin/users             - List all users                       │
+│  PATCH  /api/admin/users             - Update user status                   │
+│  DELETE /api/admin/users             - Delete user                          │
+│  GET    /api/admin/staff             - List staff                           │
+│  POST   /api/admin/staff             - Create staff                         │
+│  PATCH  /api/admin/staff             - Update staff                         │
+│  DELETE /api/admin/staff             - Delete staff                         │
+│  GET    /api/admin/rooms             - List rooms                           │
+│  POST   /api/admin/rooms             - Allocate room                        │
+│  PATCH  /api/admin/rooms             - Update room                          │
+│  GET    /api/admin/rooms/available   - Available rooms                      │
+│  GET    /api/admin/settings          - Get settings                         │
+│  PATCH  /api/admin/settings          - Update settings                      │
+│  GET    /api/admin/stats             - Dashboard statistics                 │
+│                                                                             │
+│  STAFF (7 endpoints)                                                        │
+│  ────────────────────                                                       │
+│  GET    /api/staff/meals             - Get meal data                        │
+│  POST   /api/staff/meals             - Update meal                          │
+│  GET    /api/staff/meals/voting      - Voting results                       │
+│  GET    /api/staff/expenses          - List expenses                        │
+│  POST   /api/staff/expenses          - Create expense                       │
+│  DELETE /api/staff/expenses          - Delete expense                       │
+│  GET    /api/staff/financials        - Financial reports                    │
+│  GET    /api/staff/entry-exit        - Entry/exit logs                      │
+│  POST   /api/staff/entry-exit        - Create log                           │
+│                                                                             │
+│  STUDENT (5 endpoints)                                                      │
+│  ─────────────────────                                                      │
+│  GET    /api/student/meals/tomorrow     - Tomorrow's meal                   │
+│  PUT    /api/student/meals/tomorrow     - Update meal selection             │
+│  PUT    /api/student/meals/guest-meal   - Book guest meal                   │
+│  GET    /api/student/meals/vote-for-meals - Get votable meals               │
+│  POST   /api/student/meals/vote-for-meals - Submit vote                     │
+│  GET    /api/student/billing            - View billing                      │
+│  POST   /api/student/billing            - Make payment                      │
+│                                                                             │
+│  COMMON (14 endpoints)                                                      │
+│  ─────────────────────                                                      │
+│  GET    /api/common/maintenance      - List maintenance requests            │
+│  POST   /api/common/maintenance      - Create request                       │
+│  PATCH  /api/common/maintenance      - Update request status                │
+│  GET    /api/common/gate-pass        - List gate passes                     │
+│  POST   /api/common/gate-pass        - Create gate pass                     │
+│  PATCH  /api/common/gate-pass        - Update gate pass                     │
+│  GET    /api/common/laundry          - List laundry requests                │
+│  POST   /api/common/laundry          - Create laundry request               │
+│  PATCH  /api/common/laundry          - Update laundry status                │
+│  GET    /api/common/notifications    - Get notifications                    │
+│  PATCH  /api/common/notifications    - Mark as read                         │
+│  DELETE /api/common/notifications    - Delete notification                  │
+│  GET    /api/common/weekly-menu      - Get weekly menu                      │
+│  PUT    /api/common/weekly-menu      - Update weekly menu                   │
+│  GET    /api/common/meal-count       - Get meal counts                      │
+│                                                                             │
+│  TOTAL: 47 API ENDPOINTS                                                    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+10. SYSTEM WORKFLOWS
+================================================================================
+
+=======================================
+WORKFLOW 1: Student Onboarding
+=======================================
+
+1. Student visits registration page
+2. Student fills form: name, email, phone, student ID, password
+3. System validates and creates user (status: pending)
+4. System sends confirmation email
+5. Admin receives notification of new application
+6. Admin reviews application
+7. Admin approves with room allocation OR rejects with reason
+8. System sends approval/rejection email
+9. If approved, student can login and access dashboard
+
+=======================================
+WORKFLOW 2: Daily Meal Cycle
+=======================================
+
+1. Mess Manager updates weekly menu (if needed)
+2. Students view tomorrow's menu
+3. Before 11:00 PM, students select breakfast/lunch/dinner
+4. At 11:00 PM, meal selection locks
+5. Next day morning: Mess Manager views meal counts
+6. Kitchen prepares based on counts
+7. After meals, students can rate their meals
+8. Mess Manager views voting results for feedback
+
+=======================================
+WORKFLOW 3: Gate Pass Lifecycle
+=======================================
+
+1. Student submits gate pass request with:
+   - Reason, destination, dates/times, contacts
+2. Security Guard reviews pending requests
+3. Security approves or rejects with notes
+4. Student is notified of decision
+5. On leave date, student arrives at gate
+6. Security verifies and records exit (status: active)
+7. On return, student arrives at gate
+8. Security records entry
+9. System checks if late (past return time)
+10. Gate pass marked completed or late
+
+=======================================
+WORKFLOW 4: Maintenance Request
+=======================================
+
+1. Student discovers issue in room
+2. Student submits request with:
+   - Category, priority, location, description
+3. Maintenance staff receives notification
+4. Staff assigns request to self
+5. Staff marks as in-progress
+6. Staff performs repair work
+7. Staff marks as completed with notes
+8. Student receives completion notification
+
+=======================================
+WORKFLOW 5: Laundry Service
+=======================================
+
+1. Student submits laundry request with items list
+2. System calculates expected delivery (pickup + 2 days)
+3. Laundry Manager sees pending requests
+4. Manager collects items (status: collected)
+5. Items go to washing (status: washing)
+6. Washing complete (status: ready)
+7. Student notified for pickup
+8. Student collects laundry (status: delivered)
+
+=======================================
+WORKFLOW 6: Monthly Billing Cycle
+=======================================
+
+1. On billing date (e.g., 1st of month):
+2. System calculates for each student:
+   - Meals consumed × meal prices
+   - Guest meals × guest meal price
+   - Monthly rent
+   - Laundry fee (if used)
+   - Maintenance fee
+   - WiFi fee
+   - Previous balance (if any)
+3. System generates invoice
+4. Student views bill breakdown
+5. If past due date: late fee added
+6. Student makes payment
+7. System records payment with transaction reference
+8. Receipt generated
+
+=======================================
+WORKFLOW 7: Security Entry/Exit
+=======================================
+
+1. Student with approved gate pass arrives at gate
+2. Security verifies student identity
+3. Security finds associated gate pass
+4. If exit:
+   - Record exit timestamp
+   - Update gate pass to active
+   - Create entry-exit log
+5. If entry:
+   - Record entry timestamp
+   - Check if past expected return time
+   - Update gate pass to completed/late
+   - Create entry-exit log
+
+=======================================
+WORKFLOW 8: Financial Reporting
+=======================================
+
+1. Financial Staff accesses financials page
+2. Selects date range (this month/last month/year)
+3. System calculates:
+   - Total revenue from payments
+   - Total expenses by category
+   - Net profit/loss
+   - Payment defaulters list
+   - Monthly comparison charts
+4. Staff can export reports
+5. Staff can record new expenses
+
+
+================================================================================
+                              END OF DOCUMENTATION
+================================================================================
+
+This documentation covers:
+- System Overview and Technology Stack
+- User Roles and Permissions Matrix
+- Complete Data Models for ER/Class Diagrams
+- Entity Relationship Diagram (Text)
+- 27 Use Cases with all actors
+- Activity Diagrams for major workflows
+- Sequence Diagrams for key interactions
+- Context Diagram (DFD Level 0)
+- Data Flow Diagram (Level 1)
+- Complete API Endpoint Reference (47 endpoints)
+- 8 Detailed System Workflows
+
+Use this document to create:
+✓ Class Diagram (from Data Models section)
+✓ ER Diagram (from Entity Relationships)
+✓ Use Case Diagram (from Use Cases section)
+✓ Activity Diagrams (from Activity Diagrams section)
+✓ Sequence Diagrams (from Sequence Diagrams section)
+✓ Context Diagram (from DFD Level 0)
+✓ Data Flow Diagrams (from DFD sections)
+✓ State Diagrams (from Status enums in models)
+
+================================================================================

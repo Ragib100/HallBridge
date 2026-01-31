@@ -19,6 +19,15 @@ import { seedUsers } from "./seeds/users";
 import { seedMaintenanceRequests } from "./seeds/maintenance";
 import { seedSystemSettings } from "./seeds/settings";
 import { seedRooms } from "./seeds/rooms";
+import { seedWeeklyMenu } from "./seeds/weekly-menu";
+import { seedMeals } from "./seeds/meals";
+import { seedGatePass } from "./seeds/gate-pass";
+import { seedLaundry } from "./seeds/laundry";
+import { seedExpenses } from "./seeds/expenses";
+import { seedPayments } from "./seeds/payments";
+import { seedGuestMeals } from "./seeds/guest-meals";
+import { seedVoteMeals } from "./seeds/vote-meals";
+import { seedEntryExitLogs } from "./seeds/entry-exit-logs";
 
 interface SeedResult {
   name: string;
@@ -72,6 +81,87 @@ async function seed() {
   } catch (error) {
     console.error("❌ Rooms seed failed:", error);
     results.push({ name: "Rooms", success: 0, skipped: 0, failed: 0, error: String(error) });
+  }
+
+  // Seed Weekly Menu
+  try {
+    const weeklyMenuResult = await seedWeeklyMenu();
+    results.push({ name: "Weekly Menu", ...weeklyMenuResult });
+  } catch (error) {
+    console.error("❌ Weekly Menu seed failed:", error);
+    results.push({ name: "Weekly Menu", success: 0, skipped: 0, failed: 0, error: String(error) });
+  }
+
+  // Seed Meal Selections
+  try {
+    const mealsResult = await seedMeals();
+    results.push({ name: "Meals", ...mealsResult });
+  } catch (error) {
+    console.error("❌ Meals seed failed:", error);
+    results.push({ name: "Meals", success: 0, skipped: 0, failed: 0, error: String(error) });
+  }
+
+  // Seed Gate Passes
+  try {
+    const gatePassResult = await seedGatePass();
+    results.push({ name: "Gate Passes", ...gatePassResult });
+  } catch (error) {
+    console.error("❌ Gate Pass seed failed:", error);
+    results.push({ name: "Gate Passes", success: 0, skipped: 0, failed: 0, error: String(error) });
+  }
+
+  // Seed Laundry Requests
+  try {
+    const laundryResult = await seedLaundry();
+    results.push({ name: "Laundry", ...laundryResult });
+  } catch (error) {
+    console.error("❌ Laundry seed failed:", error);
+    results.push({ name: "Laundry", success: 0, skipped: 0, failed: 0, error: String(error) });
+  }
+
+  // Seed Expenses
+  try {
+    const expensesResult = await seedExpenses();
+    results.push({ name: "Expenses", ...expensesResult });
+  } catch (error) {
+    console.error("❌ Expenses seed failed:", error);
+    results.push({ name: "Expenses", success: 0, skipped: 0, failed: 0, error: String(error) });
+  }
+
+  // Seed Payments
+  try {
+    const paymentsResult = await seedPayments();
+    results.push({ name: "Payments", ...paymentsResult });
+  } catch (error) {
+    console.error("❌ Payments seed failed:", error);
+    results.push({ name: "Payments", success: 0, skipped: 0, failed: 0, error: String(error) });
+  }
+
+  // Seed Guest Meals
+  try {
+    const guestMealsResult = await seedGuestMeals();
+    results.push({ name: "Guest Meals", ...guestMealsResult });
+  } catch (error) {
+    console.error("❌ Guest Meals seed failed:", error);
+    results.push({ name: "Guest Meals", success: 0, skipped: 0, failed: 0, error: String(error) });
+  }
+
+  // Seed Vote Meals
+  try {
+    const voteMealsResult = await seedVoteMeals();
+    results.push({ name: "Vote Meals", ...voteMealsResult });
+  } catch (error) {
+    console.error("❌ Vote Meals seed failed:", error);
+    results.push({ name: "Vote Meals", success: 0, skipped: 0, failed: 0, error: String(error) });
+  }
+
+  // Seed Entry/Exit Logs
+  try {
+    const entryExitLogsResult = await seedEntryExitLogs();
+    results.push({ name: "Entry/Exit Logs", ...entryExitLogsResult });
+  } catch (error) {
+    console.error("❌ Entry/Exit Logs seed failed:", error);
+    results.push({ name: "Entry/Exit Logs", success: 0, skipped: 0, failed: 0, error: String(error) });
   }
 
   // Print Summary
