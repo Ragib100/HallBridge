@@ -42,7 +42,8 @@ export async function GET() {
     })
       .select("fullName email createdAt")
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(10)
+      .lean();
 
     // Maintenance stats
     const maintenanceStats = {
@@ -57,7 +58,8 @@ export async function GET() {
     const recentMaintenance = await MaintenanceRequest.find()
       .populate("student", "fullName")
       .sort({ createdAt: -1 })
-      .limit(5);
+      .limit(5)
+      .lean();
 
     // Get staff by role count
     const staffByRole = await User.aggregate([

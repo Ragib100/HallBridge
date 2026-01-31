@@ -43,7 +43,8 @@ export async function GET(request: Request) {
     const requests = await MaintenanceRequest.find(query)
       .populate("student", "fullName email phone")
       .populate("assignedTo", "fullName email")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     return NextResponse.json({
       requests: requests.map((r) => ({
@@ -115,13 +116,16 @@ export async function POST(request: Request) {
       status: "pending",
     });
 
+    // Get student info for notification
+    const studentInfo = await User.findById(session).select("fullName roomAllocation") as { fullName?: string; roomAllocation?: { roomNumber?: string } } | null;
+    const roomNumber = studentInfo?.roomAllocation?.roomNumber || "N/A";
+
     // Notify maintenance staff about new request
     await notifyMaintenanceCreated(
       maintenanceRequest.requestId,
-      maintenanceRequest._id.toString(),
-      category,
-      priority,
-      location
+      studentInfo?.fullName || "Student",
+      roomNumber,
+      category
     );
 
     return NextResponse.json(

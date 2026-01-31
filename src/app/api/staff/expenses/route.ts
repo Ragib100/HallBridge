@@ -54,7 +54,8 @@ export async function GET(request: Request) {
     const expenses = await Expense.find(query)
       .populate("addedBy", "fullName")
       .sort({ date: -1 })
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     // Calculate totals by category
     const totals = await Expense.aggregate([

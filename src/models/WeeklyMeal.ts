@@ -8,6 +8,8 @@ const weeklyMealSchema = new Schema(
             type: String, 
             required: true,
             enum: DAYS_OF_WEEK,
+            unique: true, // Only one entry per day
+            index: true,
         },
         breakfast: { type: String, required: true },
         lunch: { type: String, required: true },

@@ -60,7 +60,8 @@ export async function GET(request: Request) {
 
     const users = await User.find(query)
       .select("fullName email userType staffRole studentId phone isActive approvalStatus createdAt")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     return NextResponse.json({
       users: users.map((u) => ({
@@ -307,8 +308,7 @@ export async function DELETE(request: Request) {
       const room = await Room.findById(userToDelete.roomAllocation.roomId);
       if (room) {
         const bedIndex = room.beds.findIndex(
-          (bed: { studentId: mongoose.Types.ObjectId | null }) => 
-            bed.studentId?.toString() === id
+          (bed) => bed.studentId?.toString() === id
         );
         if (bedIndex !== -1) {
           room.beds[bedIndex].studentId = null;

@@ -30,11 +30,11 @@ export async function GET(request: NextRequest) {
       "payment_due_days", "late_fee_percent",
       "breakfast_price", "lunch_price", "dinner_price", "guest_meal_price"
     ];
-    const settings = await SystemSettings.find({ key: { $in: settingsKeys } }).lean();
+    const settings = await SystemSettings.find({ key: { $in: settingsKeys } }).lean() as unknown as { key: string; value: string }[];
 
     // Convert to a map for easy access
     const settingsMap: Record<string, number> = {};
-    settings.forEach((setting: { key: string; value: string }) => {
+    settings.forEach((setting) => {
       settingsMap[setting.key] = parseFloat(setting.value) || 0;
     });
 

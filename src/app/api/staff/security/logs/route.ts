@@ -52,7 +52,8 @@ export async function GET(request: Request) {
       .populate("loggedBy", "fullName")
       .populate("gatePass", "passId purpose destination")
       .sort({ timestamp: -1 })
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     // Get today's stats
     const today = new Date();

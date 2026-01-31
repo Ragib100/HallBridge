@@ -68,9 +68,9 @@ export async function GET(request: Request) {
     const payments = await Payment.find({
       status: "completed",
       paidDate: { $gte: startDate, $lte: endDate },
-    }).populate("student", "fullName roomNumber studentId");
+    }).populate("student", "fullName roomNumber studentId").lean();
 
-    const totalRevenue = payments.reduce((sum, p) => sum + p.finalAmount, 0);
+    const totalRevenue = payments.reduce((sum, p) => sum + (p.finalAmount || 0), 0);
 
     // Revenue by type
     const revenueByType = await Payment.aggregate([
@@ -81,9 +81,9 @@ export async function GET(request: Request) {
     // Expenses for the period
     const expenses = await Expense.find({
       date: { $gte: startDate, $lte: endDate },
-    }).populate("addedBy", "fullName");
+    }).populate("addedBy", "fullName").lean();
 
-    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
 
     // Expenses by category
     const expensesByCategory = await Expense.aggregate([
@@ -91,16 +91,21 @@ export async function GET(request: Request) {
       { $group: { _id: "$category", total: { $sum: "$amount" }, count: { $sum: 1 } } },
     ]);
 
+    // Define types for lean queries
+    type StudentDoc = { _id: string; fullName: string; roomNumber?: string; studentId?: string };
+    type StaffDoc = { _id: string; fullName: string; staffRole?: string; salary?: number };
+    type SettingsDoc = { key: string; value: string };
+
     // Get all students
-    const students = await User.find({ userType: "student" }).select("fullName roomNumber studentId");
+    const students = await User.find({ userType: "student" }).select("fullName roomNumber studentId").lean() as unknown as StudentDoc[];
     
     // Get all staff
-    const staff = await User.find({ userType: "staff" }).select("fullName staffRole salary");
+    const staff = await User.find({ userType: "staff" }).select("fullName staffRole salary").lean() as unknown as StaffDoc[];
 
     // Find settings for billing calculation
     const settingsKeys = ["monthly_rent", "laundry_fee", "maintenance_fee", "wifi_fee", 
                           "breakfast_price", "lunch_price", "dinner_price", "guest_meal_price"];
-    const settingsDocs = await SystemSettings.find({ key: { $in: settingsKeys } });
+    const settingsDocs = await SystemSettings.find({ key: { $in: settingsKeys } }).lean() as unknown as SettingsDoc[];
     const settings: Record<string, number> = {};
     settingsDocs.forEach(s => { settings[s.key] = parseFloat(s.value) || 0; });
 

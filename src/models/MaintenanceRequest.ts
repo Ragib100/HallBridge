@@ -38,6 +38,7 @@ const maintenanceRequestSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
     
     // Request details
@@ -45,11 +46,13 @@ const maintenanceRequestSchema = new Schema(
       type: String,
       enum: MAINTENANCE_CATEGORIES,
       required: true,
+      index: true,
     },
     priority: {
       type: String,
       enum: MAINTENANCE_PRIORITIES,
       required: true,
+      index: true,
     },
     location: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
@@ -60,12 +63,14 @@ const maintenanceRequestSchema = new Schema(
       type: String,
       enum: MAINTENANCE_STATUSES,
       default: "pending",
+      index: true,
     },
     
     // Assignment
     assignedTo: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      index: true,
     },
     assignedAt: { type: Date },
     
@@ -78,6 +83,13 @@ const maintenanceRequestSchema = new Schema(
   },
   { timestamps: true }
 );
+
+// Compound indexes for common query patterns
+maintenanceRequestSchema.index({ status: 1, priority: 1 }); // Filter by status and priority
+maintenanceRequestSchema.index({ student: 1, status: 1 }); // Student's requests by status
+maintenanceRequestSchema.index({ assignedTo: 1, status: 1 }); // Staff's assigned tasks
+maintenanceRequestSchema.index({ status: 1, createdAt: -1 }); // Recent requests by status
+maintenanceRequestSchema.index({ priority: 1, status: 1, createdAt: -1 }); // Urgent pending requests
 
 // Generate request ID before saving
 maintenanceRequestSchema.pre("save", async function (next) {

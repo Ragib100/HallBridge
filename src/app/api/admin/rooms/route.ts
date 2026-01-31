@@ -48,7 +48,8 @@ export async function GET(request: Request) {
 
     const rooms = await Room.find(query)
       .populate("beds.studentId", "fullName studentId")
-      .sort({ floor: 1, roomNumber: 1 });
+      .sort({ floor: 1, roomNumber: 1 })
+      .lean();
 
     // Get stats
     const stats = await Room.getStats();
