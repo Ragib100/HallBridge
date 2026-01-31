@@ -1,8 +1,14 @@
 import mongoose, { Schema, type InferSchemaType } from "mongoose";
 
+const DAYS_OF_WEEK = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as const;
+
 const weeklyMealSchema = new Schema(
     {
-        day: { type: String, required: true },
+        day: { 
+            type: String, 
+            required: true,
+            enum: DAYS_OF_WEEK,
+        },
         breakfast: { type: String, required: true },
         lunch: { type: String, required: true },
         dinner: { type: String, required: true },

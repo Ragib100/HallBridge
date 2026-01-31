@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import connectDB from "@/lib/db";
 import Meal from "@/models/Meal";
 import GuestMeal from "@/models/GuestMeal";
@@ -7,6 +8,32 @@ import User from "@/models/User";
 export async function GET(request: Request) {
   try {
     await connectDB();
+
+    // Auth check - staff or admin only
+    const cookieStore = await cookies();
+    const session = cookieStore.get("hb_session")?.value;
+    if (!session) {
+      return NextResponse.json(
+        { message: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findById(session);
+    if (!user) {
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // Only allow staff (mess_manager) or admin
+    if (user.userType !== "admin" && !(user.userType === "staff" && user.staffRole === "mess_manager")) {
+      return NextResponse.json(
+        { message: "Forbidden - Mess manager or admin access only" },
+        { status: 403 }
+      );
+    }
 
     const url = new URL(request.url);
     const day = url.searchParams.get("day");

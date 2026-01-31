@@ -265,13 +265,13 @@ export default function StudentGatePassPage() {
 
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 						<div className="space-y-2">
-							<label className="text-sm font-medium text-gray-700">Emergency Contact *</label>
+							<label className="text-sm font-medium text-gray-700">Your Contact Number *</label>
 							<Input
 								type="tel"
 								name="contactNumber"
 								value={contactNumber}
 								onChange={(e) => { setContactNumber(e.target.value) }}
-								placeholder="Contact number"
+								placeholder="Your contact number"
 								className="h-11 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
 							/>
 						</div>

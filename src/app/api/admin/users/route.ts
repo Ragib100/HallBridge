@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import Room from "@/models/Room";
@@ -293,6 +294,29 @@ export async function DELETE(request: Request) {
     // Don't allow deleting self
     if (id === session) {
       return NextResponse.json({ message: "Cannot delete your own account" }, { status: 400 });
+    }
+
+    // First, find the user to check for room allocation
+    const userToDelete = await User.findById(id);
+    if (!userToDelete) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    // Release room allocation if user has one
+    if (userToDelete.roomAllocation?.roomId) {
+      const room = await Room.findById(userToDelete.roomAllocation.roomId);
+      if (room) {
+        const bedIndex = room.beds.findIndex(
+          (bed: { studentId: mongoose.Types.ObjectId | null }) => 
+            bed.studentId?.toString() === id
+        );
+        if (bedIndex !== -1) {
+          room.beds[bedIndex].studentId = null;
+          room.beds[bedIndex].isOccupied = false;
+          room.updateStatus();
+          await room.save();
+        }
+      }
     }
 
     const deletedUser = await User.findByIdAndDelete(id);

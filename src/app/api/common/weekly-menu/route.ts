@@ -122,7 +122,7 @@ export async function PUT(req: Request) {
             )
         }
 
-        if (user.role !== "admin" && user.role !== "mess_manager") {
+        if (user.userType !== "admin" && !(user.userType === "staff" && user.staffRole === "mess_manager")) {
             return NextResponse.json(
                 { message: "Only mess manager or admin can update menu" },
                 { status: 403 }

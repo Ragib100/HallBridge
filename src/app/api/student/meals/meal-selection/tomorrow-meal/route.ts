@@ -27,7 +27,7 @@ export async function PUT(req: Request) {
             );
         }
 
-        if (user.role !== "student") {
+        if (user.userType !== "student") {
             return NextResponse.json(
                 { message: "Only students can update meal selection" },
                 { status: 403 }
@@ -119,7 +119,7 @@ export async function GET() {
             );
         }
 
-        if (user.role !== "student") {
+        if (user.userType !== "student") {
             return NextResponse.json(
                 { message: "Only students can access meal selection" },
                 { status: 403 }

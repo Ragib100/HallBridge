@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    if (user.role !== "admin") {
+    if (user.userType !== "admin") {
       return NextResponse.json({ message: "Admin access required" }, { status: 403 });
     }
 

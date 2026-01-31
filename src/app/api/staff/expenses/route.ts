@@ -223,7 +223,11 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ message: "Expense ID required" }, { status: 400 });
     }
 
-    await Expense.findByIdAndDelete(id);
+    const deletedExpense = await Expense.findByIdAndDelete(id);
+
+    if (!deletedExpense) {
+      return NextResponse.json({ message: "Expense not found" }, { status: 404 });
+    }
 
     return NextResponse.json({ message: "Expense deleted successfully" });
   } catch (error) {

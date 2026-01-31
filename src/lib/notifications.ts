@@ -78,10 +78,13 @@ export async function createBulkNotifications(params: BulkNotificationParams) {
 export async function notifyByRole(params: NotifyByRoleParams) {
   const { roles, type, title, message, priority = "normal" } = params;
 
-  // Find all users with the specified roles
+  // Find all users with the specified roles (staffRole for staff, userType for user types)
   const users = await User.find({ 
-    role: { $in: roles },
-    status: "active"
+    $or: [
+      { staffRole: { $in: roles } },
+      { userType: { $in: roles } }
+    ],
+    isActive: true
   }).select("_id");
 
   if (users.length === 0) return [];
@@ -373,7 +376,7 @@ export async function broadcastNotice(
   message: string,
   priority: NotificationPriority = "normal"
 ) {
-  const users = await User.find({ status: "active" }).select("_id");
+  const users = await User.find({ isActive: true }).select("_id");
   
   if (users.length === 0) return [];
 

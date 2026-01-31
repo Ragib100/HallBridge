@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import connectDB from "@/lib/db"
 import VoteMeal from "@/models/VoteMeal"
-import Meal from "@/models/Meal"
 import User from "@/models/User"
 
 export async function GET(req: Request) {
@@ -27,32 +26,26 @@ export async function GET(req: Request) {
             );
         }
 
-        // Only allow staff members
-        const staffRoles = ["admin", "mess_manager", "maintenance_staff", "financial_staff", "security_guard"];
-        if (!staffRoles.includes(user.role)) {
+        // Only allow staff members or admin
+        const staffRoles = ["mess_manager", "maintenance_staff", "financial_staff", "security_guard"];
+        if (user.userType !== "admin" && !(user.userType === "staff" && staffRoles.includes(user.staffRole))) {
             return NextResponse.json(
                 { message: "Forbidden - Staff access only" },
                 { status: 403 }
             );
         }
 
-        // Get today's meals
-        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
-        
-        const meals = await Meal.find().lean()
-
         // Fetch all vote meals with their details
         const votes = await VoteMeal.find().populate('studentId', 'name email').lean()
 
-        // Group votes by meal time (assuming meal has breakfast, lunch, dinner)
+        // Group votes by meal time
         const mealRatings = [
             { mealTime: 'Breakfast', icon: '🍳' },
             { mealTime: 'Lunch', icon: '🍛' },
             { mealTime: 'Dinner', icon: '🍽️' }
         ].map(meal => {
             const votesForMeal = votes.filter(v => 
-                v.mealTime?.toLowerCase() === meal.mealTime.toLowerCase() || 
-                Math.random() > 0.6 // Fallback: distribute votes
+                v.mealTime?.toLowerCase() === meal.mealTime.toLowerCase()
             )
 
             const avgRating = votesForMeal.length > 0

@@ -175,8 +175,8 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
     }
 
-    // Only laundry manager can update status
-    if (user.userType !== "admin" && user.staffRole !== "laundry_manager") {
+    // Only laundry manager or admin can update status
+    if (user.userType !== "admin" && !(user.userType === "staff" && user.staffRole === "laundry_manager")) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
 

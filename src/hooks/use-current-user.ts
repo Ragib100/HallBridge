@@ -7,6 +7,9 @@ type RoomAllocation = {
   roomId: string;
   roomNumber: string;
   floor: number;
+  bedNumber?: number;
+  hallId?: string;
+  allocatedAt?: string;
 };
 
 export type CurrentUser = {

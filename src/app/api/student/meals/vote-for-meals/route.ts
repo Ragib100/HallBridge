@@ -33,7 +33,7 @@ export async function POST(req: Request) {
             );
         }
 
-        if (user.role !== "student") {
+        if (user.userType !== "student") {
             return NextResponse.json(
                 { message: "Only students can vote for meals" },
                 { status: 403 }
@@ -133,7 +133,7 @@ export async function GET(req: Request) {
             );
         }
 
-        if (user.role !== "student") {
+        if (user.userType !== "student") {
             return NextResponse.json(
                 { message: "Only students can access voting" },
                 { status: 403 }

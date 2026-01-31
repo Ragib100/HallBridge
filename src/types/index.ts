@@ -73,7 +73,7 @@ export interface WeeklyMenu {
 // =====================
 // Gate Pass Types
 // =====================
-export type GatePassStatus = "pending" | "approved" | "rejected" | "completed";
+export type GatePassStatus = "pending" | "approved" | "rejected" | "active" | "completed" | "late";
 export type GatePassPurpose = "home" | "medical" | "personal" | "family" | "academic" | "other";
 
 export interface GatePass {

@@ -27,7 +27,7 @@ export async function PUT(req: Request) {
             );
         }
 
-        if (user.role !== "student") {
+        if (user.userType !== "student") {
             return NextResponse.json(
                 { message: "Only students can add guest meals" },
                 { status: 403 }

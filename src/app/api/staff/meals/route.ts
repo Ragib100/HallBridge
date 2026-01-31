@@ -26,9 +26,9 @@ export async function GET() {
       );
     }
 
-    // Only allow staff members
-    const staffRoles = ["admin", "mess_manager", "maintenance_staff", "financial_staff", "security_guard"];
-    if (!staffRoles.includes(user.role)) {
+    // Only allow staff members or admin
+    const staffRoles = ["mess_manager", "maintenance_staff", "financial_staff", "security_guard"];
+    if (user.userType !== "admin" && !(user.userType === "staff" && staffRoles.includes(user.staffRole))) {
       return NextResponse.json(
         { message: "Forbidden - Staff access only" },
         { status: 403 }
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     }
 
     // Only allow mess_manager or admin
-    if (user.role !== "mess_manager" && user.role !== "admin") {
+    if (user.userType !== "admin" && !(user.userType === "staff" && user.staffRole === "mess_manager")) {
       return NextResponse.json(
         { message: "Forbidden - Mess manager or admin access only" },
         { status: 403 }
