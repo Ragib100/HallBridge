@@ -1,25 +1,3 @@
-import nodemailer from "nodemailer";
-import { Resend } from "resend";
-
-// Email provider configuration
-// Set EMAIL_PROVIDER to "resend" or "smtp" in your .env file
-const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || "resend";
-
-// Resend configuration (recommended - 3,000 free emails/month)
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-
-// SMTP configuration (alternative - for Gmail, SendGrid, etc.)
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-const FROM_EMAIL = process.env.EMAIL_FROM || "HallBridge <onboarding@resend.dev>";
 const APP_NAME = "HallBridge";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -31,50 +9,25 @@ export interface EmailOptions {
 }
 
 /**
- * Send an email using the configured provider (Resend or SMTP)
+ * Send an email using the configured provider (SMTP)
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    // Use Resend if configured
-    if (EMAIL_PROVIDER === "resend" && resend) {
-      const { error } = await resend.emails.send({
-        from: FROM_EMAIL,
+    const res = await fetch(process.env.EMAIL_API_URL!, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         to: options.to,
         subject: options.subject,
         html: options.html,
         text: options.text,
-      });
+        secret: process.env.EMAIL_API_SECRET,
+      }),
+    });
 
-      if (error) {
-        console.error("[EMAIL] Resend error:", error);
-        return false;
-      }
-
-      console.log("[EMAIL] Sent successfully via Resend to:", options.to);
-      return true;
-    }
-
-    // Use SMTP if configured
-    if (EMAIL_PROVIDER === "smtp" && process.env.SMTP_USER && process.env.SMTP_PASS) {
-      await transporter.sendMail({
-        from: FROM_EMAIL,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text,
-      });
-
-      console.log("[EMAIL] Sent successfully via SMTP to:", options.to);
-      return true;
-    }
-
-    // No email provider configured
-    console.warn("[EMAIL] No email provider configured. Email not sent:", options.subject);
-    console.log("[EMAIL] To:", options.to);
-    console.log("[EMAIL] Set RESEND_API_KEY or SMTP credentials in .env");
-    return false;
-  } catch (error) {
-    console.error("[EMAIL] Failed to send email:", error);
+    return res.ok;
+  } catch (err) {
+    console.error("[EMAIL API ERROR]", err);
     return false;
   }
 }
@@ -88,7 +41,7 @@ export async function sendApprovalEmail(
   studentId: string
 ): Promise<boolean> {
   const loginUrl = `${APP_URL}/auth/login`;
-  
+
   const html = `
     <!DOCTYPE html>
     <html>
