@@ -18,13 +18,6 @@ function LoginForm() {
 
   useEffect(() => {
     const oauthError = searchParams.get("error");
-    const message = searchParams.get("message");
-
-    // Handle success messages
-    if (message === "google_signup_success") {
-      setSuccessMessage("Account created successfully! Please wait for admin approval.");
-      return;
-    }
 
     if (!oauthError) return;
 
@@ -48,7 +41,23 @@ function LoginForm() {
       return;
     }
 
-    setError("Google sign-in failed. Please try again.");
+    // Microsoft OAuth errors
+    if (oauthError === "microsoft_account_not_found") {
+      setError("No account found for this Microsoft email. Please sign up first.");
+      return;
+    }
+
+    if (oauthError === "microsoft_oauth_failed") {
+      setError("Microsoft sign-in failed. Please try again.");
+      return;
+    }
+
+    if (oauthError === "microsoft_account_pending") {
+      setError("Your account is pending approval. Please wait for admin approval.");
+      return;
+    }
+
+    setError("Sign-in failed. Please try again.");
   }, [searchParams]);
 
   const handleInputChange = (
@@ -201,7 +210,7 @@ function LoginForm() {
         {/* Divider */}
         <div className="flex items-center gap-4 my-6">
           <div className="flex-1 h-px bg-gray-200" />
-          <span className="text-gray-400 text-sm">or continue with</span>
+          <span className="text-gray-400 text-sm">or</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
@@ -232,6 +241,29 @@ function LoginForm() {
             />
           </svg>
           Continue with Google
+        </button>
+
+        {/* Microsoft Button */}
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = "/api/auth/microsoft";
+          }}
+          className="w-full py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-3"
+        >
+          {/* Microsoft Logo */}
+          <svg
+            className="w-5 h-5"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <rect x="1" y="1" width="10" height="10" fill="#F25022" />
+            <rect x="13" y="1" width="10" height="10" fill="#7FBA00" />
+            <rect x="1" y="13" width="10" height="10" fill="#00A4EF" />
+            <rect x="13" y="13" width="10" height="10" fill="#FFB900" />
+          </svg>
+
+          Continue with Microsoft
         </button>
 
         {/* Sign Up Link */}
