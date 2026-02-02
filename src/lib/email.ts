@@ -434,7 +434,7 @@ export async function sendRoomAllocationEmail(
           <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
             Room ${roomInfo.roomNumber}
           </div>
-          <div style="display: flex; justify-content: center; gap: 20px; margin-top: 15px;">
+          <div style="display: flex; justify-content: between; gap: 20px; margin-top: 15px;">
             <div>
               <p style="margin: 0; font-size: 12px; opacity: 0.8;">Floor</p>
               <p style="margin: 0; font-size: 20px; font-weight: 600;">${roomInfo.floor}</p>
