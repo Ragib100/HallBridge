@@ -18,7 +18,6 @@ export interface ProfileData {
   studentId?: string;
   department?: string;
   batch?: string;
-  year?: string;
   roomNumber?: string;
   bloodGroup?: string;
   emergencyContact?: string;
@@ -95,11 +94,6 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
         return displayValue(profileData.adminRole, "Administrator");
       case "staff":
         return displayValue(profileData.staffRole, "Staff");
-      case "student":
-        if (profileData.department && profileData.year) {
-          return `${profileData.department} - ${profileData.year}`;
-        }
-        return "Student";
       default:
         return "";
     }
@@ -300,16 +294,12 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                     <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.department)}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
-                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.year)}</p>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Batch</label>
+                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.batch)}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Batch</label>
-                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{displayValue(profileData.batch)}</p>
-                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Blood Group</label>
                     {isEditing ? (
@@ -317,7 +307,7 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                         name="bloodGroup"
                         value={profileData.bloodGroup}
                         onChange={handleInputChange}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white"
+                        className="w-full h-12 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white"
                       >
                         <option value="">Select</option>
                         <option value="A+">A+</option>
@@ -333,22 +323,22 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
                       <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.bloodGroup || "Not Set"}</p>
                     )}
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
+                    {isEditing ? (
+                      <input
+                        type="tel"
+                        name="emergencyContact"
+                        value={profileData.emergencyContact}
+                        onChange={handleInputChange}
+                        className="w-full h-12 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
+                      />
+                    ) : (
+                      <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.emergencyContact || "Not Set"}</p>
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
-                  {isEditing ? (
-                    <input
-                      type="tel"
-                      name="emergencyContact"
-                      value={profileData.emergencyContact}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
-                    />
-                  ) : (
-                    <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{profileData.emergencyContact || "Not Set"}</p>
-                  )}
-                </div>
               </>
             )}
 

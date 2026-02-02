@@ -2,7 +2,7 @@ import mongoose, { Schema, type InferSchemaType} from "mongoose";
 
 const mealSchema = new Schema(
     {
-        studentId: { type: mongoose.Types.ObjectId, required: true, ref: "User", index: true },
+        studentId: { type: String, required: true, index: true },
         date: { type: Date, required: true, index: true },
         breakfast: { type: Boolean, default: false },
         lunch: { type: Boolean, default: false },

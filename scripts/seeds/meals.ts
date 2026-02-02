@@ -53,7 +53,7 @@ export async function seedMeals(): Promise<{ success: number; skipped: number; f
         const dinner = Math.random() > 0.15;
 
         await Meal.create({
-          studentId: student._id,
+          studentId: student.studentId,
           date,
           breakfast,
           lunch,

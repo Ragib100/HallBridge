@@ -58,6 +58,12 @@ const userSchema = new Schema(
     mustChangePassword: { type: Boolean, default: false },
     // Room allocation for students
     roomAllocation: roomAllocationSchema,
+    academicInfo: {
+      department: { type: String, trim: true },
+      batch: { type: String, trim: true },
+      bloodGroup: { type: String, trim: true, enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] },
+      emergencyContact: { type: String, trim: true },
+    },
     // Staff-specific fields
     staffRole: {
       type: String,

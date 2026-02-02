@@ -190,6 +190,18 @@ function LoginForm() {
           />
         </div>
 
+        {/* Edu Email Info */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-start gap-2">
+            <svg className="w-5 h-5 text-green-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="text-sm text-green-800">
+              <p className="font-medium mb-1">📧 Login using Email issued by MIST</p>
+            </div>
+          </div>
+        </div>
+
         {/* Sign In Button */}
         <button
           type="submit"

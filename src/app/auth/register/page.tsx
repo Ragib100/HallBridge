@@ -7,7 +7,6 @@ import { useState } from "react";
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     fullName: "",
-    email: "",
     studentId: "",
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -42,9 +41,7 @@ export default function RegisterPage() {
         },
         body: JSON.stringify({
           fullName: formData.fullName,
-          email: formData.email,
           studentId: formData.studentId,
-          userType: "student",
         }),
       });
 
@@ -170,22 +167,6 @@ export default function RegisterPage() {
           <p className="mt-2 text-xs text-gray-500">This will be your initial password after approval</p>
         </div>
 
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Email
-          </label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            placeholder="Enter your email address"
-            className="w-full px-4 py-3 bg-gray-100 border-0 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:outline-none transition-all"
-            required
-          />
-        </div>
-
         {/* Submit Button */}
         <button
           type="submit"
@@ -202,7 +183,7 @@ export default function RegisterPage() {
         {/* Info Box */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
           <p className="text-sm text-blue-800">
-            <strong>Note:</strong> Your request will be reviewed by an administrator. Once approved, you&apos;ll receive an email with login instructions.
+            <strong>Note:</strong> Your request will be reviewed by an administrator. Once approved, you&apos;ll receive an email at your edu mail address with login instructions.
           </p>
         </div>
 
