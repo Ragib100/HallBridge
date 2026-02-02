@@ -115,8 +115,14 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     return pathname.startsWith(path);
   };
 
-  const handleLogout = () => {
-    router.push("/auth/login");
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      router.push("/auth/login");
+    }
   };
 
   const handleProfile = () => {
@@ -125,10 +131,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex min-h-screen bg-[#1a1d21]">
-      {/* Overlay */}
+      {/* Overlay for mobile */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -136,14 +142,15 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       {/* Sidebar */}
       <aside className={`
         fixed inset-y-0 left-0 z-50
-        w-64 bg-[#1a1d21] flex flex-col
+        w-64 bg-[#1a1d21] flex flex-col h-screen overflow-y-auto
         transform transition-transform duration-300 ease-in-out
+        lg:translate-x-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        {/* Close button */}
+        {/* Close button - only on mobile */}
         <button
           onClick={() => setSidebarOpen(false)}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white"
+          className="absolute top-4 right-4 text-gray-400 hover:text-white lg:hidden"
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -167,7 +174,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2">
+        <nav className="flex-1 px-2 overflow-y-auto">
           <ul className="space-y-1">
             {navItems.map((item) => (
               <li key={item.path}>
@@ -201,14 +208,14 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#f5f5f5] overflow-hidden flex flex-col">
+      <main className="flex-1 bg-[#f5f5f5] overflow-hidden flex flex-col lg:ml-64" style={{ overscrollBehavior: 'none' }}>
         {/* Header */}
-        <header className="bg-white px-4 md:px-8 py-4 flex items-center justify-between border-b border-gray-100">
+        <header className="bg-white px-4 md:px-8 py-4 flex items-center justify-between border-b border-gray-100" style={{ touchAction: 'pan-x pan-y pinch-zoom' }}>
           <div className="flex items-center gap-4">
-            {/* Menu Toggle Button */}
+            {/* Menu Toggle Button - only on mobile */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg lg:hidden"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -249,7 +256,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 p-4 md:p-8 overflow-auto">
+        <div className="flex-1 p-4 md:p-8 overflow-auto" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
           {children}
         </div>
       </main>

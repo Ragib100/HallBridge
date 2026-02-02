@@ -149,7 +149,7 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
               <>
                 <button
                   onClick={handleCancel}
-                  className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
                 >
                   Cancel
                 </button>
@@ -164,7 +164,7 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium flex items-center gap-2"
+                className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] font-medium flex items-center gap-2"
               >
                 <svg
                   className="w-4 h-4"
