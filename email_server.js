@@ -1,6 +1,7 @@
 const express = require("express");
 const nodemailer = require("nodemailer");
 const rateLimit = require("express-rate-limit");
+const bcrypt = require("bcrypt");
 require("dotenv").config({ path: ".env.email" });
 
 const app = express();
@@ -28,7 +29,9 @@ app.post("/send-email", async (req, res) => {
   const { to, subject, html, text, secret } = req.body;
 
   // 🔐 API authentication
-  if (!secret || secret !== process.env.EMAIL_API_SECRET) {
+  const secret_matched = await bcrypt.compare(process.env.EMAIL_API_SECRET, secret);
+  console.log("🔐 Secret matched:", secret_matched);
+  if (!secret || !secret_matched) {
     return res.status(401).json({ success: false, message: "Unauthorized" });
   }
 

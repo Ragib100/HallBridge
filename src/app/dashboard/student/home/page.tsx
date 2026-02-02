@@ -36,7 +36,7 @@ export default function HomePage() {
     dinner: false,
   });
   const [recentRequests, setRecentRequests] = useState<MaintenanceRequest[]>([]);
-  const [currentBill, setCurrentBill] = useState<number>(10000);
+  const [currentBill, setCurrentBill] = useState<number>(0);
 
   // Fetch user info
   useEffect(() => {

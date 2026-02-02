@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export default function Home() {
+  const { user } = useCurrentUser();
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -20,7 +24,7 @@ export default function Home() {
             href="/auth/login"
             className="px-6 py-2 text-white border border-white rounded-md hover:bg-white/10 transition-colors font-medium"
           >
-            Login
+            {user ? "Dashboard" : "Log In"}
           </Link>
           <Link
             href="/auth/register"
