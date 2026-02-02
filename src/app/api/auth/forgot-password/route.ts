@@ -70,7 +70,14 @@ export async function POST(request: Request) {
     });
 
     // Send OTP email
-    await sendPasswordResetOTPEmail(user.email, user.fullName, otp);
+    const emailSent = await sendPasswordResetOTPEmail(user.email, user.fullName, otp);
+    
+    if (!emailSent) {
+      return NextResponse.json(
+        { message: "Failed to send OTP email" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       message: "If an account with that email exists, we've sent a password reset OTP.",

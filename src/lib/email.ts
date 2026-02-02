@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 const APP_NAME = "HallBridge";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -12,6 +13,7 @@ export interface EmailOptions {
  * Send an email using the configured provider (SMTP)
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
+  const secret: string = process.env.EMAIL_API_SECRET!;
   try {
     const res = await fetch(process.env.EMAIL_API_URL!, {
       method: "POST",
@@ -21,7 +23,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         subject: options.subject,
         html: options.html,
         text: options.text,
-        secret: process.env.EMAIL_API_SECRET,
+        secret: await bcrypt.hash(secret,10),
       }),
     });
 
