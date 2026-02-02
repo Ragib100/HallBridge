@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import mongoose from "mongoose";
 import connectDB from "@/lib/db";
 import Room from "@/models/Room";
 import User from "@/models/User";
