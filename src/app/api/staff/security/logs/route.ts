@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import EntryExitLog from "@/models/EntryExitLog";
 import GatePass from "@/models/GatePass";
+import { getBDDate } from "@/lib/dates";
 
 // GET /api/staff/security/logs - Get entry/exit logs
 export async function GET(request: Request) {
@@ -56,7 +57,7 @@ export async function GET(request: Request) {
       .lean();
 
     // Get today's stats
-    const today = new Date();
+    const today = getBDDate();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -154,14 +155,14 @@ export async function POST(request: Request) {
 
     // Generate log ID
     const count = await EntryExitLog.countDocuments();
-    const year = new Date().getFullYear();
+    const year = getBDDate().getFullYear();
     const logId = `LOG-${year}-${String(count + 1).padStart(5, "0")}`;
 
     const log = new EntryExitLog({
       logId,
       student: studentId,
       type,
-      timestamp: new Date(),
+      timestamp: getBDDate(),
       gatePass: gatePassId || undefined,
       loggedBy: session,
       notes,
@@ -176,11 +177,11 @@ export async function POST(request: Request) {
       if (gatePass) {
         if (type === "exit" && gatePass.status === "approved") {
           gatePass.status = "active";
-          gatePass.actualOutTime = new Date();
+          gatePass.actualOutTime = getBDDate();
           gatePass.checkedOutBy = session;
           await gatePass.save();
         } else if (type === "entry" && gatePass.status === "active") {
-          gatePass.actualReturnTime = new Date();
+          gatePass.actualReturnTime = getBDDate();
           gatePass.checkedInBy = session;
           
           // Check if late
@@ -188,7 +189,7 @@ export async function POST(request: Request) {
           const [hours, minutes] = gatePass.returnTime.split(":").map(Number);
           expectedReturn.setHours(hours, minutes, 0, 0);
           
-          if (new Date() > expectedReturn) {
+          if (getBDDate() > expectedReturn) {
             gatePass.status = "late";
             log.isLate = true;
             await log.save();

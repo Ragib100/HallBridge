@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { STAFF_ROLE_LABELS, type StaffRole } from '@/types';
+import { getBDDate } from '@/lib/dates';
 
 function StatsIcon({ icon, className }: { icon: string; className?: string }) {
   switch (icon) {
@@ -202,7 +203,7 @@ export default function StaffHomePage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
+            <div className="flex items-center justify-center min-h-100">
                 <div className="text-gray-500">Loading dashboard...</div>
             </div>
         );
@@ -210,7 +211,7 @@ export default function StaffHomePage() {
 
     if (!config) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
+            <div className="flex items-center justify-center min-h-100">
                 <div className="text-gray-500">No dashboard configuration found for your role.</div>
             </div>
         );
@@ -219,7 +220,7 @@ export default function StaffHomePage() {
     return (
         <div className="space-y-6">
             {/* Welcome Banner */}
-            <div className="bg-gradient-to-r from-[#2D6A4F] to-[#40916C] rounded-2xl p-6 text-white">
+            <div className="bg-linear-to-r from-[#2D6A4F] to-[#40916C] rounded-2xl p-6 text-white">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold mb-1">
@@ -296,7 +297,7 @@ export default function StaffHomePage() {
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-bold text-gray-800">Today&apos;s Overview</h2>
                         <span className="text-sm text-gray-500">
-                            {new Date().toLocaleDateString('en-US', {
+                            {getBDDate().toLocaleDateString('en-US', {
                                 weekday: 'long',
                                 year: 'numeric',
                                 month: 'long',

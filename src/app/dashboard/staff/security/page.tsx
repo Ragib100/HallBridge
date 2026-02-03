@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { StaffRoleGuard } from '@/components/staff/role-guard';
 import { Spinner } from '@/components/ui/spinner';
+import { getBDDate } from '@/lib/dates';
 
 interface GatePass {
   _id: string;
@@ -161,7 +162,8 @@ export default function SecurityPage() {
   };
 
   const formatTime = (date: string | Date) => {
-    return new Date(date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    // Date parameter is already in DB (BD timezone), just format it
+    return new Date(date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dhaka' });
   };
 
   const filteredPasses = gatePasses.filter(
@@ -400,8 +402,8 @@ export default function SecurityPage() {
                     {logs.map((log) => (
                       <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
-                          <p className="text-gray-900">{new Date(log.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
-                          <p className="text-xs text-gray-500">{new Date(log.timestamp).toLocaleDateString()}</p>
+                          <p className="text-gray-900">{new Date(log.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dhaka' })}</p>
+                          <p className="text-xs text-gray-500">{new Date(log.timestamp).toLocaleDateString('en-US', { timeZone: 'Asia/Dhaka' })}</p>
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${

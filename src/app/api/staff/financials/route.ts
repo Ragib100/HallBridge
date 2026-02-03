@@ -8,6 +8,7 @@ import Meal from "@/models/Meal";
 import GuestMeal from "@/models/GuestMeal";
 import SystemSettings from "@/models/SystemSettings";
 import Laundry from "@/models/Laundry";
+import { getBDDate } from "@/lib/dates";
 
 // GET /api/staff/financials - Get financial overview
 export async function GET(request: Request) {
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
     const customMonth = searchParams.get("month"); // Format: 2026-01
     const customYear = searchParams.get("year");
 
-    const currentDate = new Date();
+    const currentDate = getBDDate();
     let startDate: Date;
     let endDate: Date;
     let periodLabel: string;

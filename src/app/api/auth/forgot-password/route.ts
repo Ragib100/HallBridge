@@ -34,9 +34,10 @@ export async function POST(request: Request) {
     // Always return success to prevent email enumeration attacks
     // But only send email if user exists
     if (!user) {
-      return NextResponse.json({
-        message: "If an account with that email exists, we've sent a password reset OTP.",
-      });
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
     }
 
     // Check if user is a student with pending/rejected status

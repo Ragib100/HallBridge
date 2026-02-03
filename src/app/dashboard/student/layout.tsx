@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { NotificationDropdown } from "@/components/common/notification_dropdown";
 import { useState, useEffect } from "react";
+import { getBDDate } from "@/lib/dates";
 
 const navItems = [
   { name: "Home", path: "/dashboard/student/home", icon: "home" },
@@ -42,7 +43,7 @@ function formatDate(): string {
     month: 'long', 
     day: 'numeric' 
   };
-  return new Date().toLocaleDateString('en-US', options);
+  return getBDDate().toLocaleDateString('en-US', options);
 }
 
 function NavIcon({ icon, className }: { icon: string; className?: string }) {

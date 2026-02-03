@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { StaffRoleGuard } from '@/components/staff/role-guard';
 import { Spinner } from '@/components/ui/spinner';
+import { getBDDate } from '@/lib/dates';
 
 type TimeRange = 'this-month' | 'last-month' | 'this-year' | 'all-time';
 
@@ -147,12 +148,12 @@ export default function ExpensesPage() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    const today = new Date();
+    const today = getBDDate();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return `Today ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+      return `Today ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Dhaka' })}`;
     } else if (date.toDateString() === yesterday.toDateString()) {
       return 'Yesterday';
     }
@@ -252,7 +253,7 @@ export default function ExpensesPage() {
             );
           })}
           {/* Total Card */}
-          <div className="bg-gradient-to-br from-[#2D6A4F] to-[#40916c] rounded-xl p-4 shadow-sm text-white">
+          <div className="bg-linear-to-br from-[#2D6A4F] to-[#40916c] rounded-xl p-4 shadow-sm text-white">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                 <span className="text-xl">💰</span>
@@ -386,7 +387,7 @@ export default function ExpensesPage() {
                 )}
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
+              <div className="divide-y divide-gray-100 max-h-100 overflow-y-auto">
                 {filteredExpenses.map(expense => (
                   <div key={expense.id} className="py-4 flex items-center justify-between hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors group">
                     <div className="flex items-center gap-4">

@@ -8,6 +8,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import type { StaffRole } from "@/types";
 import { STAFF_ROLE_LABELS } from "@/types";
 import { NotificationDropdown } from "@/components/common/notification_dropdown";
+import { getBDDate } from "@/lib/dates";
 
 // Define which nav items each staff role can access
 type NavItem = {
@@ -99,7 +100,7 @@ function formatDate(): string {
     month: 'long', 
     day: 'numeric' 
   };
-  return new Date().toLocaleDateString('en-US', options);
+  return getBDDate().toLocaleDateString('en-US', options);
 }
 
 function NavIcon({ icon, className }: { icon: string; className?: string }) {

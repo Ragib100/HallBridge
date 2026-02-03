@@ -41,3 +41,9 @@ export function getDayFromDateBD(date: string): string {
 
     return bdDate.toLocaleDateString("en-US", { weekday: "long" });
 }
+
+export function getBDDate(): Date {
+    return new Date(
+        new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" })
+    );
+}

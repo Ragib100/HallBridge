@@ -6,6 +6,7 @@ import PayNow from "@/components/student/pay_now";
 import { generateInvoicePDF } from "@/lib/generate-invoice-pdf";
 import { Spinner } from "@/components/ui/spinner";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { getBDDate } from "@/lib/dates";
 
 interface Bill {
     seatrent: number;
@@ -42,7 +43,7 @@ export default function CurrentDuesPage() {
     const getDaysUntilDue = () => {
         if (!billdata) return 0;
         const dueDate = new Date(billdata.dueDate);
-        const today = new Date();
+        const today = getBDDate();
         const diffTime = dueDate.getTime() - today.getTime();
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     };

@@ -6,6 +6,7 @@ import Meal from "@/models/Meal";
 import GuestMeal from "@/models/GuestMeal";
 import Payment from "@/models/Payment";
 import User from "@/models/User";
+import { getBDDate } from "@/lib/dates";
 
 // GET /api/billing - Get billing information with settings from database
 export async function GET(request: NextRequest) {
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate current month billing
-    const currentDate = new Date();
+    const currentDate = getBDDate();
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const currentMonth = monthNames[currentDate.getMonth()];
     const currentYear = currentDate.getFullYear();
@@ -205,7 +206,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Amount and type are required" }, { status: 400 });
     }
 
-    const currentDate = new Date();
+    const currentDate = getBDDate();
     const month = billingMonth || currentDate.getMonth() + 1;
     const year = billingYear || currentDate.getFullYear();
 
@@ -253,7 +254,7 @@ export async function POST(request: Request) {
       billingMonth: month,
       billingYear: year,
       dueDate,
-      paidDate: new Date(),
+      paidDate: getBDDate(),
       paymentMethod: paymentMethod || "online",
       description,
       lateFee,

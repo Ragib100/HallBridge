@@ -11,6 +11,7 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Format date to a readable string
+ * Note: Accepts Date object or string. Pass BD date if timezone accuracy is needed.
  */
 export function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString("en-US", {

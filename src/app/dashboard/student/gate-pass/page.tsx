@@ -5,15 +5,15 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectL
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { getCurrentDateBD } from '@/lib/dates';
+import { getCurrentDateBD, getNextDateBD, getBDDate } from '@/lib/dates';
 
 export default function StudentGatePassPage() {
 	const [purpose, setPurpose] = useState<string>('');
 	const [purposeDetails, setPurposeDetails] = useState<string>('');
 	const [destination, setDestination] = useState<string>('');
 	const [outDate, setOutDate] = useState<string>(getCurrentDateBD());
-	const [outTime, setOutTime] = useState<string>(new Date(new Date().getTime() + 60 * 60 * 1000).toTimeString().substring(0, 5));
-	const [returnDate, setReturnDate] = useState<string>(new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+	const [outTime, setOutTime] = useState<string>(new Date(getBDDate().getTime() + 60 * 60 * 1000).toTimeString().substring(0, 5));
+	const [returnDate, setReturnDate] = useState<string>(new Date(getBDDate().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
 	const [returnTime, setReturnTime] = useState<string>('12:00');
 	const [contactNumber, setContactNumber] = useState<string>('');
 	const [emergencyContact, setEmergencyContact] = useState<string>('');
@@ -23,7 +23,7 @@ export default function StudentGatePassPage() {
 
 	const addMinutes = (time: string, minutesToAdd: number) => {
 		const [hours, minutes] = time.split(':').map(Number);
-		const base = new Date();
+		const base = getBDDate();
 		base.setHours(hours, minutes, 0, 0);
 		base.setMinutes(base.getMinutes() + minutesToAdd);
 		const hh = String(base.getHours()).padStart(2, '0');
@@ -97,8 +97,8 @@ export default function StudentGatePassPage() {
 			setPurposeDetails('');
 			setDestination('');
 			setOutDate(today);
-			setOutTime(new Date(new Date().getTime() + 60 * 60 * 1000).toTimeString().substring(0, 5));
-			const nextDay = new Date();
+			setOutTime(new Date(getBDDate().getTime() + 60 * 60 * 1000).toTimeString().substring(0, 5));
+			const nextDay = getBDDate();
 			nextDay.setDate(nextDay.getDate() + 1);
 			setReturnDate(nextDay.toISOString().split('T')[0]);
 			setReturnTime('12:00');

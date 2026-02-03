@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { getBDDate } from "@/lib/dates";
 
 interface Notification {
   _id: string;
@@ -85,7 +86,7 @@ export function useNotifications(pollingInterval = 30000): UseNotificationsRetur
       // Update local state
       setNotifications((prev) =>
         prev.map((n) =>
-          n._id === notificationId ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
+          n._id === notificationId ? { ...n, isRead: true, readAt: getBDDate().toISOString() } : n
         )
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
@@ -106,7 +107,7 @@ export function useNotifications(pollingInterval = 30000): UseNotificationsRetur
 
       // Update local state
       setNotifications((prev) =>
-        prev.map((n) => ({ ...n, isRead: true, readAt: new Date().toISOString() }))
+        prev.map((n) => ({ ...n, isRead: true, readAt: getBDDate().toISOString() }))
       );
       setUnreadCount(0);
     } catch (err) {

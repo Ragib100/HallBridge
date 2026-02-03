@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ViewIssueDialog } from '@/components/staff/view_issue';
 import { StaffRoleGuard } from '@/components/staff/role-guard';
+import { getBDDate } from '@/lib/dates';
 
 interface MaintenanceTask {
   id: string;
@@ -117,7 +118,7 @@ export default function MaintenancePage() {
       if (response.ok) {
         setTasks(prev => prev.map(task => 
           task.id === taskId 
-            ? { ...task, status: newStatus, completedAt: newStatus === 'completed' ? new Date().toISOString() : task.completedAt }
+            ? { ...task, status: newStatus, completedAt: newStatus === 'completed' ? getBDDate().toISOString() : task.completedAt }
             : task
         ));
       }
@@ -135,7 +136,7 @@ export default function MaintenancePage() {
 
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
-    const now = new Date();
+    const now = getBDDate();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
@@ -160,7 +161,7 @@ export default function MaintenancePage() {
   if (loading) {
     return (
       <StaffRoleGuard allowedRoles={['maintenance_staff']}>
-        <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center justify-center min-h-100">
           <div className="text-gray-500">Loading maintenance requests...</div>
         </div>
       </StaffRoleGuard>

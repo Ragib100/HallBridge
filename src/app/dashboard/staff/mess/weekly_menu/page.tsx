@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { getBDDate } from "@/lib/dates"
 import { getIcon } from "@/components/common/icons"
 
 interface Meal {
@@ -28,7 +29,7 @@ export default function GuestMeal() {
     const [loading, setLoading] = useState(true)
     const [editingDay, setEditingDay] = useState<string | null>(null)
     const [editedMeal, setEditedMeal] = useState<Meal | null>(null)
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+    const today = getBDDate().toLocaleDateString('en-US', { weekday: 'long' })
 
     // Fetch meals from database on page load
     useEffect(() => {

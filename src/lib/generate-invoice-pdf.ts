@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getBDDate } from '@/lib/dates';
 
 interface Bill {
     seatrent: number;
@@ -72,7 +73,7 @@ export const generateInvoicePDF = (
     doc.text(`Invoice ID: ${invoice.invoice_id}`, 120, startY + 7);
     doc.text(`Month: ${invoice.month}`, 120, startY + 14);
     doc.text(`Due Date: ${dueDate}`, 120, startY + 21);
-    doc.text(`Issue Date: ${new Date().toLocaleDateString()}`, 120, startY + 28);
+    doc.text(`Issue Date: ${getBDDate().toLocaleDateString()}`, 120, startY + 28);
     
     // Billing breakdown table
     const tableStartY = startY + 45;
@@ -182,7 +183,7 @@ export const generateInvoicePDFBlob = (
     doc.text(`Invoice ID: ${invoice.invoice_id}`, 120, startY + 7);
     doc.text(`Month: ${invoice.month}`, 120, startY + 14);
     doc.text(`Due Date: ${dueDate}`, 120, startY + 21);
-    doc.text(`Issue Date: ${new Date().toLocaleDateString()}`, 120, startY + 28);
+    doc.text(`Issue Date: ${getBDDate().toLocaleDateString()}`, 120, startY + 28);
     
     const tableStartY = startY + 45;
     const tableData: any[] = [];

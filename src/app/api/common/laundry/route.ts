@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import Laundry, { LAUNDRY_STATUSES } from "@/models/Laundry";
+import { getBDDate } from "@/lib/dates";
 
 // GET /api/common/laundry - Get laundry requests
 export async function GET(request: Request) {
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
       const todayDelivered = await Laundry.countDocuments({
         status: "delivered",
         actualDelivery: {
-          $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          $gte: new Date(getBDDate().setHours(0, 0, 0, 0)),
         },
       });
 
@@ -123,11 +124,11 @@ export async function POST(request: Request) {
 
     // Generate request ID
     const count = await Laundry.countDocuments();
-    const year = new Date().getFullYear();
+    const year = getBDDate().getFullYear();
     const requestId = `LND-${year}-${String(count + 1).padStart(4, "0")}`;
 
     // Expected delivery is 2 days from now
-    const expectedDelivery = new Date();
+    const expectedDelivery = getBDDate();
     expectedDelivery.setDate(expectedDelivery.getDate() + 2);
 
     const laundryRequest = new Laundry({
@@ -198,12 +199,12 @@ export async function PATCH(request: Request) {
       
       // Set pickup date when collected
       if (status === "collected" && !laundryRequest.pickupDate) {
-        laundryRequest.pickupDate = new Date();
+        laundryRequest.pickupDate = getBDDate();
       }
       
       // Set delivery date when delivered
       if (status === "delivered") {
-        laundryRequest.actualDelivery = new Date();
+        laundryRequest.actualDelivery = getBDDate();
       }
     }
 
