@@ -224,7 +224,7 @@ export default function StudentLaundryPage() {
                 value={studentNotes}
                 onChange={(e) => setStudentNotes(e.target.value)}
                 placeholder="Any special care instructions..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] min-h-[80px]"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] min-h-20"
               />
             </div>
 

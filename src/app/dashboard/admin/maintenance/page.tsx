@@ -96,7 +96,7 @@ export default function AdminMaintenancePage() {
 
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-[400px]">
+      <div className="p-6 flex items-center justify-center min-h-100">
         <div className="text-gray-500">Loading maintenance requests...</div>
       </div>
     );

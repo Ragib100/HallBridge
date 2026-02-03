@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { PlayCircle } from "@boxicons/react";
 
 export default function Home() {
   const { user } = useCurrentUser();
@@ -71,18 +72,14 @@ export default function Home() {
               >
                 Get Started
               </Link>
-              <button className="flex items-center gap-2 text-white hover:text-white/80 transition-colors font-medium">
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+              <button
+                className="flex items-center gap-2 text-white hover:text-white/80 transition-colors font-medium cursor-pointer"
+                onClick={() => {
+                  const videoUrl = process.env.NEXT_PUBLIC_DEMO_VIDEO_URL || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+                  window.open(videoUrl, "_blank");
+                }}
+              >
+                <PlayCircle />
                 Watch Demo
               </button>
             </div>

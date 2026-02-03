@@ -79,6 +79,12 @@ const usersData = [
     phone: "+880 1812-111111",
     isActive: true,
     approvalStatus: "approved",
+    academicInfo: {
+      department: "Computer Science",
+      batch: "2024",
+      bloodGroup: "A+",
+      emergencyContact: "+880 1712-111119",
+    },
   },
   {
     fullName: "Karim Khan",
@@ -89,6 +95,12 @@ const usersData = [
     phone: "+880 1812-222222",
     isActive: true,
     approvalStatus: "approved",
+    academicInfo: {
+      department: "Electrical Engineering",
+      batch: "2024",
+      bloodGroup: "B+",
+      emergencyContact: "+880 1712-222229",
+    },
   },
   {
     fullName: "Fahim Hasan",
@@ -99,6 +111,12 @@ const usersData = [
     phone: "+880 1812-333333",
     isActive: true,
     approvalStatus: "approved",
+    academicInfo: {
+      department: "Mechanical Engineering",
+      batch: "2024",
+      bloodGroup: "O+",
+      emergencyContact: "+880 1712-333339",
+    },
   },
   {
     fullName: "Anik Roy",
@@ -109,6 +127,12 @@ const usersData = [
     phone: "+880 1812-444444",
     isActive: true,
     approvalStatus: "approved",
+    academicInfo: {
+      department: "Civil Engineering",
+      batch: "2024",
+      bloodGroup: "AB+",
+      emergencyContact: "+880 1712-444449",
+    },
   },
   {
     fullName: "Tanvir Islam",
@@ -119,6 +143,12 @@ const usersData = [
     phone: "+880 1812-555555",
     isActive: true,
     approvalStatus: "approved",
+    academicInfo: {
+      department: "Computer Science",
+      batch: "2024",
+      bloodGroup: "O-",
+      emergencyContact: "+880 1712-555559",
+    },
   },
   // Pending Students (not yet approved)
   {
@@ -127,8 +157,15 @@ const usersData = [
     password: "student123",
     userType: "student",
     studentId: "STU-2024-006",
+    phone: "+880 1812-666666",
     isActive: false,
     approvalStatus: "pending",
+    academicInfo: {
+      department: "Business Administration",
+      batch: "2024",
+      bloodGroup: "B-",
+      emergencyContact: "+880 1712-666669",
+    },
   },
   {
     fullName: "Imran Hossain",
@@ -136,8 +173,15 @@ const usersData = [
     password: "student123",
     userType: "student",
     studentId: "STU-2024-007",
+    phone: "+880 1812-777777",
     isActive: false,
     approvalStatus: "pending",
+    academicInfo: {
+      department: "Economics",
+      batch: "2024",
+      bloodGroup: "A-",
+      emergencyContact: "+880 1712-777779",
+    },
   },
 ];
 
@@ -168,6 +212,7 @@ export async function seedUsers(): Promise<{ success: number; skipped: number; f
         phone: userData.phone,
         isActive: userData.isActive,
         approvalStatus: userData.approvalStatus || (userData.userType === 'student' ? 'pending' : undefined),
+        academicInfo: userData.academicInfo,
       });
       console.log(`  ✅ Created user: ${userData.email} (${userData.userType})`);
       success++;

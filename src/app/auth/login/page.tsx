@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { AlertCircle } from "@boxicons/react";
 
 function LoginForm() {
   const router = useRouter();
@@ -192,12 +193,10 @@ function LoginForm() {
 
         {/* Edu Email Info */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-start gap-2">
-            <svg className="w-5 h-5 text-green-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+          <div className="flex items-center gap-2">
+            <AlertCircle fill="#0da200" />
             <div className="text-sm text-green-800">
-              <p className="font-medium mb-1">📧 Login using Email issued by MIST</p>
+              <p className="font-medium">📧 Use your registered email address to sign in</p>
             </div>
           </div>
         </div>
@@ -206,7 +205,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium"
+          className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium cursor-pointer"
         >
           {isLoading ? "Signing in..." : "Sign in"}
         </button>
@@ -232,7 +231,7 @@ function LoginForm() {
           onClick={() => {
             window.location.href = "/api/auth/google";
           }}
-          className="w-full py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-3"
+          className="w-full py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-3 cursor-pointer"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -261,7 +260,7 @@ function LoginForm() {
           onClick={() => {
             window.location.href = "/api/auth/microsoft";
           }}
-          className="w-full py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-3"
+          className="w-full py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-3 cursor-pointer"
         >
           {/* Microsoft Logo */}
           <svg
