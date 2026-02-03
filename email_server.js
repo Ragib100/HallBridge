@@ -2,6 +2,7 @@ const express = require("express");
 const nodemailer = require("nodemailer");
 const rateLimit = require("express-rate-limit");
 const bcrypt = require("bcrypt");
+const sanitizeHtml = require("sanitize-html");
 require("dotenv").config({ path: ".env.email" });
 
 const app = express();
@@ -43,8 +44,8 @@ app.post("/send-email", async (req, res) => {
     });
   }
 
-  // Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // Validate email format (safer regex to prevent ReDoS)
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(to)) {
     return res.status(400).json({ 
       success: false, 
@@ -52,12 +53,61 @@ app.post("/send-email", async (req, res) => {
     });
   }
 
+  // Sanitize HTML content to prevent XSS attacks
+  const sanitizedHtml = sanitizeHtml(html, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat([
+      'img', 'h1', 'h2', 'h3', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'html', 'head', 'body', 'meta', 'title'
+    ]),
+    allowedAttributes: {
+      ...sanitizeHtml.defaults.allowedAttributes,
+      '*': ['style', 'class'],
+      'table': ['role', 'width', 'cellpadding', 'cellspacing', 'border', 'align', 'bgcolor'],
+      'tr': ['valign', 'align', 'bgcolor'],
+      'td': ['width', 'height', 'valign', 'align', 'colspan', 'rowspan', 'bgcolor'],
+      'th': ['width', 'height', 'valign', 'align', 'colspan', 'rowspan', 'bgcolor'],
+      'img': ['src', 'alt', 'width', 'height', 'border'],
+      'a': ['href', 'target', 'rel'],
+      'meta': ['charset', 'name', 'content'],
+      'div': ['style', 'class', 'align']
+    },
+    allowedStyles: {
+      '*': {
+        'color': [/^#?[0-9a-fA-F]{3,6}$/],
+        'background-color': [/^#?[0-9a-fA-F]{3,6}$/],
+        'text-align': [/^(left|right|center|justify)$/],
+        'font-size': [/^\d+(?:px|em|rem|%|pt)$/],
+        'font-weight': [/^(bold|normal|\d{3})$/],
+        'font-family': [/.*/],
+        'padding': [/^\d+(?:px|em|rem|%)(?:\s+\d+(?:px|em|rem|%))*$/],
+        'margin': [/^\d+(?:px|em|rem|%)(?:\s+\d+(?:px|em|rem|%))*$/],
+        'border': [/.*/],
+        'border-radius': [/^\d+(?:px|em|rem|%)(?:\s+\d+(?:px|em|rem|%))*$/],
+        'border-left': [/.*/],
+        'border-right': [/.*/],
+        'border-top': [/.*/],
+        'border-bottom': [/.*/],
+        'line-height': [/^\d+(?:\.\d+)?$/],
+        'width': [/^\d+(?:px|em|rem|%)$/],
+        'height': [/^\d+(?:px|em|rem|%)$/],
+        'max-width': [/^\d+(?:px|em|rem|%)$/],
+        'display': [/^(block|inline|inline-block|none|table|table-cell)$/],
+        'vertical-align': [/^(top|middle|bottom|baseline)$/],
+        'text-decoration': [/^(none|underline|line-through)$/],
+        'letter-spacing': [/^\d+(?:px|em|rem)$/],
+        'opacity': [/^\d*\.?\d+$/]
+      }
+    },
+    // Allow data URIs for images (commonly used in email templates)
+    allowedSchemes: ['http', 'https', 'mailto', 'data'],
+    allowProtocolRelative: false
+  });
+
   try {
     await transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to,
       subject,
-      html,
+      html: sanitizedHtml,
       text: text || subject, // Fallback to subject if no text provided
     });
 

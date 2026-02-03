@@ -18,6 +18,7 @@
     "db:reset": "npx tsx scripts/clear.ts --force && npx tsx scripts/seed.ts"
   },
   "dependencies": {
+    "@boxicons/react": "^1.0.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.3.6",
@@ -44,6 +45,7 @@
     "react": "19.2.3",
     "react-day-picker": "^9.13.0",
     "react-dom": "19.2.3",
+    "sanitize-html": "^2.17.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

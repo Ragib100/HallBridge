@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Bed, Door, StepsUp, CurrencyNotes } from "@boxicons/react";
 
 interface UserInfo {
   fullName: string;
@@ -119,9 +120,7 @@ export default function HomePage() {
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-[#2D6A4F]/10 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-[#2D6A4F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
+              <Door fill="#2D6A4F" />
             </div>
             <span className="text-sm text-gray-500">My Room</span>
           </div>
@@ -140,9 +139,7 @@ export default function HomePage() {
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <StepsUp className="fill-slate-600" />
             </div>
             <span className="text-sm text-gray-500">Floor</span>
           </div>
@@ -164,9 +161,7 @@ export default function HomePage() {
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
+              <Bed fill="#0065fc" />
             </div>
             <span className="text-sm text-gray-500">Bed No.</span>
           </div>
@@ -195,19 +190,7 @@ export default function HomePage() {
                 ${currentBill >= 10000 ? "bg-red-100" : "bg-red-50"}
               `}
             >
-              <svg
-                className={`w-5 h-5 ${currentBill >= 10000 ? "text-red-700" : "text-red-600"}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
+              <CurrencyNotes fill="#ff0000" />
             </div>
 
             <span
@@ -399,8 +382,8 @@ export default function HomePage() {
                     </p>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${request.status === "completed" ? "bg-green-100 text-green-700" :
-                      request.status === "in-progress" ? "bg-blue-100 text-blue-700" :
-                        "bg-yellow-100 text-yellow-700"
+                    request.status === "in-progress" ? "bg-blue-100 text-blue-700" :
+                      "bg-yellow-100 text-yellow-700"
                     }`}>
                     {request.status === "in-progress" ? "In Progress" :
                       request.status.charAt(0).toUpperCase() + request.status.slice(1)}

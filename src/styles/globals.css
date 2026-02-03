@@ -7,10 +7,6 @@ html,
 body {
   @apply bg-white;
   overscroll-behavior: none;
-  overflow: hidden;
-  height: 100vh;
-  position: fixed;
-  width: 100%;
 }
 
 @theme inline {
