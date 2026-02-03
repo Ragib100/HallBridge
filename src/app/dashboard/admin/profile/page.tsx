@@ -41,7 +41,7 @@ export default function AdminProfilePage() {
     name: user.fullName,
     email: user.email,
     phone: user.phone || "",
-    avatar: "/logos/profile.png",
+    picture: user.picture || "",
     role: user.userType,
     joinedDate,
     adminRole: "Administrator",
@@ -55,6 +55,7 @@ export default function AdminProfilePage() {
         body: JSON.stringify({
           fullName: data.name,
           phone: data.phone,
+          picture: data.picture,
         }),
       });
 

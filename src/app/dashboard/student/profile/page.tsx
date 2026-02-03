@@ -41,9 +41,15 @@ export default function StudentProfilePage() {
     name: user.fullName,
     email: user.email,
     phone: user.phone || "",
-    avatar: "/logos/profile.png",
+    picture: user.picture || "",
     role: user.userType,
     joinedDate,
+    studentId: user.studentId,
+    roomNumber: user.roomAllocation?.roomNumber,
+    department: user.academicInfo?.department,
+    batch: user.academicInfo?.batch,
+    bloodGroup: user.academicInfo?.bloodGroup,
+    emergencyContact: user.academicInfo?.emergencyContact,
   };
 
   const handleSave = async (data: ProfileData): Promise<boolean> => {
@@ -54,6 +60,13 @@ export default function StudentProfilePage() {
         body: JSON.stringify({
           fullName: data.name,
           phone: data.phone,
+          picture: data.picture,
+          academicInfo: {
+            department: data.department,
+            batch: data.batch,
+            bloodGroup: data.bloodGroup,
+            emergencyContact: data.emergencyContact,
+          },
         }),
       });
 

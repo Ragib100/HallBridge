@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 
 export type UserRole = "admin" | "student" | "staff";
@@ -10,7 +10,7 @@ export interface ProfileData {
   name: string;
   email: string;
   phone: string;
-  avatar: string;
+  picture: string;
   role: UserRole;
   joinedDate: string;
 
@@ -42,9 +42,22 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>(initialData);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const displayValue = (value?: string, fallback = "Not Set") =>
     value && value.trim().length > 0 ? value : fallback;
+
+  const dataURLtoBlob = (dataURL: string): Blob => {
+    const arr = dataURL.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -66,6 +79,32 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
     setSaveError(null);
     setSaveSuccess(false);
 
+    // Check if image was changed (is base64)
+    if(profileData.picture && profileData.picture.startsWith('data:')) {
+      try {
+        const formData = new FormData();
+        const blob = dataURLtoBlob(profileData.picture);
+        formData.append('image', blob, 'profile-picture.png');
+        formData.append('oldImageUrl', initialData.picture || '');
+        
+        const response = await fetch('/api/common/upload-image', {
+          method: 'PUT',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Image upload failed');
+        }
+
+        const data = await response.json();
+        profileData.picture = data.imageUrl;
+      } catch (error) {
+        setSaveError("Image upload failed. Please try again.");
+        setIsSaving(false);
+        return;
+      }
+    }
+
     try {
       const success = await onSave(profileData);
       if (success) {
@@ -86,6 +125,24 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
     setIsEditing(false);
     setProfileData(initialData);
     setSaveError(null);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileData({
+          ...profileData,
+          picture: reader.result as string,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCameraClick = () => {
+    fileInputRef.current?.click();
   };
 
   const getRoleLabel = () => {
@@ -119,19 +176,32 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
         <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="relative">
             <Image
-              src={profileData.avatar}
+              src={profileData.picture || "/default-avatar.png"}
               alt={profileData.name}
               width={96}
               height={96}
               className="w-24 h-24 rounded-full object-cover border-4 border-[#2D6A4F]/20"
             />
             {isEditing && (
-              <button className="absolute bottom-0 right-0 w-8 h-8 bg-[#2D6A4F] text-white rounded-full flex items-center justify-center hover:bg-[#245840] transition-colors">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
+              <>
+                <button 
+                  onClick={handleCameraClick}
+                  type="button"
+                  className="absolute bottom-0 right-0 w-8 h-8 bg-[#2D6A4F] text-white rounded-full flex items-center justify-center hover:bg-[#245840] transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+              </>
             )}
           </div>
           <div className="flex-1 text-center md:text-left">
@@ -187,12 +257,12 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
 
         {/* Success/Error Messages */}
         {saveSuccess && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mt-4">
             Profile updated successfully!
           </div>
         )}
         {saveError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mt-4">
             {saveError}
           </div>
         )}

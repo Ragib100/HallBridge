@@ -12,14 +12,23 @@ type RoomAllocation = {
   allocatedAt?: string;
 };
 
+type AcademicInfo = {
+  department?: string;
+  batch?: string;
+  bloodGroup?: string;
+  emergencyContact?: string;
+};
+
 export type CurrentUser = {
   id: string;
   fullName: string;
   email: string;
   userType: "student" | "staff" | "admin";
+  picture?: string;
 
   studentId?: string;
   roomAllocation?: RoomAllocation;
+  academicInfo?: AcademicInfo;
 
   staffRole?: StaffRole;
 

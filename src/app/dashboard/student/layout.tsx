@@ -235,7 +235,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
               className="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1.5 transition-colors"
             >
               <Image
-                src="/logos/profile.png"
+                src={user?.picture || "/images/default_profile.png"}
                 alt="Profile"
                 width={32}
                 height={32}

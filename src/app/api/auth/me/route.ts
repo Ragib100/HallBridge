@@ -14,7 +14,7 @@ export async function GET() {
 
     await connectDB();
 
-    const user = await User.findById(session).select("fullName email studentId userType staffRole phone isActive approvalStatus mustChangePassword roomAllocation createdAt");
+    const user = await User.findById(session).select("fullName email studentId userType picture staffRole phone isActive approvalStatus mustChangePassword roomAllocation academicInfo createdAt");
     if (!user) {
       return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
     }
@@ -26,12 +26,14 @@ export async function GET() {
         email: user.email,
         studentId: user.studentId,
         userType: user.userType,
+        picture: user.picture,
         staffRole: user.staffRole,
         phone: user.phone,
         isActive: user.isActive,
         approvalStatus: user.approvalStatus,
         mustChangePassword: user.mustChangePassword,
         roomAllocation: user.roomAllocation,
+        academicInfo: user.academicInfo,
         createdAt: user.createdAt,
       },
     });
@@ -58,17 +60,27 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { fullName, phone } = body;
+    const { fullName, phone, picture, academicInfo } = body;
 
-    // Only allow updating fullName and phone (email is primary key, not editable)
-    const updateData: Record<string, string> = {};
+    // Only allow updating fullName, phone, picture, and academicInfo (email is primary key, not editable)
+    const updateData: Record<string, any> = {};
     if (fullName !== undefined && fullName.trim()) {
       updateData.fullName = fullName.trim();
     }
     if (phone !== undefined) {
       updateData.phone = phone.trim();
     }
-
+    if (picture !== undefined) {
+      updateData.picture = picture.trim();
+    }
+    if (academicInfo !== undefined) {
+      updateData.academicInfo = {
+        department: academicInfo.department?.trim() || undefined,
+        batch: academicInfo.batch?.trim() || undefined,
+        bloodGroup: academicInfo.bloodGroup || undefined,
+        emergencyContact: academicInfo.emergencyContact?.trim() || undefined,
+      };
+    }
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ message: "No valid fields to update" }, { status: 400 });
     }
@@ -77,7 +89,7 @@ export async function PATCH(request: NextRequest) {
       session,
       updateData,
       { new: true }
-    ).select("fullName email userType staffRole phone isActive createdAt");
+    ).select("fullName email studentId userType picture staffRole phone isActive academicInfo roomAllocation approvalStatus mustChangePassword createdAt");
 
     return NextResponse.json({
       message: "Profile updated successfully",
@@ -85,10 +97,16 @@ export async function PATCH(request: NextRequest) {
         id: updatedUser._id,
         fullName: updatedUser.fullName,
         email: updatedUser.email,
+        studentId: updatedUser.studentId,
         userType: updatedUser.userType,
+        picture: updatedUser.picture,
         staffRole: updatedUser.staffRole,
         phone: updatedUser.phone,
         isActive: updatedUser.isActive,
+        approvalStatus: updatedUser.approvalStatus,
+        mustChangePassword: updatedUser.mustChangePassword,
+        roomAllocation: updatedUser.roomAllocation,
+        academicInfo: updatedUser.academicInfo,
         createdAt: updatedUser.createdAt,
       },
     });

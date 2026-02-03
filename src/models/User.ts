@@ -54,6 +54,7 @@ const userSchema = new Schema(
         return this.userType === "student";
       },
     },
+    picture: { type: String, trim: true },
     // Flag to force password change on first login
     mustChangePassword: { type: Boolean, default: false },
     // Room allocation for students

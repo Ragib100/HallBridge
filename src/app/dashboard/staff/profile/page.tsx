@@ -42,7 +42,7 @@ export default function StaffProfilePage() {
     name: user.fullName,
     email: user.email,
     phone: user.phone || "",
-    avatar: "/logos/profile.png",
+    picture: user.picture || "",
     role: user.userType,
     joinedDate,
     staffRole: user.staffRole ? STAFF_ROLE_LABELS[user.staffRole] : "Staff",
@@ -56,6 +56,7 @@ export default function StaffProfilePage() {
         body: JSON.stringify({
           fullName: data.name,
           phone: data.phone,
+          picture: data.picture,
         }),
       });
 
