@@ -19,39 +19,39 @@ type NavItem = {
 };
 
 const allNavItems: NavItem[] = [
-  { 
-    name: "Dashboard", 
-    path: "/dashboard/staff/home", 
+  {
+    name: "Dashboard",
+    path: "/dashboard/staff/home",
     icon: "dashboard",
     roles: ["mess_manager", "financial_staff", "laundry_manager", "security_guard"]
   },
-  { 
-    name: "Mess Management", 
-    path: "/dashboard/staff/mess", 
+  {
+    name: "Mess Management",
+    path: "/dashboard/staff/mess",
     icon: "meals",
     roles: ["mess_manager"]
   },
-  { 
-    name: "Maintenance", 
-    path: "/dashboard/staff/maintenance", 
+  {
+    name: "Maintenance",
+    path: "/dashboard/staff/maintenance",
     icon: "maintenance",
     roles: ["maintenance_staff"]
   },
-  { 
-    name: "Laundry", 
-    path: "/dashboard/staff/laundry", 
+  {
+    name: "Laundry",
+    path: "/dashboard/staff/laundry",
     icon: "laundry",
     roles: ["laundry_manager"]
   },
-  { 
-    name: "Expenses", 
-    path: "/dashboard/staff/expenses", 
+  {
+    name: "Expenses",
+    path: "/dashboard/staff/expenses",
     icon: "expenses",
     roles: ["financial_staff"]
   },
-  { 
-    name: "Security", 
-    path: "/dashboard/staff/security", 
+  {
+    name: "Security",
+    path: "/dashboard/staff/security",
     icon: "security",
     roles: ["security_guard"]
   },
@@ -94,11 +94,11 @@ function getPageTitle(pathname: string): { title: string; subtitle: string } {
 }
 
 function formatDate(): string {
-  const options: Intl.DateTimeFormatOptions = { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   };
   return getBDDate().toLocaleDateString('en-US', options);
 }
@@ -196,7 +196,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
     <div className="flex min-h-screen bg-[#1a1d21]">
       {/* Overlay for mobile */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -243,11 +243,10 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
               <li key={item.path}>
                 <Link
                   href={item.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                    isActive(item.path)
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive(item.path)
                       ? "bg-[#2D6A4F] text-white"
                       : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                  }`}
+                    }`}
                 >
                   <NavIcon icon={item.icon} className="w-5 h-5" />
                   <span className="text-sm font-medium">{item.name}</span>
@@ -294,7 +293,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
               className="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1.5 transition-colors"
             >
               <Image
-                src="/logos/profile.png"
+                src={user?.picture || "/default-profile.png"}
                 alt="Profile"
                 width={32}
                 height={32}

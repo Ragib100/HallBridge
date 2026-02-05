@@ -7,7 +7,6 @@ export async function POST() {
     
     // Clear the session cookie
     cookieStore.delete("hb_session");
-    cookieStore.delete("hb_route");
 
     return NextResponse.json(
       { message: "Logged out successfully" },

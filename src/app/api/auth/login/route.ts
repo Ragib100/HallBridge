@@ -82,16 +82,6 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    response.cookies.set({
-      name: "hb_route",
-      value: user.userType,
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
-
     return response;
   } catch (error) {
     return NextResponse.json(

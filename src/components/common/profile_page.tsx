@@ -87,7 +87,7 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
         formData.append('image', blob, 'profile-picture.png');
         formData.append('oldImageUrl', initialData.picture || '');
         
-        const response = await fetch('/api/common/upload-image', {
+        const response = await fetch('/api/upload-image/profile-image', {
           method: 'PUT',
           body: formData,
         });
@@ -176,7 +176,7 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
         <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="relative">
             <Image
-              src={profileData.picture || "/default-avatar.png"}
+              src={profileData.picture || "/default_profile.svg"}
               alt={profileData.name}
               width={96}
               height={96}
