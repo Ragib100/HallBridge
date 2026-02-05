@@ -4,8 +4,9 @@ import { Textarea } from "../ui/textarea";
 import Rating from "../ui/rating";
 import { useState } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { getBDTime } from '@/lib/dates';
 
-interface mealinfo{
+interface mealinfo {
     mealTime: 'breakfast' | 'lunch' | 'dinner';
     menuItems: string[];
     isSubmitted: boolean;
@@ -22,17 +23,38 @@ const mealIcons: Record<string, string> = {
     dinner: '🍽️'
 };
 
-export default function VoteForMeal( {mealinfo, onSubmit}: VoteForMealProps ) {
-    
+export default function VoteForMeal({ mealinfo, onSubmit }: VoteForMealProps) {
+
     const [rating, setRating] = useState<number>(0);
     const [comments, setComments] = useState<string>("");
     const { user } = useCurrentUser();
+    const votingTime = [
+        { mealTime: 'breakfast', start: '09:30:00' },
+        { mealTime: 'lunch', start: '15:30:00' },
+        { mealTime: 'dinner', start: '21:30:00' }
+    ];
+    const currentTime = getBDTime();
+
 
     const handleSubmitReview = async () => {
         try {
-            if(!user) {
+            if (!user) {
                 return;
             }
+            
+            if(mealinfo.mealTime==='breakfast' && currentTime < votingTime[0].start) {
+                alert("Voting for breakfast will open at 9:30 AM");
+                return;
+            }
+            if(mealinfo.mealTime==='lunch' && currentTime < votingTime[1].start) {
+                alert("Voting for lunch will open at 3:30 PM");
+                return;
+            }
+            if(mealinfo.mealTime==='dinner' && currentTime < votingTime[2].start) {
+                alert("Voting for dinner will open at 9:30 PM");
+                return;
+            }
+
             const url = `/api/student/meals/vote-for-meals`;
             const response = await fetch(url, {
                 method: "POST",
@@ -66,13 +88,13 @@ export default function VoteForMeal( {mealinfo, onSubmit}: VoteForMealProps ) {
                     {mealinfo.mealTime.charAt(0).toUpperCase() + mealinfo.mealTime.slice(1)}
                 </h3>
             </div>
-            
+
             <div className="space-y-4">
                 <div>
                     <label className="text-sm font-medium text-gray-700">Menu Items</label>
                     <p className="mt-1 text-gray-600">{mealinfo.menuItems.join(', ')}</p>
                 </div>
-                
+
                 <div>
                     <label className="text-sm font-medium text-gray-700">Rate this meal</label>
                     <div className="mt-2">
@@ -82,11 +104,11 @@ export default function VoteForMeal( {mealinfo, onSubmit}: VoteForMealProps ) {
 
                 <div>
                     <label className="text-sm font-medium text-gray-700">Additional comments (optional)</label>
-                    <Textarea 
-                        placeholder="Write your comments here..." 
-                        className="mt-2 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]" 
-                        value={comments} 
-                        onChange={(e) => setComments(e.target.value)} 
+                    <Textarea
+                        placeholder="Write your comments here..."
+                        className="mt-2 focus:ring-2 focus:ring-[#2D6A4F] focus:border-[#2D6A4F]"
+                        value={comments}
+                        onChange={(e) => setComments(e.target.value)}
                     />
                 </div>
 

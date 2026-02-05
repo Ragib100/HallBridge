@@ -1,8 +1,10 @@
 "use client"
 
 import VoteForMeal from '@/components/student/vote_for_meal';
+import { Loading } from '@/components/ui/loading';
 import { useState, useEffect } from 'react';
 import { useCurrentUser } from '@/hooks/use-current-user';
+import { AlertCircle } from '@boxicons/react';
 
 interface MealData {
     mealTime: 'breakfast' | 'lunch' | 'dinner';
@@ -14,6 +16,7 @@ export default function VoteForMealsPage() {
 
     const [todaysMeals, setTodaysMeals] = useState<MealData[]>([]);
     const { user } = useCurrentUser();
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     useEffect(() => {
         const mealInfo = async () => {
@@ -30,19 +33,28 @@ export default function VoteForMealsPage() {
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.log("Error fetching today's meal info:", errorData?.message || "Unknown error");
+                    setIsLoading(false);
                     return;
                 }
 
                 const data = await response.json();
                 setTodaysMeals(data.mealsForToday);
+                setIsLoading(false);
             }
             catch (error) {
                 console.error("Error fetching today's meal info:", error);
+                setIsLoading(false);
             }
-        }
+        };
 
         mealInfo();
     },[user]);
+
+    if(isLoading) {
+        return (
+            <Loading />
+        );
+    }
 
     const handleMealSubmitted = (mealTime: 'breakfast' | 'lunch' | 'dinner') => {
         setTodaysMeals(prev =>
@@ -75,13 +87,10 @@ export default function VoteForMealsPage() {
 
             {allMealsSubmitted && 
                 <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle fill="#0002f1"/>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">All Reviewed!</h3>
-                    <p className="text-gray-500">All meals for today have been reviewed. Thank you for your feedback!</p>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">No meals available for voting today</h3>
                 </div>
             }
         </div>

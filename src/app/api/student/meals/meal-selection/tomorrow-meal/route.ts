@@ -35,7 +35,7 @@ export async function PUT(req: Request) {
         }
 
         // Use authenticated user's studentId instead of query param
-        const studentId = user.studentId;
+        const studentId = user._id;
         const { breakfast, lunch, dinner } = await req.json();
 
         if (
@@ -126,7 +126,7 @@ export async function GET() {
             );
         }
 
-        const studentId = user.studentId;
+        const studentId = user._id;
 
         const tomorrowDate = getNextDateBD();
         // console.log("Tomorrow's Date (UTC):", tomorrowDate);

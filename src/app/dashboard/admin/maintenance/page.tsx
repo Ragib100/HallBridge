@@ -153,7 +153,7 @@ export default function AdminMaintenancePage() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                   activeTab === tab
                     ? "bg-[#2D6A4F] text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"

@@ -10,7 +10,6 @@ export async function proxy(request: NextRequest) {
         "/auth/login",
         "/auth/register",
         "/auth/forgot-password",
-        "/auth/change-password",
     ];
 
     // Check if the current path is a public route
@@ -19,25 +18,41 @@ export async function proxy(request: NextRequest) {
         publicRoutes.some((route) => pathname.startsWith(route)) ||
         pathname === "/unauthorized";
 
+    console.log("here1");
+
     // If no session and not a public route, redirect to login
     if (!session && !isPublicRoute) {
         return NextResponse.redirect(new URL("/auth/login", request.url));
     }
 
-    // If has session and trying to access public auth routes, redirect to appropriate dashboard
-    if (session && (pathname === "/" || pathname.startsWith("/auth/"))) {
+    console.log("here2");
+
+    // Handle authenticated users
+    if (session) {
         try {
-            // Fetch user data to determine redirect location
+            // Fetch user data
             const userResponse = await fetch(new URL("/api/auth/me", request.url), {
                 headers: {
                     Cookie: `hb_session=${session}`,
                 },
             });
 
-            if (userResponse.ok) {
-                const { user } = await userResponse.json();
-                
-                // Redirect based on user type
+            if (!userResponse.ok) {
+                // Invalid session, redirect to login
+                const response = NextResponse.redirect(new URL("/auth/login", request.url));
+                response.cookies.delete("hb_session");
+                return response;
+            }
+
+            const { user } = await userResponse.json();
+
+            // If user must change password, force them to change-password page
+            if (user.mustChangePassword && pathname !== "/auth/change-password") {
+                return NextResponse.redirect(new URL("/auth/change-password", request.url));
+            }
+
+            // If user doesn't need to change password and is on auth routes, redirect to dashboard
+            if (!user.mustChangePassword && (pathname === "/" || pathname.startsWith("/auth/"))) {
                 if (user.userType === "admin") {
                     return NextResponse.redirect(new URL("/dashboard/admin", request.url));
                 } else if (user.userType === "staff") {
@@ -48,11 +63,16 @@ export async function proxy(request: NextRequest) {
             }
         } catch (error) {
             console.error("Error fetching user data in middleware:", error);
+            const response = NextResponse.redirect(new URL("/auth/login", request.url));
+            response.cookies.delete("hb_session");
+            return response;
         }
     }
 
-    // Role-based route protection
-    if (session && !isPublicRoute) {
+    console.log("here3");
+
+    // Role-based route protection for dashboard routes
+    if (session && !isPublicRoute && pathname.startsWith("/dashboard")) {
         try {
             // Fetch user data to validate role-based access
             const userResponse = await fetch(new URL("/api/auth/me", request.url), {
@@ -91,6 +111,8 @@ export async function proxy(request: NextRequest) {
             return response;
         }
     }
+
+    console.log("here4");
 
     return NextResponse.next();
 }

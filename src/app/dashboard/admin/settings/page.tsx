@@ -866,7 +866,7 @@ export default function SettingsPage() {
 
       {/* Save Button */}
       <div className="flex justify-end gap-3">
-        <button className="px-6 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+        <button className="px-6 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer">
           Reset Changes
         </button>
         <button 

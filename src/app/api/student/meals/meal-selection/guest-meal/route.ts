@@ -35,7 +35,7 @@ export async function PUT(req: Request) {
         }
 
         // Use authenticated user's studentId
-        const studentId = user.studentId;
+        const studentId = user._id;
         const { name, id, department, phone, breakfast, lunch, dinner } = await req.json();
 
         if (
@@ -53,20 +53,22 @@ export async function PUT(req: Request) {
         const tomorrowDate = getNextDateBD();
 
         if (breakfast || lunch || dinner) {
-            const guestMeal = new GuestMeal({
-                studentId,
-                name,
-                id,
-                department,
-                phone,
-                date: tomorrowDate,
-                breakfast,
-                lunch,
-                dinner
-            });
-
-            const savedGuestMeal = await GuestMeal.findOneAndReplace(
-                { studentId, date: tomorrowDate, id },guestMeal,
+            const savedGuestMeal = await GuestMeal.findOneAndUpdate(
+                { studentId, date: tomorrowDate, id },
+                {
+                    $set:
+                    {
+                        studentId,
+                        name,
+                        id,
+                        department,
+                        phone,
+                        date: tomorrowDate,
+                        breakfast,
+                        lunch,
+                        dinner
+                    }
+                },
                 { new: true, upsert: true }
             );
 

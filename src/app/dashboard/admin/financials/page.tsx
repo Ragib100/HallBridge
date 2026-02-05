@@ -3,6 +3,8 @@
 import React, { useState, useEffect, FormEvent } from "react";
 import Image from "next/image";
 import { Spinner } from "@/components/ui/spinner";
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { set } from "mongoose";
 
 type TimeRange = "this-month" | "last-month" | "this-year";
 type TabType = "overview" | "collections" | "expenses" | "salaries" | "defaulters";
@@ -326,7 +328,7 @@ export default function FinancialsPage() {
         <p className="text-gray-500 text-sm mb-4">There was an error loading the financial information. Please try again.</p>
         <button 
           onClick={() => fetchFinancialData(timeRange)}
-          className="px-6 py-2 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors"
+          className="px-6 py-2 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors cursor-pointer"
         >
           Try Again
         </button>
@@ -356,6 +358,20 @@ export default function FinancialsPage() {
   // Calculate expense total for pie chart
   const expenseTotal = data?.expensesByCategory?.reduce((sum, e) => sum + e.total, 0) || 0;
 
+  // Dummy data for chart when no real data is available
+  const dummyMonthlyStats = [
+    { month: 'Jan', monthYear: 'Jan 2026', revenue: 45000, expenses: 38000 },
+    { month: 'Feb', monthYear: 'Feb 2026', revenue: 42000, expenses: 52000 },
+    { month: 'Mar', monthYear: 'Mar 2026', revenue: 48000, expenses: 39000 },
+    { month: 'Apr', monthYear: 'Apr 2026', revenue: 55000, expenses: 64000 },
+    { month: 'May', monthYear: 'May 2026', revenue: 61000, expenses: 47000 },
+    { month: 'Jun', monthYear: 'Jun 2026', revenue: 58000, expenses: 60000 },
+  ];
+
+  const chartData = (data?.monthlyStats && data.monthlyStats.length > 0) 
+    ? data.monthlyStats 
+    : dummyMonthlyStats;
+
   return (
     <div className="space-y-6">
       {/* Header with Actions */}
@@ -377,7 +393,7 @@ export default function FinancialsPage() {
           <div className="flex flex-wrap items-center gap-3">
             <button 
               onClick={handleExportReport}
-              className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+              className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -386,7 +402,7 @@ export default function FinancialsPage() {
             </button>
             <button 
               onClick={() => setShowAddExpenseModal(true)}
-              className="px-4 py-2.5 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245840] transition-colors flex items-center gap-2 shadow-sm"
+              className="px-4 py-2.5 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245840] transition-colors flex items-center gap-2 shadow-sm cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -464,7 +480,7 @@ export default function FinancialsPage() {
             <button
               key={tab.id}
               onClick={() => { setActiveTab(tab.id); setSearchQuery(""); setCategoryFilter("all"); }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === tab.id
                   ? "bg-[#2D6A4F] text-white shadow-md"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -489,7 +505,7 @@ export default function FinancialsPage() {
             <button
               key={range.id}
               onClick={() => setTimeRange(range.id)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                 timeRange === range.id ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"
               }`}
             >
@@ -525,45 +541,73 @@ export default function FinancialsPage() {
                   </div>
                 </div>
               </div>
-              {data?.monthlyStats && data.monthlyStats.length > 0 ? (
-                <div className="h-64 flex items-end justify-between gap-3 px-2">
-                  {data.monthlyStats.map((m, index) => {
-                    const revenueHeight = (m.revenue / maxChartValue) * 100;
-                    const expenseHeight = (m.expenses / maxChartValue) * 100;
-                    const profit = m.revenue - m.expenses;
-                    return (
-                      <div key={index} className="flex-1 flex flex-col items-center gap-2 group">
-                        {/* Tooltip */}
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded-lg p-2 mb-1 whitespace-nowrap">
-                          <p>Revenue: ৳{m.revenue.toLocaleString()}</p>
-                          <p>Expenses: ৳{m.expenses.toLocaleString()}</p>
-                          <p className={profit >= 0 ? 'text-green-400' : 'text-red-400'}>
-                            {profit >= 0 ? 'Profit' : 'Loss'}: ৳{Math.abs(profit).toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="flex gap-1 items-end h-48 w-full justify-center">
-                          <div
-                            className="w-6 bg-gradient-to-t from-[#2D6A4F] to-[#40916c] rounded-t transition-all hover:from-[#245840] cursor-pointer"
-                            style={{ height: `${revenueHeight}%`, minHeight: m.revenue > 0 ? '12px' : '0' }}
-                          />
-                          <div
-                            className="w-6 bg-gradient-to-t from-[#E91E63] to-[#f06292] rounded-t transition-all hover:from-[#C2185B] cursor-pointer"
-                            style={{ height: `${expenseHeight}%`, minHeight: m.expenses > 0 ? '12px' : '0' }}
-                          />
-                        </div>
-                        <span className="text-sm font-medium text-gray-600">{m.month}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="h-64 flex flex-col items-center justify-center text-gray-400">
-                  <svg className="w-16 h-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  <p>No data available for the selected period</p>
-                </div>
-              )}
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2D6A4F" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#2D6A4F" stopOpacity={0.05} />
+                    </linearGradient>
+                    <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#E91E63" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#E91E63" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tickLine={false}
+                    tickFormatter={(value) => `৳${(value / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1F2937',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                    labelStyle={{ color: '#F9FAFB', fontWeight: 'bold', marginBottom: '4px' }}
+                    itemStyle={{ color: '#F9FAFB', fontSize: '13px' }}
+                    formatter={(value: number | undefined) => [`৳${(value ?? 0).toLocaleString()}`, '']}
+                    cursor={{ stroke: '#9CA3AF', strokeWidth: 1, strokeDasharray: '5 5' }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                    iconType="circle"
+                  />
+                  <Line 
+                    type="monotone"
+                    dataKey="revenue" 
+                    stroke="#772ff5" 
+                    strokeWidth={3}
+                    dot={{ fill: '#772ff5', strokeWidth: 2, r: 5 }}
+                    activeDot={{ r: 7, stroke: '#fff', strokeWidth: 2 }}
+                    name="Revenue"
+                    fill="url(#revenueGradient)"
+                  />
+                  <Line 
+                    type="monotone"
+                    dataKey="expenses" 
+                    stroke="#2fb536" 
+                    strokeWidth={3}
+                    dot={{ fill: '#2fb536', strokeWidth: 2, r: 5 }}
+                    activeDot={{ r: 7, stroke: '#fff', strokeWidth: 2 }}
+                    name="Expenses"
+                    fill="url(#expenseGradient)"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+              {!data?.monthlyStats || data.monthlyStats.length === 0 ? (
+                <p className="text-center text-sm text-gray-400 mt-2">Showing sample data</p>
+              ) : null}
             </div>
 
             {/* Expense Breakdown Pie Chart */}
@@ -572,36 +616,48 @@ export default function FinancialsPage() {
               {data?.expensesByCategory && data.expensesByCategory.length > 0 ? (
                 <>
                   {/* Visual Pie Chart Representation */}
-                  <div className="relative w-40 h-40 mx-auto mb-6">
-                    <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
-                      {data.expensesByCategory.reduce((acc, item, index) => {
-                        const percentage = (item.total / expenseTotal) * 100;
-                        const offset = acc.offset;
-                        acc.elements.push(
-                          <circle
-                            key={index}
-                            cx="18"
-                            cy="18"
-                            r="15.9"
-                            fill="transparent"
-                            stroke={CATEGORY_COLORS[item.category] || '#6B7280'}
-                            strokeWidth="3"
-                            strokeDasharray={`${percentage} ${100 - percentage}`}
-                            strokeDashoffset={-offset}
-                            className="transition-all duration-300 hover:opacity-80"
+                  <ResponsiveContainer width="100%" height={240}>
+                    <PieChart>
+                      <Pie
+                        data={data.expensesByCategory.map(item => ({
+                          name: item.name,
+                          value: item.total,
+                          category: item.category
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={85}
+                        paddingAngle={3}
+                        dataKey="value"
+                        label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
+                        labelLine={{ stroke: '#9CA3AF', strokeWidth: 1 }}
+                      >
+                        {data.expensesByCategory.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={CATEGORY_COLORS[entry.category] || '#6B7280'}
+                            stroke="#fff"
+                            strokeWidth={2}
                           />
-                        );
-                        acc.offset += percentage;
-                        return acc;
-                      }, { elements: [] as React.ReactNode[], offset: 0 }).elements}
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <p className="text-2xl font-bold text-gray-800">{formatCurrency(expenseTotal)}</p>
-                      <p className="text-xs text-gray-500">Total</p>
-                    </div>
-                  </div>
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1F2937',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '12px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                        labelStyle={{ color: '#F9FAFB', fontWeight: 'bold', marginBottom: '4px' }}
+                        itemStyle={{ color: '#F9FAFB' }}
+                        formatter={(value: number | undefined) => `৳${(value ?? 0).toLocaleString()}`}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
                   {/* Legend */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 mt-4">
                     {data.expensesByCategory.map((item, index) => {
                       const percentage = expenseTotal > 0 ? Math.round((item.total / expenseTotal) * 100) : 0;
                       return (
@@ -681,7 +737,7 @@ export default function FinancialsPage() {
                 <h2 className="text-lg font-bold text-gray-800">Recent Activity</h2>
                 <button 
                   onClick={() => setActiveTab("collections")}
-                  className="text-sm text-[#2D6A4F] font-medium hover:underline flex items-center gap-1"
+                  className="text-sm text-[#2D6A4F] font-medium hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   View All
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -735,7 +791,7 @@ export default function FinancialsPage() {
                 {summary.defaulterCount > 0 && (
                   <button 
                     onClick={() => setActiveTab("defaulters")}
-                    className="text-sm text-[#2D6A4F] font-medium hover:underline flex items-center gap-1"
+                    className="text-sm text-[#2D6A4F] font-medium hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     View All ({summary.defaulterCount})
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -769,7 +825,7 @@ export default function FinancialsPage() {
                 <div className="space-y-3">
                   <button 
                     onClick={() => setShowAddExpenseModal(true)}
-                    className="w-full p-4 bg-blue-50 rounded-lg text-left hover:bg-blue-100 transition-colors flex items-center gap-3"
+                    className="w-full p-4 bg-blue-50 rounded-lg text-left hover:bg-blue-100 transition-colors flex items-center gap-3 cursor-pointer"
                   >
                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">💳</div>
                     <div>
@@ -779,7 +835,7 @@ export default function FinancialsPage() {
                   </button>
                   <button 
                     onClick={() => setActiveTab("salaries")}
-                    className="w-full p-4 bg-purple-50 rounded-lg text-left hover:bg-purple-100 transition-colors flex items-center gap-3"
+                    className="w-full p-4 bg-purple-50 rounded-lg text-left hover:bg-purple-100 transition-colors flex items-center gap-3 cursor-pointer"
                   >
                     <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">💼</div>
                     <div>
@@ -789,7 +845,7 @@ export default function FinancialsPage() {
                   </button>
                   <button 
                     onClick={handleExportReport}
-                    className="w-full p-4 bg-green-50 rounded-lg text-left hover:bg-green-100 transition-colors flex items-center gap-3"
+                    className="w-full p-4 bg-green-50 rounded-lg text-left hover:bg-green-100 transition-colors flex items-center gap-3 cursor-pointer"
                   >
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">📊</div>
                     <div>
@@ -946,7 +1002,7 @@ export default function FinancialsPage() {
                   </select>
                   <button 
                     onClick={() => setShowAddExpenseModal(true)}
-                    className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245840] flex items-center gap-2"
+                    className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245840] flex items-center gap-2 cursor-pointer"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -996,7 +1052,7 @@ export default function FinancialsPage() {
                 <p className="text-sm mb-4">Try adjusting your search or filter criteria</p>
                 <button 
                   onClick={() => setShowAddExpenseModal(true)}
-                  className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245840]"
+                  className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245840] cursor-pointer"
                 >
                   Add First Expense
                 </button>
@@ -1058,7 +1114,7 @@ export default function FinancialsPage() {
               </div>
               <button 
                 onClick={() => setShowAddExpenseModal(true)}
-                className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245840] flex items-center gap-2"
+                className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245840] flex items-center gap-2 cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -1116,7 +1172,7 @@ export default function FinancialsPage() {
                           {staff.status === "pending" && (
                             <button
                               onClick={() => { setSelectedStaff(staff); setShowPaySalaryModal(true); }}
-                              className="px-3 py-1.5 bg-[#2D6A4F] text-white text-xs font-medium rounded-lg hover:bg-[#245840] transition-colors"
+                              className="px-3 py-1.5 bg-[#2D6A4F] text-white text-xs font-medium rounded-lg hover:bg-[#245840] transition-colors cursor-pointer"
                             >
                               Pay Now
                             </button>
@@ -1145,7 +1201,7 @@ export default function FinancialsPage() {
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="bg-linear-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-sm">Total Defaulters</p>
@@ -1158,7 +1214,7 @@ export default function FinancialsPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="bg-linear-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-sm">Total Pending Amount</p>
@@ -1171,7 +1227,7 @@ export default function FinancialsPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="bg-linear-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-sm">Average Due Amount</p>
@@ -1211,7 +1267,7 @@ export default function FinancialsPage() {
                       className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] w-64"
                     />
                   </div>
-                  <button className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2">
+                  <button className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2 cursor-pointer">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
@@ -1263,7 +1319,7 @@ export default function FinancialsPage() {
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-red-600">৳{defaulter.dueAmount.toLocaleString()}</td>
                         <td className="px-6 py-4">
-                          <button className="px-3 py-1.5 bg-[#2D6A4F] text-white text-xs font-medium rounded-lg hover:bg-[#245840] transition-colors flex items-center gap-1">
+                          <button className="px-3 py-1.5 bg-[#2D6A4F] text-white text-xs font-medium rounded-lg hover:bg-[#245840] transition-colors flex items-center gap-1 cursor-pointer">
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
@@ -1309,7 +1365,7 @@ export default function FinancialsPage() {
                 </div>
                 <button 
                   onClick={() => setShowAddExpenseModal(false)}
-                  className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1384,14 +1440,14 @@ export default function FinancialsPage() {
                 <button
                   type="button"
                   onClick={() => setShowAddExpenseModal(false)}
-                  className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {submitting && <Spinner className="w-4 h-4" />}
                   Add Expense
@@ -1421,7 +1477,7 @@ export default function FinancialsPage() {
                 </div>
                 <button 
                   onClick={() => { setShowPaySalaryModal(false); setSelectedStaff(null); }}
-                  className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1455,14 +1511,14 @@ export default function FinancialsPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => { setShowPaySalaryModal(false); setSelectedStaff(null); }}
-                  className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handlePaySalary}
                   disabled={submitting}
-                  className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {submitting && <Spinner className="w-4 h-4" />}
                   Confirm Payment

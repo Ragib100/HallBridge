@@ -188,7 +188,7 @@ export default function ExpensesPage() {
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
             {error}
-            <button onClick={() => setError(null)} className="float-right">&times;</button>
+            <button onClick={() => setError(null)} className="float-right cursor-pointer">&times;</button>
           </div>
         )}
 
@@ -365,7 +365,7 @@ export default function ExpensesPage() {
                   <span className="text-sm text-gray-500">Filtered by:</span>
                   <span className={`px-2 py-1 ${CATEGORY_COLORS[selectedCategory]?.bg || 'bg-gray-100'} ${CATEGORY_COLORS[selectedCategory]?.text || 'text-gray-600'} rounded-full text-xs font-medium flex items-center gap-1`}>
                     {CATEGORY_ICONS[selectedCategory]} {selectedCategory}
-                    <button onClick={() => setSelectedCategory('all')} className="ml-1 hover:opacity-70">×</button>
+                    <button onClick={() => setSelectedCategory('all')} className="ml-1 hover:opacity-70 cursor-pointer">×</button>
                   </span>
                   <span className="text-sm text-gray-500">Total: ৳{filteredGrandTotal.toLocaleString()}</span>
                 </div>

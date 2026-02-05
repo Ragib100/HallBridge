@@ -159,7 +159,7 @@ export default function StudentLaundryPage() {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
           {error}
-          <button onClick={() => setError(null)} className="float-right">&times;</button>
+          <button onClick={() => setError(null)} className="float-right cursor-pointer">&times;</button>
         </div>
       )}
 

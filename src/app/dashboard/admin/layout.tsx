@@ -151,7 +151,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Close button - only on mobile */}
         <button
           onClick={() => setSidebarOpen(false)}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white lg:hidden"
+          className="absolute top-4 right-4 text-gray-400 hover:text-white lg:hidden cursor-pointer"
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -213,7 +213,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Menu Toggle Button - only on mobile */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg lg:hidden"
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg lg:hidden cursor-pointer"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -229,7 +229,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Profile */}
             <button
               onClick={handleProfile}
-              className="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1.5 transition-colors"
+              className="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1.5 transition-colors cursor-pointer"
             >
               <Image
                 src={user?.picture || "/default_profile.svg"}
@@ -243,7 +243,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
               title="Logout"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

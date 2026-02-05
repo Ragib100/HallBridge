@@ -363,7 +363,7 @@ export default function SecurityPage() {
                               </button>
                             )}
                             {pass.status === 'late' && (
-                              <button className="px-3 py-1.5 border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors">
+                              <button className="px-3 py-1.5 border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors cursor-pointer">
                                 Contact
                               </button>
                             )}

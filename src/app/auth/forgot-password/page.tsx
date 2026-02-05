@@ -253,7 +253,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium disabled:opacity-70 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
             >
               {isLoading ? <LoadingSpinner /> : "Send OTP"}
             </button>
@@ -308,7 +308,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isLoading || otp.join("").length !== 6}
-              className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium disabled:opacity-70 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
             >
               {isLoading ? <LoadingSpinner /> : "Verify OTP"}
             </button>
@@ -325,7 +325,7 @@ export default function ForgotPasswordPage() {
                   type="button"
                   onClick={handleResendOTP}
                   disabled={isLoading}
-                  className="text-[#2D6A4F] font-medium hover:underline"
+                  className="text-[#2D6A4F] font-medium hover:underline cursor-pointer"
                 >
                   Resend
                 </button>
@@ -341,7 +341,7 @@ export default function ForgotPasswordPage() {
                   setOtp(["", "", "", "", "", ""]);
                   setError(null);
                 }}
-                className="text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-2"
+                className="text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -400,7 +400,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium disabled:opacity-70 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
             >
               {isLoading ? <LoadingSpinner /> : "Reset Password"}
             </button>
@@ -430,7 +430,7 @@ export default function ForgotPasswordPage() {
 
           <button
             onClick={() => router.push("/auth/login")}
-            className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium"
+            className="w-full py-3 bg-[#2D6A4F] text-white rounded-lg hover:bg-[#245840] transition-colors font-medium cursor-pointer"
           >
             Go to Login
           </button>

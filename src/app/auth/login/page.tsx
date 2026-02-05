@@ -96,22 +96,8 @@ function LoginForm() {
         return;
       }
 
-      const userType = data?.user?.userType;
-      const mustChangePassword = data?.user?.mustChangePassword;
-
-      // Redirect to change password page if required
-      if (mustChangePassword) {
-        router.push("/auth/change-password");
-        return;
-      }
-
-      if (userType === "student") {
-        router.push("/dashboard/student/home");
-      } else if (userType === "staff") {
-        router.push("/dashboard/staff");
-      } else {
-        router.push("/dashboard/admin");
-      }
+      // Let the proxy handle routing based on user type and mustChangePassword
+      router.push("/");
     } catch (err) {
       setError("Unable to sign in. Please try again.");
     } finally {

@@ -47,3 +47,13 @@ export function getBDDate(): Date {
         new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" })
     );
 }
+
+export function getBDTime(): string {
+    const bd = getBDDate();
+
+    const hour = String(bd.getHours()).padStart(2, "0");
+    const min = String(bd.getMinutes()).padStart(2, "0");
+    const sec = String(bd.getSeconds()).padStart(2, "0");
+
+    return `${hour}:${min}:${sec}`;
+}

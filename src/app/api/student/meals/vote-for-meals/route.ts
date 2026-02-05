@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         }
 
         // Use authenticated user's studentId
-        const studentId = user.studentId;
+        const studentId = user._id;
         const {mealTime, rating, comments } = await req.json();
 
         if (
@@ -141,7 +141,7 @@ export async function GET(req: Request) {
         }
 
         // Use authenticated user's studentId
-        const studentId = user.studentId;
+        const studentId = user._id;
 
         const currentDate = getCurrentDateBD();
         const meal = await Meal.findOne({ studentId, date: currentDate }).lean<MealDocument>();

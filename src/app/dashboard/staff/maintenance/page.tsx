@@ -323,7 +323,7 @@ export default function MaintenancePage() {
                         tags: [getPriorityTag(task.priority), getCategoryTag(task.category)],
                         status: task.status,
                       }}>
-                        <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+                        <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer">
                           View Details
                         </button>
                       </ViewIssueDialog>
