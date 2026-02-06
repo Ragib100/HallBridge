@@ -135,15 +135,27 @@ export async function GET(request: NextRequest) {
           laundry: laundryFee,
           othercharges: otherCharges,
         },
-        mealDetails: {
-          breakfastCount,
-          lunchCount,
-          dinnerCount,
-          guestMealCount,
-          breakfastPrice,
-          lunchPrice,
-          dinnerPrice,
-          guestMealPrice,
+        mealBreakdown: {
+          breakfast: {
+            count: breakfastCount,
+            price: breakfastPrice,
+            total: breakfastCount * breakfastPrice,
+          },
+          lunch: {
+            count: lunchCount,
+            price: lunchPrice,
+            total: lunchCount * lunchPrice,
+          },
+          dinner: {
+            count: dinnerCount,
+            price: dinnerPrice,
+            total: dinnerCount * dinnerPrice,
+          },
+          guestMeals: {
+            count: guestMealCount,
+            price: guestMealPrice,
+            total: guestMealCount * guestMealPrice,
+          },
         },
         amount: totalAmount,
         dueDate: dueDateStr,
