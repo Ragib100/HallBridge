@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import Meal from "@/models/Meal";
 import GuestMeal from "@/models/GuestMeal";
 import User from "@/models/User";
+import { getCurrentDateBD, getNextDateBD } from "@/lib/dates";
 
 export async function GET(request: Request) {
   try {
@@ -38,44 +39,46 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const day = url.searchParams.get("day");
 
-    const now = new Date();
-    const baseDate = new Date(now);
+    // Get the appropriate date string in BD timezone
+    const dateString = day === "tomorrow" ? getNextDateBD() : getCurrentDateBD();
+    
+    console.log(`Fetching meal counts for date: ${dateString}`);
 
-    if (day === "tomorrow") {
-      baseDate.setDate(now.getDate() + 1);
-    }
-
-    baseDate.setHours(0, 0, 0, 0);
-
-    const dayStart = new Date(baseDate);
-    const dayEnd = new Date(baseDate);
-    dayEnd.setHours(23, 59, 59, 999);
-
-    const [breakfast, lunch, dinner, guestMeals, totalStudents] = await Promise.all([
+    const [breakfast, lunch, dinner] = await Promise.all([
       Meal.countDocuments({
-        date: { $gte: dayStart, $lte: dayEnd },
+        date: dateString,
         breakfast: true,
       }),
       Meal.countDocuments({
-        date: { $gte: dayStart, $lte: dayEnd },
+        date: dateString,
         lunch: true,
       }),
       Meal.countDocuments({
-        date: { $gte: dayStart, $lte: dayEnd },
+        date: dateString,
         dinner: true,
+      })
+    ]);
+
+    const [guestBreakfast, guestLunch, guestDinner] = await Promise.all([
+      GuestMeal.countDocuments({
+        date: dateString,
+        breakfast: true,
       }),
       GuestMeal.countDocuments({
-        date: { $gte: dayStart, $lte: dayEnd },
+        date: dateString,
+        lunch: true,
       }),
-      User.countDocuments({ userType: "student" }),
+      GuestMeal.countDocuments({
+        date: dateString,
+        dinner: true,
+      }),
     ]);
 
     return NextResponse.json(
       {
         mealCounts: { breakfast, lunch, dinner },
-        guestMeals,
-        totalStudents,
-        date: dayStart,
+        guestMeals: { guestBreakfast, guestLunch, guestDinner },
+        date: dateString,
       },
       { status: 200 }
     );

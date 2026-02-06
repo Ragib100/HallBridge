@@ -69,7 +69,9 @@ const roleConfigs: Record<StaffRole, {
             { title: "Today's Breakfast", valueKey: "breakfast", icon: "meals", iconBgColor: "bg-blue-100", textColor: "text-blue-600", link: "/dashboard/staff/mess/meal_count", linkText: "View details →" },
             { title: "Today's Lunch", valueKey: "lunch", icon: "meals", iconBgColor: "bg-green-100", textColor: "text-green-600", link: "/dashboard/staff/mess/meal_count", linkText: "View details →" },
             { title: "Today's Dinner", valueKey: "dinner", icon: "meals", iconBgColor: "bg-purple-100", textColor: "text-purple-600", link: "/dashboard/staff/mess/meal_count", linkText: "View details →" },
-            { title: "Guest Meals", valueKey: "guestMeals", icon: "users", iconBgColor: "bg-yellow-100", textColor: "text-yellow-600", link: "/dashboard/staff/mess", linkText: "Manage →" },
+            { title: "Guest Breakfast", valueKey: "guestBreakfast", icon: "users", iconBgColor: "bg-yellow-100", textColor: "text-yellow-600", link: "/dashboard/staff/mess", linkText: "Manage →" },
+            { title: "Guest Lunch", valueKey: "guestLunch", icon: "users", iconBgColor: "bg-orange-100", textColor: "text-orange-600", link: "/dashboard/staff/mess", linkText: "Manage →" },
+            { title: "Guest Dinner", valueKey: "guestDinner", icon: "users", iconBgColor: "bg-pink-100", textColor: "text-pink-600", link: "/dashboard/staff/mess", linkText: "Manage →" },
         ],
         quickActions: [
             { title: "Update Weekly Menu", icon: "📋", link: "/dashboard/staff/mess/weekly_menu" },
@@ -151,11 +153,14 @@ export default function StaffHomePage() {
                     const response = await fetch('/api/common/meal-count?day=today');
                     if (response.ok) {
                         const data = await response.json();
+                        const guestMealData = data?.guestMeals || {};
                         setStats({
                             breakfast: data?.mealCounts?.breakfast ?? 0,
                             lunch: data?.mealCounts?.lunch ?? 0,
                             dinner: data?.mealCounts?.dinner ?? 0,
-                            guestMeals: data?.guestMeals ?? 0,
+                            guestBreakfast: guestMealData.guestBreakfast ?? 0,
+                            guestLunch: guestMealData.guestLunch ?? 0,
+                            guestDinner: guestMealData.guestDinner ?? 0,
                         });
                     }
                 } else if (user.staffRole === 'security_guard') {
@@ -306,8 +311,8 @@ export default function StaffHomePage() {
                         </span>
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {config.statsCards.slice(0, 4).map((card, index) => (
+                    <div className={`grid gap-4 ${config.statsCards.length > 4 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
+                        {config.statsCards.map((card, index) => (
                             <div key={index} className={`p-4 ${card.iconBgColor.replace('-100', '-50')} rounded-lg text-center`}>
                                 <p className="text-2xl font-bold text-gray-800">
                                     {statsLoading ? '...' : (stats[card.valueKey] ?? 0)}
