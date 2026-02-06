@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { StaffRoleGuard } from '@/components/staff/role-guard';
 import { Spinner } from '@/components/ui/spinner';
-import { getBDDate } from '@/lib/dates';
+import { ArrowOutRightSquareHalf, CheckCircle, Clock4, AlertTriangle, Search } from '@boxicons/react';
 
 interface GatePass {
   _id: string;
@@ -180,9 +180,7 @@ export default function SecurityPage() {
           <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
+                <ArrowOutRightSquareHalf fill="#17b000" />
               </div>
               <div className="flex-1">
                 <p className="text-gray-500 text-sm">Currently Out</p>
@@ -194,9 +192,7 @@ export default function SecurityPage() {
           <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <CheckCircle fill="#3a23cc" />
               </div>
               <div className="flex-1">
                 <p className="text-gray-500 text-sm">Approved Passes</p>
@@ -208,9 +204,7 @@ export default function SecurityPage() {
           <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <Clock4 fill="#fe7800" />
               </div>
               <div className="flex-1">
                 <p className="text-gray-500 text-sm">Pending</p>
@@ -222,9 +216,7 @@ export default function SecurityPage() {
           <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+                <AlertTriangle fill="#f1131a" />
               </div>
               <div className="flex-1">
                 <p className="text-gray-500 text-sm">Late Returns</p>
@@ -260,16 +252,16 @@ export default function SecurityPage() {
           </div>
           
           <div className="relative max-w-sm">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <Search />
+            </div>
             <input
               type="text"
-              placeholder="Search by name or ID..."
+              placeholder="Search by student name or ID"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
             />
-            <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
           </div>
         </div>
 
