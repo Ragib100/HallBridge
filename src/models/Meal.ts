@@ -7,8 +7,6 @@ const mealSchema = new Schema(
         breakfast: { type: Boolean, default: false },
         lunch: { type: Boolean, default: false },
         dinner: { type: Boolean, default: false },
-        isLocked: { type: Boolean, default: false },
-        lockedAt: { type: Date },
         breakfast_rating: { type: String, default: null },
         lunch_rating: { type: String, default: null },
         dinner_rating: { type: String, default: null },
@@ -21,7 +19,6 @@ mealSchema.index({ studentId: 1, date: 1 }, { unique: true }); // Unique meal pe
 mealSchema.index({ date: 1, breakfast: 1 }); // For counting breakfast
 mealSchema.index({ date: 1, lunch: 1 }); // For counting lunch
 mealSchema.index({ date: 1, dinner: 1 }); // For counting dinner
-mealSchema.index({ date: 1, isLocked: 1 }); // For locking meals
 
 export type MealDocument = InferSchemaType<typeof mealSchema> & {
     _id: mongoose.Types.ObjectId;

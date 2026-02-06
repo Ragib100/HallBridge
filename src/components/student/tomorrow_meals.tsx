@@ -81,7 +81,7 @@ export default function TomorrowMeals() {
 
             if (!response.ok) {
                 const data = await response.json() as { message?: string };
-                console.error('Error saving meal selection:', data?.message || 'Unknown error');
+                alert(`Error saving meal selection: ${data?.message || 'Unknown error'}`);
                 return;
             }
 

@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import connectDB from "@/lib/db";
 import Meal from "@/models/Meal";
 import User from "@/models/User";
-import { getCurrentDateBD, getNextDateBD } from "@/lib/dates";
+import SystemSettings from "@/models/SystemSettings";
+import { getCurrentDateBD, getNextDateBD, getBDTime } from "@/lib/dates";
 
 export async function PUT(req: Request) {
     try {
@@ -50,20 +51,19 @@ export async function PUT(req: Request) {
             );
         }
 
-        const tomorrowDate = getNextDateBD();
+        const systemSettings = await SystemSettings.findOne(
+            {key: "meal_cutoff_time"}
+        );
 
-        const existingMeal = await Meal.findOne({
-            studentId,
-            date: tomorrowDate
-        });
-
-        if (existingMeal?.isLocked) {
+        const cutoffTime = systemSettings?.value || "22:00";
+        if(getBDTime() > cutoffTime) {
             return NextResponse.json(
-                { message: "Meal selection deadline has passed (11:00 PM). You cannot modify tomorrow's meals." },
-                { status: 403 }
+                { message: `Meal selection cannot be updated after cutoff time of ${cutoffTime} BD time` },
+                { status: 400 }
             );
         }
 
+        const tomorrowDate = getNextDateBD();
         const updatedMeal = await Meal.findOneAndUpdate(
             { studentId, date: tomorrowDate },
             {
@@ -72,7 +72,6 @@ export async function PUT(req: Request) {
                 breakfast,
                 lunch,
                 dinner,
-                isLocked: false,
                 breakfast_rating: null,
                 lunch_rating: null,
                 dinner_rating: null
@@ -151,7 +150,6 @@ export async function GET() {
                     breakfast: false,
                     lunch: false,
                     dinner: false,
-                    isLocked: false,
                     breakfast_rating: null,
                     lunch_rating: null,
                     dinner_rating: null
@@ -173,7 +171,6 @@ export async function GET() {
                 breakfast: todayMeal.breakfast,
                 lunch: todayMeal.lunch,
                 dinner: todayMeal.dinner,
-                isLocked: false,
                 breakfast_rating: null,
                 lunch_rating: null,
                 dinner_rating: null

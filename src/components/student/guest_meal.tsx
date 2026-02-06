@@ -65,7 +65,7 @@ export default function GuestMeal() {
 			}
 
 			const data = await response.json();
-			console.log("Guest meal submitted successfully:", data);
+			alert("Guest meal registered successfully!");
 
 		} catch (error) {
 			console.error("Submission error:", error);
