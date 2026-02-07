@@ -42,11 +42,26 @@ export default function StudentGatePassPage() {
 	useEffect(() => {
 		const fetchActivePass = async () => {
 			try {
-				const res = await fetch('/api/common/gate-pass');
-				if(res?.ok) {
-					const data = await res.json();
+				const [activeRes, pendingRes, approvedRes] = await Promise.all([
+					fetch('/api/common/gate-pass?status=active'),
+					fetch('/api/common/gate-pass?status=pending'),
+					fetch('/api/common/gate-pass?status=approved')
+				]);
+				if(activeRes?.ok) {
+					const data = await activeRes.json();
 					if(data?.passes?.length == 0) {
 						setDisabled(false);
+
+						if(pendingRes?.ok || approvedRes?.ok) {
+							const pendingData = await pendingRes.json();
+							const approvedData = await approvedRes.json();
+							if(pendingData?.passes?.length > 0) {
+								setError('You have a pending gate pass request. Filling out a new request will overwrite the existing pending request.');
+							}
+							else if(approvedData?.passes?.length > 0) {
+								setError('You have an approved gate pass request. Filling out a new request will overwrite the existing approved request.');
+							}
+						}
 					}
 					else {
 						setError('You have an active gate pass. You cannot request a new one until you return and check in.');

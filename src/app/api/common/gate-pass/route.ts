@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 import { notifyGatePassUpdated } from "@/lib/notifications";
 
 // GET /api/gate-pass - Get user's gate passes
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const cookieStore = await cookies();
     const session = cookieStore.get("hb_session")?.value;
@@ -27,9 +27,12 @@ export async function GET() {
     const query: Record<string, unknown> = {};
     if (user.userType === "student") {
       query.studentId = session;
-      query.status = "active";
+      const url = new URL(request.url);
+      const status = url.searchParams.get("status");
+      if (status) {
+        query.status = status;
+      }
     }
-
     const passes = await GatePass.find(query)
       .populate("studentId", "fullName email phone")
       .sort({ createdAt: -1 })
@@ -118,20 +121,24 @@ export async function POST(request: Request) {
     const count = await GatePass.countDocuments();
     const passId = `GP-${year}-${String(count + 1).padStart(4, "0")}`;
 
-    const gatePass = await GatePass.create({
-      passId,
-      studentId: session,
-      purpose,
-      purposeDetails: purpose === "other" ? String(purposeDetails).trim() : undefined,
-      destination,
-      outDate: new Date(outDate),
-      outTime,
-      returnDate: new Date(returnDate),
-      returnTime,
-      contactNumber,
-      emergencyContact,
-      status: "pending",
-    });
+    const gatePass = await GatePass.findOneAndReplace(
+      { studentId: session, status: { $in: ["pending", "approved"] } },
+      {
+        passId,
+        studentId: session,
+        purpose,
+        purposeDetails: purpose === "other" ? String(purposeDetails).trim() : undefined,
+        destination,
+        outDate: new Date(outDate),
+        outTime,
+        returnDate: new Date(returnDate),
+        returnTime,
+        contactNumber,
+        emergencyContact,
+        status: "pending",
+      },
+      { new: true, upsert: true }
+    );
 
     return NextResponse.json(
       {

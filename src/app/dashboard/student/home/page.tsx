@@ -67,7 +67,7 @@ export default function HomePage() {
           fetch("/api/student/meals/meal-selection/tomorrow-meal").catch(() => null),
           fetch("/api/common/maintenance?limit=3").catch(() => null),
           fetch("/api/student/billing").catch(() => null),
-          fetch("/api/common/gate-pass").catch(() => null),
+          fetch("/api/common/gate-pass?status=active").catch(() => null),
         ]);
 
         if (mealsRes?.ok) {
