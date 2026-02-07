@@ -65,6 +65,11 @@ const maintenanceRequestSchema = new Schema(
       default: "pending",
       index: true,
     },
+
+    // Rating and feedback (after completion)
+    reviewed: { type: Boolean, required: true, default: false },
+    rating: { type: Number, min: 1, max: 5 },
+    feedback: { type: String, trim: true },
     
     // Assignment
     assignedTo: {

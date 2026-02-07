@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface MaintenanceRequest {
   id: string;
@@ -15,6 +22,9 @@ interface MaintenanceRequest {
   assignedTo?: { fullName: string; email: string };
   createdAt: string;
   completedAt?: string;
+  reviewed: boolean;
+  rating?: number;
+  feedback?: string;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -46,6 +56,7 @@ export default function AdminMaintenancePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "in-progress" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
 
   useEffect(() => {
     fetchRequests();
@@ -231,6 +242,9 @@ export default function AdminMaintenancePage() {
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">
                     Assigned To
                   </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -281,6 +295,17 @@ export default function AdminMaintenancePage() {
                         {request.assignedTo?.fullName || "-"}
                       </span>
                     </td>
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => setSelectedRequest(request)}
+                        className="px-3 py-1.5 rounded-md border border-[#2D6A4F]
+                                  text-[#2D6A4F] text-sm font-medium
+                                  hover:bg-[#2D6A4F] hover:text-white
+                                  transition-colors duration-200"
+                      >
+                        View Details
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -288,6 +313,144 @@ export default function AdminMaintenancePage() {
           </div>
         )}
       </div>
+
+      {/* Request Details Dialog */}
+      <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Maintenance Request Details
+              {/* <span className="text-sm font-normal text-gray-500">#{selectedRequest?.requestId}</span> */}
+            </DialogTitle>
+            <DialogDescription>
+              View complete details and student feedback
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedRequest && (
+            <div className="space-y-6 mt-4">
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Student</label>
+                  <p className="text-sm font-medium text-gray-800 mt-1">{selectedRequest.student.fullName}</p>
+                  <p className="text-xs text-gray-500">{selectedRequest.student.email}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Category</label>
+                  <p className="text-sm text-gray-800 mt-1">
+                    {categoryLabels[selectedRequest.category] || selectedRequest.category}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Location</label>
+                  <p className="text-sm text-gray-800 mt-1">{selectedRequest.location}</p>
+                </div>
+                <div className="grid grid-cols-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Priority</label>
+                    <span
+                    className={`inline-block w-fit px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                      priorityLabels[selectedRequest.priority]?.color || "bg-gray-100 text-gray-700"
+                    }`}
+                    >
+                    {priorityLabels[selectedRequest.priority]?.label || selectedRequest.priority}
+                    </span>
+                </div>
+                <div className="grid grid-cols-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Status</label>
+                  <span
+                    className={`inline-block w-fit px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                      statusConfig[selectedRequest.status]?.color || "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {statusConfig[selectedRequest.status]?.label || selectedRequest.status}
+                  </span>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Assigned To</label>
+                  <p className="text-sm text-gray-800 mt-1">
+                    {selectedRequest.assignedTo?.fullName || "Not assigned"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Description</label>
+                <p className="text-sm text-gray-700 mt-2 bg-gray-50 rounded-lg">
+                  {selectedRequest.description}
+                </p>
+              </div>
+
+              {/* Timestamps */}
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Submitted</label>
+                  <p className="text-sm text-gray-700 mt-1">{formatDate(selectedRequest.createdAt)}</p>
+                </div>
+                {selectedRequest.completedAt && (
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Completed</label>
+                    <p className="text-sm text-gray-700 mt-1">{formatDate(selectedRequest.completedAt)}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Student Feedback Section - Only for completed requests */}
+              {selectedRequest.status === "completed" && (
+                <div className="pt-4 border-t border-gray-200">
+                  <label className="text-xs font-semibold text-gray-500 uppercase block mb-3">
+                    Student Feedback
+                  </label>
+                  {selectedRequest.reviewed ? (
+                    <div className="bg-linear-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-sm font-medium text-gray-700">Rating:</span>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <svg
+                              key={star}
+                              className={`w-6 h-6 ${
+                                selectedRequest.rating && star <= selectedRequest.rating
+                                  ? "text-yellow-400 fill-current"
+                                  : "text-gray-300"
+                              }`}
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                          <span className="ml-2 text-base font-bold text-gray-800">
+                            {selectedRequest.rating}/5
+                          </span>
+                        </div>
+                      </div>
+                      {selectedRequest.feedback && (
+                        <div className="mt-3">
+                          <span className="text-sm font-medium text-gray-700 block mb-1">Comments:</span>
+                          <p className="text-sm text-gray-700 bg-white p-3 rounded-lg border border-gray-200">
+                            {selectedRequest.feedback}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <p className="text-sm text-yellow-700 flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Awaiting student feedback
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

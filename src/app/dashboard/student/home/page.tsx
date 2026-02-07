@@ -63,7 +63,7 @@ export default function HomePage() {
         // console.log("User data:", userData.user);
 
         const [mealsRes, maintenanceRes, billingRes] = await Promise.all([
-          fetch(`/api/student/meals/meal-selection/tomorrow-meal?studentId=${userData.user.id}`).catch(() => null),
+          fetch("/api/student/meals/meal-selection/tomorrow-meal").catch(() => null),
           fetch("/api/common/maintenance?limit=3").catch(() => null),
           fetch("/api/student/billing").catch(() => null),
         ]);

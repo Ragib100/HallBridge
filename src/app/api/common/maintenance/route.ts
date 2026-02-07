@@ -57,6 +57,9 @@ export async function GET(request: Request) {
         description: r.description,
         contactNumber: r.contactNumber,
         status: r.status,
+        reviewed: r.reviewed,
+        rating: r.rating,
+        feedback: r.feedback,
         assignedTo: r.assignedTo,
         assignedAt: r.assignedAt,
         completedAt: r.completedAt,
@@ -224,9 +227,9 @@ export async function PATCH(request: Request) {
       
       await notifyMaintenanceUpdated(
         studentId,
-        updatedRequest.requestId,
         updatedRequest._id.toString(),
-        status
+        status,
+        updatedRequest.issueType
       );
     }
 

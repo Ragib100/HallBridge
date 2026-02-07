@@ -2,6 +2,16 @@
 
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import MaintenanceRating from '@/components/student/maintenance_rating';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Star } from "@boxicons/react"
 
 interface MaintenanceRequest {
     id: string;
@@ -12,6 +22,7 @@ interface MaintenanceRequest {
     description: string;
     assignedTo?: { fullName: string };
     estimatedCompletion?: string;
+    reviewed: boolean;
     createdAt: string;
     completedAt?: string;
 }
@@ -40,6 +51,7 @@ export default function MyRequestsPage() {
     const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [openDialogId, setOpenDialogId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchRequests();
@@ -60,6 +72,13 @@ export default function MyRequestsPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleReviewSuccess = () => {
+        // Close dialog
+        setOpenDialogId(null);
+        // Refresh requests to update the UI
+        fetchRequests();
     };
 
     const getStatusConfig = (status: string) => {
@@ -149,13 +168,24 @@ export default function MyRequestsPage() {
                     )}
                 </div>
                 
-                {request.status === 'completed' && (
-                    <Button className="w-full mt-4 bg-[#2D6A4F] hover:bg-[#245a42] text-white cursor-pointer h-10">
-                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                        </svg>
-                        Rate Service
-                    </Button>
+                {request.status === 'completed' && !request.reviewed && (
+                    <Dialog open={openDialogId === request.id} onOpenChange={(open) => setOpenDialogId(open ? request.id : null)}>
+                        <DialogTrigger asChild>
+                            <Button className="w-full mt-4 bg-[#2D6A4F] hover:bg-[#245a42] text-white cursor-pointer h-10">
+                                <Star />
+                                Rate Service
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Rate Maintenance Service</DialogTitle>
+                                <DialogDescription>
+                                    Please provide your feedback.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <MaintenanceRating requestId={request.id} onSuccess={handleReviewSuccess} />
+                        </DialogContent>
+                    </Dialog>
                 )}
             </div>
         );
