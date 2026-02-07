@@ -20,6 +20,7 @@ export default function StudentGatePassPage() {
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
+	const [disabled, setDisabled] = useState<boolean>(true);
 
 	const addMinutes = (time: string, minutesToAdd: number) => {
 		const [hours, minutes] = time.split(':').map(Number);
@@ -37,6 +38,29 @@ export default function StudentGatePassPage() {
 		d.setDate(d.getDate() + 1);
 		return d.toISOString().split('T')[0];
 	}, [outDate]);
+
+	useEffect(() => {
+		const fetchActivePass = async () => {
+			try {
+				const res = await fetch('/api/common/gate-pass');
+				if(res?.ok) {
+					const data = await res.json();
+					if(data?.passes?.length == 0) {
+						setDisabled(false);
+					}
+					else {
+						setError('You have an active gate pass. You cannot request a new one until you return and check in.');
+					}
+				}
+				else {
+					alert('Failed to check active gate pass. Please try again later.');
+				}
+			} catch (error) {
+				console.error('Failed to check active gate pass:', error);
+			}
+		}
+		fetchActivePass();
+	}, []);
 
 	useEffect(() => {
 		// If current returnDate is less than minReturnDate, adjust it
@@ -290,7 +314,7 @@ export default function StudentGatePassPage() {
 
 					<Button
 						className="w-full h-12 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium cursor-pointer"
-						disabled={isSubmitting}
+						disabled={isSubmitting || disabled}
 						type="submit"
 					>
 						{isSubmitting ? <Spinner /> : (

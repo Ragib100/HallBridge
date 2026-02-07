@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Bed, Door, StepsUp, CurrencyNotes } from "@boxicons/react";
+import { Bed, Door, StepsUp, CurrencyNotes, ArrowOutRightSquareHalf } from "@boxicons/react";
 
 interface UserInfo {
   fullName: string;
@@ -38,6 +38,7 @@ export default function HomePage() {
   });
   const [recentRequests, setRecentRequests] = useState<MaintenanceRequest[]>([]);
   const [currentBill, setCurrentBill] = useState<number>(0);
+  const [isInsideHall, setIsInsideHall] = useState<boolean>(true);
 
   // Fetch user info
   useEffect(() => {
@@ -62,10 +63,11 @@ export default function HomePage() {
 
         // console.log("User data:", userData.user);
 
-        const [mealsRes, maintenanceRes, billingRes] = await Promise.all([
+        const [mealsRes, maintenanceRes, billingRes, gatePasses] = await Promise.all([
           fetch("/api/student/meals/meal-selection/tomorrow-meal").catch(() => null),
           fetch("/api/common/maintenance?limit=3").catch(() => null),
           fetch("/api/student/billing").catch(() => null),
+          fetch("/api/common/gate-pass").catch(() => null),
         ]);
 
         if (mealsRes?.ok) {
@@ -83,6 +85,13 @@ export default function HomePage() {
           const billingData = await billingRes.json();
           setCurrentBill(billingData.currentBill?.amount || 0);
         }
+
+        if(gatePasses?.ok) {
+          const gatePassData = await gatePasses.json();
+          const insideHall = gatePassData.passes?.length === 0;
+          setIsInsideHall(insideHall);
+        }
+
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -92,7 +101,7 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  const firstName = userInfo?.fullName?.split(" ")[0] || "Student";
+  const name = userInfo?.fullName || "Student";
 
   return (
     <div className="space-y-6">
@@ -101,7 +110,7 @@ export default function HomePage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold mb-1">
-              Welcome back, {loading ? "..." : firstName}! 👋
+              Welcome back, {loading ? "..." : name}! 👋
             </h1>
             <p className="text-white/80">
               Here&apos;s your hall overview for today
@@ -341,22 +350,46 @@ export default function HomePage() {
         {/* Hall Status */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-bold text-gray-800 mb-4">Current Status</h2>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+          {loading ? (
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
+              <div className="flex-1">
+                <div className="h-6 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-40 animate-pulse"></div>
+              </div>
             </div>
-            <div>
-              <p className="text-lg font-semibold text-gray-800">Inside Hall</p>
-              <p className="text-sm text-gray-500">No active gate pass</p>
-            </div>
-          </div>
-          {userInfo?.roomAllocation?.hallId && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-500">Hall ID</p>
-              <p className="font-medium text-[#2D6A4F]">{userInfo.roomAllocation.hallId}</p>
-            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  isInsideHall ? "bg-green-100" : "bg-orange-100"
+                }`}>
+                  {isInsideHall ? (
+                    <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <ArrowOutRightSquareHalf fill="#ff0000" />
+                  )}
+                </div>
+                <div>
+                  <p className={`text-lg font-semibold ${
+                    isInsideHall ? "text-green-700" : "text-orange-700"
+                  }`}>
+                    {isInsideHall ? "Inside Hall" : "Outside Hall"}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {isInsideHall ? "No active gate pass" : "Active gate pass"}
+                  </p>
+                </div>
+              </div>
+              {userInfo?.roomAllocation?.hallId && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">Hall ID</p>
+                  <p className="font-medium text-[#2D6A4F]">{userInfo.roomAllocation.hallId}</p>
+                </div>
+              )}
+            </>
           )}
         </div>
 

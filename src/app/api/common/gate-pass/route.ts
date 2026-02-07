@@ -27,6 +27,7 @@ export async function GET() {
     const query: Record<string, unknown> = {};
     if (user.userType === "student") {
       query.studentId = session;
+      query.status = "active";
     }
 
     const passes = await GatePass.find(query)
@@ -214,7 +215,6 @@ export async function PATCH(request: Request) {
         // Notify student about approval
         await notifyGatePassUpdated(
           gatePass.studentId.toString(),
-          gatePass.passId,
           gatePass._id.toString(),
           "approved"
         );
@@ -300,9 +300,9 @@ export async function PATCH(request: Request) {
         // Notify student about rejection
         await notifyGatePassUpdated(
           gatePass.studentId.toString(),
-          gatePass.passId,
           gatePass._id.toString(),
-          "rejected"
+          "rejected",
+          body.reason
         );
         
         return NextResponse.json(
