@@ -364,7 +364,7 @@ export async function sendPasswordResetOTPEmail(
                     <tr>
                       <td style="background-color: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
                         <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">
-                          <strong>⏰ This code expires in 10 minutes.</strong><br>
+                          <strong>⏰ This code expires in 1 minute.</strong><br>
                           Do not share this code with anyone.
                         </p>
                       </td>
@@ -398,7 +398,7 @@ We received a request to reset your password. Use the OTP code below to verify y
 
 Your OTP: ${otp}
 
-This code expires in 10 minutes. Do not share this code with anyone.
+This code expires in 1 minute. Do not share this code with anyone.
 
 If you didn't request a password reset, please ignore this email.
   `;

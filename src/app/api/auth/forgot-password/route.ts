@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       userId: user._id,
       email: user.email,
       otp,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      expiresAt: new Date(Date.now() + 1 * 60 * 1000), // 1 minute
     });
 
     // Send OTP email
