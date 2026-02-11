@@ -74,7 +74,17 @@ const userSchema = new Schema(
       },
     },
     phone: { type: String, trim: true },
-    isActive: { type: Boolean, default: true },
+    isActive: { 
+      type: Boolean, 
+      default: function (this: { userType: string; approvalStatus?: string }) {
+        // Students start as inactive until approved
+        if (this.userType === "student") {
+          return this.approvalStatus === "approved";
+        }
+        // Staff and admin are active by default
+        return true;
+      }
+    },
     // Google OAuth
     googleId: { type: String, sparse: true }, // Store Google email for reference
   },
