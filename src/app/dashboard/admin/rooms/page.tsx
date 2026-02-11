@@ -107,6 +107,18 @@ export default function RoomAllocationPage() {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [showAllRooms, setShowAllRooms] = useState(false); // For "View All" toggle
+  const [showCreateRoom, setShowCreateRoom] = useState(false);
+  const [createRoomData, setCreateRoomData] = useState({
+    floor: "1",
+    roomNumber: "",
+    capacity: "4",
+    amenities: [] as string[],
+  });
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkRoomRange, setBulkRoomRange] = useState({
+    startRoom: "",
+    endRoom: "",
+  });
 
   // Fetch rooms from database
   useEffect(() => {
@@ -213,6 +225,110 @@ export default function RoomAllocationPage() {
     }
   };
 
+  const handleCreateRoom = async () => {
+    if (bulkMode) {
+      if (!bulkRoomRange.startRoom || !bulkRoomRange.endRoom) {
+        alert("Please enter both start and end room numbers");
+        return;
+      }
+
+      const start = parseInt(bulkRoomRange.startRoom);
+      const end = parseInt(bulkRoomRange.endRoom);
+
+      if (isNaN(start) || isNaN(end) || start > end) {
+        alert("Invalid room range");
+        return;
+      }
+
+      if (end - start > 50) {
+        alert("Cannot create more than 50 rooms at once");
+        return;
+      }
+
+      setActionLoading(true);
+      let successCount = 0;
+      let failCount = 0;
+
+      for (let roomNum = start; roomNum <= end; roomNum++) {
+        try {
+          const res = await fetch("/api/admin/rooms/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...createRoomData,
+              roomNumber: roomNum.toString().padStart(2, "0"),
+            }),
+          });
+
+          if (res.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          failCount++;
+        }
+      }
+
+      alert(`Created ${successCount} rooms successfully${failCount > 0 ? `, ${failCount} failed` : ""}`);
+      setShowCreateRoom(false);
+      setCreateRoomData({
+        floor: "1",
+        roomNumber: "",
+        capacity: "4",
+        amenities: [],
+      });
+      setBulkMode(false);
+      setBulkRoomRange({ startRoom: "", endRoom: "" });
+      fetchRooms();
+      setActionLoading(false);
+    } else {
+      if (!createRoomData.roomNumber) {
+        alert("Please enter a room number");
+        return;
+      }
+
+      setActionLoading(true);
+      try {
+        const res = await fetch("/api/admin/rooms/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(createRoomData),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          alert(data.message || "Room created successfully!");
+          setShowCreateRoom(false);
+          setCreateRoomData({
+            floor: "1",
+            roomNumber: "",
+            capacity: "4",
+            amenities: [],
+          });
+          fetchRooms();
+        } else {
+          alert(data.message || "Failed to create room");
+        }
+      } catch (error) {
+        console.error("Failed to create room:", error);
+        alert("Failed to create room. Please try again.");
+      } finally {
+        setActionLoading(false);
+      }
+    }
+  };
+
+  const handleToggleAmenity = (amenity: string) => {
+    setCreateRoomData(prev => ({
+      ...prev,
+      amenities: prev.amenities.includes(amenity)
+        ? prev.amenities.filter(a => a !== amenity)
+        : [...prev.amenities, amenity],
+    }));
+  };
+
   // Get members from beds for display
   const getRoomMembers = (room: Room) => {
     return room.beds
@@ -295,6 +411,15 @@ export default function RoomAllocationPage() {
               <option value="vacant">Vacant</option>
               <option value="maintenance">Maintenance</option>
             </select>
+            <button
+              onClick={() => setShowCreateRoom(true)}
+              className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245a42] transition-colors flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Room
+            </button>
           </div>
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -382,7 +507,16 @@ export default function RoomAllocationPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
             <p className="text-gray-500 mb-2">No rooms found</p>
-            <p className="text-sm text-gray-400">Run the room seed script to initialize rooms</p>
+            <p className="text-sm text-gray-400 mb-4">Click the "Add Room" button above to create new rooms</p>
+            <button
+              onClick={() => setShowCreateRoom(true)}
+              className="inline-flex items-center gap-2 px-6 py-2 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245a42] transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Your First Room
+            </button>
           </div>
         )}
 
@@ -731,6 +865,205 @@ export default function RoomAllocationPage() {
                   {actionLoading ? "Updating..." : "Set to Maintenance"}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Room Dialog */}
+      {showCreateRoom && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 sticky top-0 bg-white">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-800">Create New Room</h2>
+                <button
+                  onClick={() => setShowCreateRoom(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Mode Toggle */}
+              <div className="flex items-center justify-center gap-2 bg-gray-100 rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setBulkMode(false)}
+                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    !bulkMode ? "bg-white text-gray-800 shadow-sm" : "text-gray-600"
+                  }`}
+                >
+                  Single Room
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBulkMode(true)}
+                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    bulkMode ? "bg-white text-gray-800 shadow-sm" : "text-gray-600"
+                  }`}
+                >
+                  Bulk Create
+                </button>
+              </div>
+
+              {/* Floor Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Floor Number *
+                </label>
+                <select
+                  value={createRoomData.floor}
+                  onChange={(e) => setCreateRoomData({...createRoomData, floor: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(floor => (
+                    <option key={floor} value={floor}>Floor {floor}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Room Number or Range */}
+              {bulkMode ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Room Number Range *
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      value={bulkRoomRange.startRoom}
+                      onChange={(e) => setBulkRoomRange({...bulkRoomRange, startRoom: e.target.value})}
+                      placeholder="Start (e.g., 1)"
+                      min="1"
+                      max="99"
+                      className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                    />
+                    <span className="text-gray-500">to</span>
+                    <input
+                      type="number"
+                      value={bulkRoomRange.endRoom}
+                      onChange={(e) => setBulkRoomRange({...bulkRoomRange, endRoom: e.target.value})}
+                      placeholder="End (e.g., 20)"
+                      min="1"
+                      max="99"
+                      className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                    />
+                  </div>
+                  {bulkRoomRange.startRoom && bulkRoomRange.endRoom && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Will create {Math.max(0, parseInt(bulkRoomRange.endRoom) - parseInt(bulkRoomRange.startRoom) + 1)} rooms
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Room Number *
+                  </label>
+                  <input
+                    type="text"
+                    value={createRoomData.roomNumber}
+                    onChange={(e) => setCreateRoomData({...createRoomData, roomNumber: e.target.value})}
+                    placeholder="e.g., 01, 02, 103"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Display will be: {createRoomData.floor}{createRoomData.roomNumber.padStart(2, "0") || "XX"}
+                  </p>
+                </div>
+              )}
+
+              {/* Capacity */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bed Capacity *
+                </label>
+                <select
+                  value={createRoomData.capacity}
+                  onChange={(e) => setCreateRoomData({...createRoomData, capacity: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                >
+                  {[1, 2, 3, 4, 5, 6].map(cap => (
+                    <option key={cap} value={cap}>{cap} Bed{cap > 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Amenities */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Amenities (Optional)
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {["AC", "Fan", "Attached Bath", "Common Bath", "Balcony", "WiFi"].map(amenity => (
+                    <button
+                      key={amenity}
+                      type="button"
+                      onClick={() => handleToggleAmenity(amenity)}
+                      className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
+                        createRoomData.amenities.includes(amenity)
+                          ? "border-[#2D6A4F] bg-[#2D6A4F] text-white"
+                          : "border-gray-200 text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      {amenity}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Summary</h3>
+                <div className="text-sm text-gray-600 space-y-1">
+                  {bulkMode ? (
+                    <>
+                      <p>• Mode: Bulk Creation</p>
+                      <p>• Floor: {createRoomData.floor}</p>
+                      <p>• Rooms: {bulkRoomRange.startRoom && bulkRoomRange.endRoom 
+                        ? `${createRoomData.floor}${bulkRoomRange.startRoom.padStart(2, "0")} to ${createRoomData.floor}${bulkRoomRange.endRoom.padStart(2, "0")}`
+                        : "Not specified"}</p>
+                      <p>• Count: {bulkRoomRange.startRoom && bulkRoomRange.endRoom 
+                        ? Math.max(0, parseInt(bulkRoomRange.endRoom) - parseInt(bulkRoomRange.startRoom) + 1)
+                        : 0} rooms</p>
+                      <p>• Each room: {createRoomData.capacity} bed{createRoomData.capacity !== "1" ? 's' : ''}</p>
+                      <p>• Amenities: {createRoomData.amenities.length > 0 ? createRoomData.amenities.join(", ") : "None"}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p>• Floor: {createRoomData.floor}</p>
+                      <p>• Room: {createRoomData.floor}{createRoomData.roomNumber.padStart(2, "0") || "XX"}</p>
+                      <p>• Capacity: {createRoomData.capacity} bed{createRoomData.capacity !== "1" ? 's' : ''}</p>
+                      <p>• Amenities: {createRoomData.amenities.length > 0 ? createRoomData.amenities.join(", ") : "None"}</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCreateRoom(false);
+                  setBulkMode(false);
+                  setBulkRoomRange({ startRoom: "", endRoom: "" });
+                }}
+                className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateRoom}
+                disabled={actionLoading || (bulkMode ? (!bulkRoomRange.startRoom || !bulkRoomRange.endRoom) : !createRoomData.roomNumber)}
+                className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245a42] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {actionLoading ? "Creating..." : bulkMode ? "Create Rooms" : "Create Room"}
+              </button>
             </div>
           </div>
         </div>
