@@ -8,7 +8,7 @@ export default function MealsLayout( { children } : { children: React.ReactNode 
     ];
 
     return(
-        <div className="w-full">
+        <div className="px-4 md:px-8 py-4 max-w-full overflow-x-hidden">
             <TopNavigation navItems={nav_items} />
             <div className="mt-4">
                 {children}

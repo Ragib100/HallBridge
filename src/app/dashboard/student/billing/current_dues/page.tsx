@@ -7,6 +7,7 @@ import { generateInvoicePDF } from "@/lib/generate-invoice-pdf";
 import { Spinner } from "@/components/ui/spinner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { getBDDate } from "@/lib/dates";
+import {AlertTriangle } from "@boxicons/react"
 
 interface Bill {
     seatrent: number;
@@ -128,15 +129,19 @@ export default function CurrentDuesPage() {
         <div className="space-y-6">
             {/* Overdue/Near Due Warning */}
             {!billdata.isPaid && (isOverdue || isNearDue) && (
-                <div className={`rounded-xl p-4 flex items-center gap-4 ${
+                <div className={`rounded-xl p-4 flex flex-col md:flex-row items-center gap-4 ${
                     isOverdue ? 'bg-red-50 border border-red-200' : 'bg-yellow-50 border border-yellow-200'
                 }`}>
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        isOverdue ? 'bg-red-100' : 'bg-yellow-100'
-                    }`}>
-                        <svg className={`w-6 h-6 ${isOverdue ? 'text-red-500' : 'text-yellow-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
+                    <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                            isOverdue ? 'bg-red-100' : 'bg-yellow-100'
+                        }`}
+                        >
+                        <AlertTriangle
+                            className={`w-6 h-6 ${
+                            isOverdue ? 'text-red-600' : 'text-yellow-600'
+                            }`}
+                        />
                     </div>
                     <div className="flex-1">
                         <p className={`font-bold ${isOverdue ? 'text-red-700' : 'text-yellow-700'}`}>
@@ -149,7 +154,9 @@ export default function CurrentDuesPage() {
                             }
                         </p>
                     </div>
-                    <PayNow amount={billdata.amount} dueDate={billdata.dueDate} />
+                    <div className="w-full md:w-[20%]">
+                        <PayNow amount={billdata.amount} dueDate={billdata.dueDate} />
+                    </div>
                 </div>
             )}
 

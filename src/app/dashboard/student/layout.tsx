@@ -209,9 +209,9 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#f5f5f5] flex flex-col lg:ml-64 h-screen">
+      <main  className="flex-1 bg-[#f5f5f5] overflow-hidden flex flex-col lg:ml-64" style={{ overscrollBehavior: 'none' }}>
         {/* Header */}
-        <header className="bg-white px-4 md:px-8 py-4 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+        <header className="bg-white px-4 md:px-8 py-4 flex items-center justify-between border-b border-gray-100" style={{ touchAction: 'pan-x pan-y pinch-zoom' }}>
           <div className="flex items-center gap-4">
             {/* Menu Toggle Button - only on mobile */}
             <button
