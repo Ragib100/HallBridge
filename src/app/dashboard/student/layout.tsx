@@ -209,7 +209,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       </aside>
 
       {/* Main Content */}
-      <main  className="flex-1 bg-[#f5f5f5] overflow-hidden flex flex-col lg:ml-64" style={{ overscrollBehavior: 'none' }}>
+      <main  className="flex-1 bg-[#f5f5f5] min-h-screen xl:overflow-hidden flex flex-col lg:ml-64" style={{ overscrollBehavior: 'none' }}>
         {/* Header */}
         <header className="bg-white px-4 md:px-8 py-4 flex items-center justify-between border-b border-gray-100" style={{ touchAction: 'pan-x pan-y pinch-zoom' }}>
           <div className="flex items-center gap-4">
@@ -257,7 +257,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden xl:overscroll-none">
           <div className="p-4 md:p-8">
             {children}
           </div>
