@@ -3,6 +3,7 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import PasswordResetToken from "@/models/PasswordResetToken";
 import { sendPasswordResetOTPEmail } from "@/lib/email";
+import { getBDDate } from "@/lib/dates";
 
 /**
  * Generate a random 6-digit OTP
@@ -63,11 +64,14 @@ export async function POST(request: Request) {
     const otp = generateOTP();
 
     // Create new reset token
+    const expiryTime = getBDDate();
+    expiryTime.setMinutes(expiryTime.getMinutes() + 1); // 1 minute
+    
     await PasswordResetToken.create({
       userId: user._id,
       email: user.email,
       otp,
-      expiresAt: new Date(Date.now() + 1 * 60 * 1000), // 1 minute
+      expiresAt: expiryTime,
     });
 
     // Send OTP email

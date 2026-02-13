@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import MaintenanceRequest from "@/models/MaintenanceRequest";
 import { notifyMaintenanceCreated, notifyMaintenanceUpdated } from "@/lib/notifications";
+import { getBDDate } from "@/lib/dates";
 
 // GET /api/maintenance - Get maintenance requests
 // Query params: status, studentId (optional)
@@ -104,7 +105,7 @@ export async function POST(request: Request) {
     }
 
     // Generate request ID
-    const year = new Date().getFullYear();
+    const year = getBDDate().getFullYear();
     const count = await MaintenanceRequest.countDocuments();
     const requestId = `MT-${year}-${String(count + 1).padStart(3, "0")}`;
 
@@ -191,16 +192,16 @@ export async function PATCH(request: Request) {
       updateData.status = status;
       if (status === "in-progress" && !assignedTo) {
         updateData.assignedTo = session;
-        updateData.assignedAt = new Date();
+        updateData.assignedAt = getBDDate();
       }
       if (status === "completed") {
-        updateData.completedAt = new Date();
+        updateData.completedAt = getBDDate();
       }
     }
 
     if (assignedTo) {
       updateData.assignedTo = assignedTo;
-      updateData.assignedAt = new Date();
+      updateData.assignedAt = getBDDate();
     }
 
     if (estimatedCompletion) {

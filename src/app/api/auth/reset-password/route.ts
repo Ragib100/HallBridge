@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import PasswordResetToken from "@/models/PasswordResetToken";
 import { sendPasswordResetSuccessEmail } from "@/lib/email";
+import { getBDDate } from "@/lib/dates";
 
 /**
  * POST /api/auth/reset-password
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
     const resetToken = await PasswordResetToken.findOne({
       email: email.toLowerCase(),
       isVerified: true,
-      expiresAt: { $gt: new Date() },
+      expiresAt: { $gt: getBDDate() },
     });
 
     if (!resetToken) {

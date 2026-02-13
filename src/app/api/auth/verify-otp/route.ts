@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import PasswordResetToken from "@/models/PasswordResetToken";
+import { getBDDate } from "@/lib/dates";
 
 const MAX_ATTEMPTS = 5;
 
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     // Find the reset token
     const resetToken = await PasswordResetToken.findOne({
       email: email.toLowerCase(),
-      expiresAt: { $gt: new Date() },
+      expiresAt: { $gt: getBDDate() },
     });
 
     if (!resetToken) {

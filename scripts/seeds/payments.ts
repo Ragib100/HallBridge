@@ -8,13 +8,7 @@
 import { connectDB, disconnectDB } from "../lib/db";
 import User from "../../src/models/User";
 import Payment from "../../src/models/Payment";
-
-function getDateWithOffset(daysOffset: number): Date {
-  const date = new Date();
-  date.setDate(date.getDate() + daysOffset);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
+import { getBDDateWithOffset, getBDDate } from "../../src/lib/dates";
 
 export async function seedPayments(): Promise<{ success: number; skipped: number; failed: number }> {
   console.log("\n📌 Seeding Payments...");
@@ -54,21 +48,22 @@ export async function seedPayments(): Promise<{ success: number; skipped: number
     
     for (let i = 0; i < numPayments; i++) {
       const paymentType = paymentTypes[i % paymentTypes.length];
-      const year = new Date().getFullYear();
-      const month = String(new Date().getMonth() + 1).padStart(2, "0");
+      const bdDate = getBDDate();
+      const year = bdDate.getFullYear();
+      const month = String(bdDate.getMonth() + 1).padStart(2, "0");
       paymentCounter++;
       const paymentId = `PAY-${year}${month}-${String(paymentCounter).padStart(5, "0")}`;
 
       try {
-        const paymentDate = getDateWithOffset(-Math.floor(Math.random() * 30));
+        const paymentDate = getBDDateWithOffset(-Math.floor(Math.random() * 30));
         const status = Math.random() > 0.3 ? "completed" : (Math.random() > 0.5 ? "pending" : "failed");
         
         // Random payment methods
         const methods = ["cash", "card", "online", "bank_transfer"] as const;
         const method = methods[Math.floor(Math.random() * methods.length)];
 
-        const currentMonth = new Date().getMonth() + 1;
-        const currentYear = new Date().getFullYear();
+        const currentMonth = bdDate.getMonth() + 1;
+        const currentYear = bdDate.getFullYear();
 
         // Calculate late fee (10% if past due date)
         const lateFee = Math.random() > 0.7 ? Math.round(paymentType.amount * 0.1) : 0;
@@ -85,7 +80,7 @@ export async function seedPayments(): Promise<{ success: number; skipped: number
           status,
           billingMonth: currentMonth,
           billingYear: currentYear,
-          dueDate: getDateWithOffset(15),
+          dueDate: getBDDateWithOffset(15),
           lateFee,
           discount,
           finalAmount,

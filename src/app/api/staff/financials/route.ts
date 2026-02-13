@@ -43,16 +43,35 @@ export async function GET(request: Request) {
     let periodLabel: string;
 
     if (timeRange === "this-month") {
-      startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59);
+      startDate = getBDDate();
+      startDate.setDate(1);
+      startDate.setHours(0, 0, 0, 0);
+      
+      endDate = getBDDate();
+      endDate.setMonth(endDate.getMonth() + 1);
+      endDate.setDate(0);
+      endDate.setHours(23, 59, 59, 999);
       periodLabel = startDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     } else if (timeRange === "last-month") {
-      startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-      endDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0, 23, 59, 59);
+      startDate = getBDDate();
+      startDate.setMonth(startDate.getMonth() - 1);
+      startDate.setDate(1);
+      startDate.setHours(0, 0, 0, 0);
+      
+      endDate = getBDDate();
+      endDate.setDate(0);
+      endDate.setHours(23, 59, 59, 999);
       periodLabel = startDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     } else if (timeRange === "this-year") {
-      startDate = new Date(currentDate.getFullYear(), 0, 1);
-      endDate = new Date(currentDate.getFullYear(), 11, 31, 23, 59, 59);
+      startDate = getBDDate();
+      startDate.setMonth(0);
+      startDate.setDate(1);
+      startDate.setHours(0, 0, 0, 0);
+      
+      endDate = getBDDate();
+      endDate.setMonth(11);
+      endDate.setDate(31);
+      endDate.setHours(23, 59, 59, 999);
       periodLabel = `Year ${currentDate.getFullYear()}`;
     } else {
       // Custom range
@@ -60,8 +79,18 @@ export async function GET(request: Request) {
       const targetMonth = customMonth 
         ? parseInt(customMonth.split("-")[1]) 
         : currentDate.getMonth() + 1;
-      startDate = new Date(targetYear, targetMonth - 1, 1);
-      endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59);
+      
+      startDate = getBDDate();
+      startDate.setFullYear(targetYear);
+      startDate.setMonth(targetMonth - 1);
+      startDate.setDate(1);
+      startDate.setHours(0, 0, 0, 0);
+      
+      endDate = getBDDate();
+      endDate.setFullYear(targetYear);
+      endDate.setMonth(targetMonth);
+      endDate.setDate(0);
+      endDate.setHours(23, 59, 59, 999);
       periodLabel = startDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     }
 
@@ -126,8 +155,17 @@ export async function GET(request: Request) {
 
       if (!paidThisMonth) {
         // Calculate their due amount
-        const startOfCurrMonth = new Date(currentYear, currentMonth - 1, 1);
-        const endOfCurrMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+        const startOfCurrMonth = getBDDate();
+        startOfCurrMonth.setFullYear(currentYear);
+        startOfCurrMonth.setMonth(currentMonth - 1);
+        startOfCurrMonth.setDate(1);
+        startOfCurrMonth.setHours(0, 0, 0, 0);
+        
+        const endOfCurrMonth = getBDDate();
+        endOfCurrMonth.setFullYear(currentYear);
+        endOfCurrMonth.setMonth(currentMonth);
+        endOfCurrMonth.setDate(0);
+        endOfCurrMonth.setHours(23, 59, 59, 999);
 
         // Get their meals
         const meals = await Meal.find({
@@ -170,13 +208,18 @@ export async function GET(request: Request) {
           else break;
         }
 
+        const dueDateObj = getBDDate();
+        dueDateObj.setFullYear(currentYear);
+        dueDateObj.setMonth(currentMonth - 1);
+        dueDateObj.setDate(15);
+        
         defaultersWithDues.push({
           id: student._id,
           name: student.fullName,
           studentId: student.studentId || `STU-${student._id.toString().slice(-6)}`,
           room: student.roomNumber || 'N/A',
           dueAmount,
-          dueDate: new Date(currentYear, currentMonth - 1, 15).toLocaleDateString('en-US', { 
+          dueDate: dueDateObj.toLocaleDateString('en-US', { 
             month: 'short', day: 'numeric', year: 'numeric' 
           }),
           monthsOverdue: monthsOverdue + 1,
@@ -214,9 +257,15 @@ export async function GET(request: Request) {
     // Monthly comparison (last 6 months)
     const monthlyStats = [];
     for (let i = 5; i >= 0; i--) {
-      const mDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-      const mStart = new Date(mDate.getFullYear(), mDate.getMonth(), 1);
-      const mEnd = new Date(mDate.getFullYear(), mDate.getMonth() + 1, 0, 23, 59, 59);
+      const mStart = getBDDate();
+      mStart.setMonth(mStart.getMonth() - i);
+      mStart.setDate(1);
+      mStart.setHours(0, 0, 0, 0);
+      
+      const mEnd = getBDDate();
+      mEnd.setMonth(mEnd.getMonth() - i + 1);
+      mEnd.setDate(0);
+      mEnd.setHours(23, 59, 59, 999);
 
       const mRevenue = await Payment.aggregate([
         { $match: { status: "completed", paidDate: { $gte: mStart, $lte: mEnd } } },
@@ -229,8 +278,8 @@ export async function GET(request: Request) {
       ]);
 
       monthlyStats.push({
-        month: mDate.toLocaleDateString("en-US", { month: "short" }),
-        monthYear: mDate.toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+        month: mStart.toLocaleDateString("en-US", { month: "short" }),
+        monthYear: mStart.toLocaleDateString("en-US", { month: "short", year: "numeric" }),
         revenue: mRevenue[0]?.total || 0,
         expenses: mExpenses[0]?.total || 0,
       });

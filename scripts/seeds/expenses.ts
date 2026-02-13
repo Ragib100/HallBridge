@@ -8,13 +8,7 @@
 import { connectDB, disconnectDB } from "../lib/db";
 import User from "../../src/models/User";
 import Expense from "../../src/models/Expense";
-
-function getDateWithOffset(daysOffset: number): Date {
-  const date = new Date();
-  date.setDate(date.getDate() + daysOffset);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
+import { getBDDateWithOffset, getBDDate } from "../../src/lib/dates";
 
 const expensesData = [
   {
@@ -113,12 +107,13 @@ export async function seedExpenses(): Promise<{ success: number; skipped: number
 
   for (let i = 0; i < expensesData.length; i++) {
     const expense = expensesData[i];
-    const year = new Date().getFullYear();
-    const month = String(new Date().getMonth() + 1).padStart(2, "0");
+    const bdDate = getBDDate();
+    const year = bdDate.getFullYear();
+    const month = String(bdDate.getMonth() + 1).padStart(2, "0");
     const expenseId = `EXP-${year}${month}-${String(i + 1).padStart(4, "0")}`;
 
     try {
-      const expenseDate = getDateWithOffset(expense.daysOffset);
+      const expenseDate = getBDDateWithOffset(expense.daysOffset);
 
       await Expense.create({
         expenseId,

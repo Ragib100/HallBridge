@@ -8,6 +8,7 @@
 import { connectDB, disconnectDB } from "../lib/db";
 import User from "../../src/models/User";
 import MaintenanceRequest from "../../src/models/MaintenanceRequest";
+import { getBDDate } from "../../src/lib/dates";
 
 const requestsData = [
   {
@@ -80,7 +81,8 @@ export async function seedMaintenanceRequests(): Promise<{ success: number; fail
     const studentIndex = i % students.length;
 
     // Generate requestId (same format as in the model's pre-save hook)
-    const year = new Date().getFullYear();
+    const bdDate = getBDDate();
+    const year = bdDate.getFullYear();
     const requestId = `MT-${year}-${String(i + 1).padStart(3, "0")}`;
 
     try {

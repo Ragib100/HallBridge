@@ -8,13 +8,7 @@
 import { connectDB, disconnectDB } from "../lib/db";
 import User from "../../src/models/User";
 import GuestMeal from "../../src/models/GuestMeal";
-
-function getDateWithOffset(daysOffset: number): Date {
-  const date = new Date();
-  date.setDate(date.getDate() + daysOffset);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
+import { getBDDateWithOffset } from "../../src/lib/dates";
 
 const guestMealData = [
   {
@@ -76,7 +70,7 @@ export async function seedGuestMeals(): Promise<{ success: number; skipped: numb
     const student = students[i % students.length];
 
     try {
-      const mealDate = getDateWithOffset(guest.daysOffset);
+      const mealDate = getBDDateWithOffset(guest.daysOffset);
 
       await GuestMeal.create({
         studentId: student._id,

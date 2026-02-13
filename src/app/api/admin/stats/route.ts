@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import MaintenanceRequest from "@/models/MaintenanceRequest";
+import { getBDDate } from "@/lib/dates";
 
 // GET /api/admin/stats - Get dashboard statistics (admin only)
 export async function GET() {
@@ -23,8 +24,10 @@ export async function GET() {
     }
 
     // Get current month start date
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const now = getBDDate();
+    const monthStart = getBDDate();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
 
     // User stats
     const totalStudents = await User.countDocuments({ userType: "student", isActive: true });

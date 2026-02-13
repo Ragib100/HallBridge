@@ -6,6 +6,7 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import Room from "@/models/Room";
 import { sendRoomAllocationEmail, sendRejectionEmail } from "@/lib/email";
+import { getBDDate } from "@/lib/dates";
 
 // GET /api/admin/users - Get all users (admin only)
 export async function GET(request: Request) {
@@ -181,7 +182,7 @@ export async function PATCH(request: Request) {
               roomNumber: room.roomNumber,
               bedNumber,
               hallId: room.hallId,
-              allocatedAt: new Date(),
+              allocatedAt: getBDDate(),
             },
           },
           { new: true }

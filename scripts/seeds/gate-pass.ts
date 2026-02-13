@@ -8,13 +8,7 @@
 import { connectDB, disconnectDB } from "../lib/db";
 import User from "../../src/models/User";
 import GatePass from "../../src/models/GatePass";
-
-function getDateWithOffset(daysOffset: number): Date {
-  const date = new Date();
-  date.setDate(date.getDate() + daysOffset);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
+import { getBDDateWithOffset, getBDDate } from "../../src/lib/dates";
 
 const gatePassData = [
   {
@@ -99,12 +93,13 @@ export async function seedGatePass(): Promise<{ success: number; skipped: number
   for (let i = 0; i < gatePassData.length; i++) {
     const pass = gatePassData[i];
     const student = students[i % students.length];
-    const year = new Date().getFullYear();
+    const bdDate = getBDDate();
+    const year = bdDate.getFullYear();
     const passId = `GP-${year}-${String(i + 1).padStart(4, "0")}`;
 
     try {
-      const outDate = getDateWithOffset(pass.daysOffset);
-      const returnDate = getDateWithOffset(pass.returnDaysOffset);
+      const outDate = getBDDateWithOffset(pass.daysOffset);
+      const returnDate = getBDDateWithOffset(pass.returnDaysOffset);
 
       await GatePass.create({
         passId,

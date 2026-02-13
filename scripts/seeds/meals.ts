@@ -8,13 +8,7 @@
 import { connectDB, disconnectDB } from "../lib/db";
 import User from "../../src/models/User";
 import Meal from "../../src/models/Meal";
-
-function getDateWithOffset(daysOffset: number): Date {
-  const date = new Date();
-  date.setDate(date.getDate() + daysOffset);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
+import { getBDDateWithOffset } from "../../src/lib/dates";
 
 export async function seedMeals(): Promise<{ success: number; skipped: number; failed: number }> {
   console.log("\n📌 Seeding Meal Selections...");
@@ -38,11 +32,11 @@ export async function seedMeals(): Promise<{ success: number; skipped: number; f
     console.error("  ⚠️  Failed to clear existing meals:", error);
   }
 
-  // Create meal selections for today and tomorrow for each student
-  const dates = [
-    getDateWithOffset(0), // Today
-    getDateWithOffset(1), // Tomorrow
-  ];
+  // Create meal selections for the last 30 days + today and tomorrow
+  const dates = [];
+  for (let i = -30; i <= 1; i++) {
+    dates.push(getBDDateWithOffset(i));
+  }
 
   for (const student of students) {
     for (const date of dates) {

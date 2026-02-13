@@ -59,8 +59,9 @@ export async function GET(request: Request) {
     // Get today's stats
     const today = getBDDate();
     today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
+    const tomorrow = getBDDate();
     tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
 
     const todayEntries = await EntryExitLog.countDocuments({
       type: "entry",

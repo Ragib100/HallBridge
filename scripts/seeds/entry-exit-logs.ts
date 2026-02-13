@@ -8,12 +8,7 @@
 import { connectDB, disconnectDB } from "../lib/db";
 import User from "../../src/models/User";
 import EntryExitLog from "../../src/models/EntryExitLog";
-
-function getDateTimeWithOffset(hoursOffset: number): Date {
-  const date = new Date();
-  date.setHours(date.getHours() + hoursOffset);
-  return date;
-}
+import { getBDDateTimeWithOffset, getBDDate } from "../../src/lib/dates";
 
 export async function seedEntryExitLogs(): Promise<{ success: number; skipped: number; failed: number }> {
   console.log("\n📌 Seeding Entry/Exit Logs...");
@@ -62,8 +57,9 @@ export async function seedEntryExitLogs(): Promise<{ success: number; skipped: n
     // Each student gets 2 log entries
     for (let j = 0; j < 2; j++) {
       const logEntry = logEntries[(i * 2 + j) % logEntries.length];
-      const year = new Date().getFullYear();
-      const month = String(new Date().getMonth() + 1).padStart(2, "0");
+      const bdDate = getBDDate();
+      const year = bdDate.getFullYear();
+      const month = String(bdDate.getMonth() + 1).padStart(2, "0");
       logCounter++;
       const logId = `LOG-${year}${month}-${String(logCounter).padStart(4, "0")}`;
 
@@ -72,7 +68,7 @@ export async function seedEntryExitLogs(): Promise<{ success: number; skipped: n
           logId,
           student: student._id,
           type: logEntry.type,
-          timestamp: getDateTimeWithOffset(logEntry.hoursOffset),
+          timestamp: getBDDateTimeWithOffset(logEntry.hoursOffset),
           loggedBy: securityStaff._id,
           notes: logEntry.notes || undefined,
           isLate: logEntry.isLate,

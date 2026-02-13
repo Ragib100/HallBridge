@@ -57,3 +57,30 @@ export function getBDTime(): string {
 
     return `${hour}:${min}:${sec}`;
 }
+
+/**
+ * Get Bangladesh date with offset in days
+ * @param daysOffset Number of days to offset (can be negative)
+ * @returns Date object in BD timezone with time set to 00:00:00
+ */
+export function getBDDateWithOffset(daysOffset: number): Date {
+    const bd = new Date(
+        new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" })
+    );
+    bd.setDate(bd.getDate() + daysOffset);
+    bd.setHours(0, 0, 0, 0);
+    return bd;
+}
+
+/**
+ * Get Bangladesh date/time with offset in hours
+ * @param hoursOffset Number of hours to offset (can be negative)
+ * @returns Date object in BD timezone with specified hour offset
+ */
+export function getBDDateTimeWithOffset(hoursOffset: number): Date {
+    const bd = new Date(
+        new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" })
+    );
+    bd.setHours(bd.getHours() + hoursOffset);
+    return bd;
+}

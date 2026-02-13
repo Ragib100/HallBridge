@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import Expense, { EXPENSE_CATEGORIES } from "@/models/Expense";
+import { getBDDate } from "@/lib/dates";
 
 // GET /api/staff/expenses - Get all expenses
 export async function GET(request: Request) {
@@ -42,8 +43,17 @@ export async function GET(request: Request) {
 
     if (month) {
       const [year, monthNum] = month.split("-").map(Number);
-      const startOfMonth = new Date(year, monthNum - 1, 1);
-      const endOfMonth = new Date(year, monthNum, 0, 23, 59, 59);
+      const startOfMonth = getBDDate();
+      startOfMonth.setFullYear(year);
+      startOfMonth.setMonth(monthNum - 1);
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const endOfMonth = getBDDate();
+      endOfMonth.setFullYear(year);
+      endOfMonth.setMonth(monthNum);
+      endOfMonth.setDate(0);
+      endOfMonth.setHours(23, 59, 59, 999);
       query.date = { $gte: startOfMonth, $lte: endOfMonth };
     } else if (startDate || endDate) {
       query.date = {};
@@ -162,7 +172,7 @@ export async function POST(request: Request) {
 
     // Generate expense ID
     const count = await Expense.countDocuments();
-    const year = new Date().getFullYear();
+    const year = getBDDate().getFullYear();
     const expenseId = `EXP-${year}-${String(count + 1).padStart(4, "0")}`;
 
     const expense = new Expense({
@@ -170,7 +180,7 @@ export async function POST(request: Request) {
       category,
       amount: parseFloat(amount),
       description,
-      date: date ? new Date(date) : new Date(),
+      date: date ? new Date(date) : getBDDate(),
       addedBy: session,
       vendor,
       notes,

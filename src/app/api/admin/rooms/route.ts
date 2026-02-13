@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import connectDB from "@/lib/db";
 import Room from "@/models/Room";
 import User from "@/models/User";
+import { getBDDate } from "@/lib/dates";
 
 // GET /api/admin/rooms - Get all rooms with filters
 export async function GET(request: Request) {
@@ -175,7 +176,7 @@ export async function POST(request: Request) {
       roomNumber: room.roomNumber,
       bedNumber,
       hallId: room.hallId,
-      allocatedAt: new Date(),
+      allocatedAt: getBDDate(),
     };
     await student.save();
 

@@ -8,13 +8,7 @@
 import { connectDB, disconnectDB } from "../lib/db";
 import User from "../../src/models/User";
 import Laundry from "../../src/models/Laundry";
-
-function getDateWithOffset(daysOffset: number): Date {
-  const date = new Date();
-  date.setDate(date.getDate() + daysOffset);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
+import { getBDDateWithOffset, getBDDate } from "../../src/lib/dates";
 
 const laundryData = [
   {
@@ -88,12 +82,13 @@ export async function seedLaundry(): Promise<{ success: number; skipped: number;
   for (let i = 0; i < laundryData.length; i++) {
     const laundry = laundryData[i];
     const student = students[i % students.length];
-    const year = new Date().getFullYear();
-    const month = String(new Date().getMonth() + 1).padStart(2, "0");
+    const bdDate = getBDDate();
+    const year = bdDate.getFullYear();
+    const month = String(bdDate.getMonth() + 1).padStart(2, "0");
     const requestId = `LR-${year}${month}-${String(i + 1).padStart(4, "0")}`;
 
     try {
-      const submittedDate = getDateWithOffset(laundry.daysOffset);
+      const submittedDate = getBDDateWithOffset(laundry.daysOffset);
       const totalItems = laundry.items.reduce((sum, item) => sum + item.quantity, 0);
 
       // Calculate expected delivery (2 days after submission)

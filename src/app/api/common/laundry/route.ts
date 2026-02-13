@@ -51,10 +51,12 @@ export async function GET(request: Request) {
       const collected = await Laundry.countDocuments({ status: "collected" });
       const washing = await Laundry.countDocuments({ status: "washing" });
       const ready = await Laundry.countDocuments({ status: "ready" });
+      const todayStart = getBDDate();
+      todayStart.setHours(0, 0, 0, 0);
       const todayDelivered = await Laundry.countDocuments({
         status: "delivered",
         actualDelivery: {
-          $gte: new Date(getBDDate().setHours(0, 0, 0, 0)),
+          $gte: todayStart,
         },
       });
 

@@ -6,6 +6,7 @@ import GatePass from "@/models/GatePass";
 import { getCurrentDateBD } from "@/lib/dates";
 import mongoose from "mongoose";
 import { notifyGatePassUpdated } from "@/lib/notifications";
+import { getBDDate } from "@/lib/dates";
 
 // GET /api/gate-pass - Get user's gate passes
 export async function GET(request: Request) {
@@ -117,7 +118,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const year = new Date().getFullYear();
+    const year = getBDDate().getFullYear();
     const count = await GatePass.countDocuments();
     const passId = `GP-${year}-${String(count + 1).padStart(4, "0")}`;
 
@@ -202,7 +203,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ message: "Gate pass not found" }, { status: 404 });
     }
 
-    const now = new Date();
+    const now = getBDDate();
     const userId = new mongoose.Types.ObjectId(session);
 
     switch (action) {
