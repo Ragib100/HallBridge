@@ -11,12 +11,18 @@ import { getBDDate } from "@/lib/dates"
 
 export async function GET(req: NextRequest) {
     try {
-        const isCron = req.headers.get("x-vercel-cron");
+        // Check for Vercel Cron authentication
+        const authHeader = req.headers.get("authorization");
+        const cronSecret = process.env.CRON_SECRET;
+        
+        const isCron = req.headers.get("x-vercel-cron") || 
+                      (authHeader && cronSecret && authHeader === `Bearer ${cronSecret}`);
 
         const cookieStore = await cookies();
         const session = cookieStore.get("hb_session")?.value;
 
         if (!isCron && !session) {
+            console.log("Auth failed - no cron header or session");
             return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
         }
 
