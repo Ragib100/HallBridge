@@ -5,6 +5,7 @@ import { getBDDate } from '@/lib/dates';
 interface Bill {
     seatrent: number;
     messbill: number;
+    laundry: number;
     othercharges: number;
 }
 

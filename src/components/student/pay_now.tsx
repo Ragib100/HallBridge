@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 interface PayNowProps {
     amount: number;
     dueDate: string;
+    onPaymentSuccess?: () => void;
 }
 
 type PaymentMethod = "card" | "mobile";
@@ -20,7 +21,7 @@ const mobileAccountNumbers: Record<MobileBankingProvider, string> = {
     rocket: "01790-078409"
 };
 
-export default function PayNow({ amount , dueDate }: PayNowProps) {
+export default function PayNow({ amount , dueDate, onPaymentSuccess }: PayNowProps) {
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
@@ -68,13 +69,12 @@ export default function PayNow({ amount , dueDate }: PayNowProps) {
 
             // Get current month and year
             const currentDate = new Date();
-            const billingMonth = currentDate.getMonth() + 1;
+            const billingMonth = currentDate.getMonth();
             const billingYear = currentDate.getFullYear();
 
             // Prepare payment data
             const paymentData = {
                 amount: amount,
-                type: "hall_fee",
                 paymentMethod: paymentMethod === "card" ? "card" : mobileBankingProvider,
                 billingMonth,
                 billingYear,
@@ -101,7 +101,12 @@ export default function PayNow({ amount , dueDate }: PayNowProps) {
 
             // Success - close dialog and refresh
             setOpen(false);
-            alert(`Payment successful! Payment ID: ${data.payment.paymentId}`);
+            
+            // Call the callback to reload parent data
+            if (onPaymentSuccess) {
+                onPaymentSuccess();
+            }
+            
             router.refresh();
             
         } catch (err) {
@@ -115,8 +120,8 @@ export default function PayNow({ amount , dueDate }: PayNowProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <button className="w-full h-11 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button className="w-full h-12 px-6 bg-linear-to-r from-[#2D6A4F] to-[#1b8057] hover:from-[#245a42] hover:to-[#156945] text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2 group cursor-pointer">
+                    <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                     </svg>
                     Pay Now

@@ -83,7 +83,10 @@ export default function HomePage() {
 
         if (billingRes?.ok) {
           const billingData = await billingRes.json();
-          setCurrentBill(billingData.currentBill?.amount || 0);
+          // Calculate total unpaid amount from all unpaid payments
+          const unpaidPayments = billingData.payments?.filter((payment: any) => payment.status !== 'completed') || [];
+          const totalDue = unpaidPayments.reduce((sum: number, payment: any) => sum + (payment.finalAmount || payment.amount), 0);
+          setCurrentBill(totalDue);
         }
 
         if(gatePasses?.ok) {

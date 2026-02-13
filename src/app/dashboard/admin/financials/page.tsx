@@ -4,7 +4,6 @@ import React, { useState, useEffect, FormEvent } from "react";
 import Image from "next/image";
 import { Spinner } from "@/components/ui/spinner";
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { set } from "mongoose";
 
 type TimeRange = "this-month" | "last-month" | "this-year";
 type TabType = "overview" | "collections" | "expenses" | "salaries" | "defaulters";
@@ -136,6 +135,8 @@ export default function FinancialsPage() {
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseVendor, setExpenseVendor] = useState("");
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
+  const [processingBilling, setProcessingBilling] = useState(false);
+  const [processingLateFee, setProcessingLateFee] = useState(false);
 
   const fetchFinancialData = async (range: TimeRange) => {
     setLoading(true);
@@ -150,6 +151,56 @@ export default function FinancialsPage() {
       setError("Failed to load financial data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleProcessBillingJobs = async () => {
+    if (!confirm("Are you sure you want to process billing jobs? This will generate bills for all students.")) {
+      return;
+    }
+
+    setProcessingBilling(true);
+    try {
+      const response = await fetch("/api/job/student-billing");
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Billing jobs processed successfully!\n${result.message || 'Bills generated for all students.'}`);
+        fetchFinancialData(timeRange);
+      } else {
+        const err = await response.json();
+        alert(err.message || "Failed to process billing jobs");
+      }
+    } catch (error) {
+      console.error("Failed to process billing jobs:", error);
+      alert("Failed to process billing jobs. Please try again.");
+    } finally {
+      setProcessingBilling(false);
+    }
+  };
+
+  const handleProcessLateFees = async () => {
+    if (!confirm("Are you sure you want to process late fees? This will apply late fees to all overdue payments.")) {
+      return;
+    }
+
+    setProcessingLateFee(true);
+    try {
+      const response = await fetch("/api/job/late-fee");
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Late fees processed successfully!\n${result.message || 'Late fees applied to overdue payments.'}`);
+        fetchFinancialData(timeRange);
+      } else {
+        const err = await response.json();
+        alert(err.message || "Failed to process late fees");
+      }
+    } catch (error) {
+      console.error("Failed to process late fees:", error);
+      alert("Failed to process late fees. Please try again.");
+    } finally {
+      setProcessingLateFee(false);
     }
   };
 
@@ -391,6 +442,44 @@ export default function FinancialsPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <button 
+              onClick={handleProcessBillingJobs}
+              disabled={processingBilling}
+              className="px-4 py-2.5 border border-[#2D6A4F] text-[#2D6A4F] rounded-lg text-sm font-medium hover:bg-[#2D6A4F]/5 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {processingBilling ? (
+                <>
+                  <Spinner className="w-4 h-4" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                  Process Billing
+                </>
+              )}
+            </button>
+            <button 
+              onClick={handleProcessLateFees}
+              disabled={processingLateFee}
+              className="px-4 py-2.5 border border-orange-500 text-orange-600 rounded-lg text-sm font-medium hover:bg-orange-50 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {processingLateFee ? (
+                <>
+                  <Spinner className="w-4 h-4" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Process Late Fees
+                </>
+              )}
+            </button>
             <button 
               onClick={handleExportReport}
               className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"

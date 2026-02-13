@@ -39,6 +39,7 @@ export default function CurrentDuesPage() {
     const [error, setError] = useState<string | null>(null);
     const [showMealDetails, setShowMealDetails] = useState(false);
     const { user } = useCurrentUser();
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // Calculate days until due
     const getDaysUntilDue = () => {
@@ -53,6 +54,10 @@ export default function CurrentDuesPage() {
     const isOverdue = daysUntilDue < 0;
     const isNearDue = daysUntilDue >= 0 && daysUntilDue <= 5;
 
+    const handlePaymentSuccess = () => {
+        setRefreshKey(prev => (prev + 1)%2);
+    };
+
     useEffect(() => {
         const fetchBillingData = async () => {
             try {
@@ -61,7 +66,79 @@ export default function CurrentDuesPage() {
                     throw new Error('Failed to fetch billing data');
                 }
                 const data = await response.json();
-                setBilldata(data.currentBill);
+                
+                // Filter unpaid payments and get the most recent one
+                const unpaidPayments = data.payments.filter((payment: any) => payment.status !== 'completed');
+                // console.log('Unpaid payments:', unpaidPayments);
+                
+                if (unpaidPayments.length > 0) {
+                    // Group payments by billing period to combine all types
+                    const paymentsByPeriod = new Map<string, any[]>();
+                    unpaidPayments.forEach((payment: any) => {
+                        const key = `${payment.billingYear}-${payment.billingMonth}`;
+                        if (!paymentsByPeriod.has(key)) {
+                            paymentsByPeriod.set(key, []);
+                        }
+                        paymentsByPeriod.get(key)?.push(payment);
+                    });
+                    
+                    // Get the most recent period
+                    const [mostRecentPeriod] = Array.from(paymentsByPeriod.entries())
+                        .sort(([a], [b]) => b.localeCompare(a));
+                    
+                    const currentPeriodPayments = mostRecentPeriod[1];
+                    const firstPayment = currentPeriodPayments[0];
+                    
+                    // Transform to the format expected by the UI
+                    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                                       'July', 'August', 'September', 'October', 'November', 'December'];
+                    const monthName = monthNames[firstPayment.billingMonth - 1];
+                    
+                    // Calculate breakdown from individual payments by type
+                    const breakdown = {
+                        seatrent: 0,
+                        messbill: 0,
+                        laundry: 0,
+                        othercharges: 0,
+                    };
+                    
+                    let totalAmount = 0;
+                    let combinedPaymentId = '';
+                    
+                    currentPeriodPayments.forEach((payment: any) => {
+                        totalAmount += payment.finalAmount || payment.amount;
+                        if (!combinedPaymentId) combinedPaymentId = payment.paymentId;
+                        
+                        switch (payment.type) {
+                            case 'hall_fee':
+                                breakdown.seatrent += payment.amount;
+                                break;
+                            case 'mess_fee':
+                                breakdown.messbill += payment.amount;
+                                break;
+                            case 'laundry_fee':
+                                breakdown.laundry += payment.amount;
+                                break;
+                            case 'fine':
+                            case 'other':
+                                breakdown.othercharges += payment.amount;
+                                break;
+                        }
+                    });
+                    
+                    setBilldata({
+                        invoice_id: combinedPaymentId,
+                        month: `${monthName} ${firstPayment.billingYear}`,
+                        billinfo: breakdown,
+                        amount: totalAmount,
+                        dueDate: new Date(firstPayment.dueDate).toLocaleDateString('en-GB'),
+                        isPaid: false,
+                        mealBreakdown: firstPayment.mealBreakdown,
+                    });
+                } else {
+                    // No unpaid bills
+                    setBilldata(null);
+                }
             } catch (err) {
                 console.error('Error fetching billing:', err);
                 setError('Failed to load billing information');
@@ -71,7 +148,7 @@ export default function CurrentDuesPage() {
         };
 
         fetchBillingData();
-    }, []);
+    }, [refreshKey]);
 
     const handleDownloadInvoice = () => {
         if (!billdata) return;
@@ -82,6 +159,7 @@ export default function CurrentDuesPage() {
                 billinfo: {
                     seatrent: billdata.billinfo.seatrent,
                     messbill: billdata.billinfo.messbill,
+                    laundry: billdata.billinfo.laundry,
                     othercharges: billdata.billinfo.othercharges + billdata.billinfo.laundry,
                 },
                 amount: billdata.amount,
@@ -155,7 +233,7 @@ export default function CurrentDuesPage() {
                         </p>
                     </div>
                     <div className="w-full md:w-[20%]">
-                        <PayNow amount={billdata.amount} dueDate={billdata.dueDate} />
+                        <PayNow amount={billdata.amount} dueDate={billdata.dueDate} onPaymentSuccess={handlePaymentSuccess} />
                     </div>
                 </div>
             )}
@@ -295,7 +373,7 @@ export default function CurrentDuesPage() {
             {/* Action Buttons */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {!billdata.isPaid && (
-                    <PayNow amount={billdata.amount} dueDate={billdata.dueDate} />
+                    <PayNow amount={billdata.amount} dueDate={billdata.dueDate} onPaymentSuccess={handlePaymentSuccess} />
                 )}
                 <Button 
                     className={`w-full h-12 ${billdata.isPaid ? 'col-span-full' : ''} bg-gray-600 hover:bg-gray-700 text-white font-medium cursor-pointer flex items-center justify-center gap-2`} 

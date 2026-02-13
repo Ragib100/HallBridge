@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import StudentInvoice from "@/components/student/invoice";
+import PayNow from "@/components/student/pay_now";
 import { generateInvoicePDF } from "@/lib/generate-invoice-pdf";
 import { Spinner } from "@/components/ui/spinner";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -9,6 +10,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 interface Bill {
     seatrent: number;
     messbill: number;
+    laundry: number;
     othercharges: number;
 }
 
@@ -19,6 +21,7 @@ interface Invoice {
     amount: number;
     media?: "Bkash" | "Nagad" | "Rocket" | "Card";
     isPaid?: boolean;
+    dueDate?: string;
 }
 
 interface PaymentHistory {
@@ -54,26 +57,86 @@ export default function InvoicesPage() {
                 }
                 const data = await response.json();
                 
-                // Create current month invoice from API data
-                if (data.currentBill) {
-                    const currentInvoice: Invoice = {
-                        invoice_id: data.currentBill.invoice_id,
-                        month: data.currentBill.month,
-                        billinfo: {
-                            seatrent: data.currentBill.billinfo.seatrent,
-                            messbill: data.currentBill.billinfo.messbill,
-                            othercharges: data.currentBill.billinfo.othercharges + (data.currentBill.billinfo.laundry || 0),
-                        },
-                        amount: data.currentBill.amount,
-                        isPaid: data.currentBill.isPaid,
-                    };
-                    setInvoices([currentInvoice]);
-                }
-
-                // Store payment history
-                if (data.paymentHistory) {
-                    setPaymentHistory(data.paymentHistory);
-                }
+                // Group payments by billing period
+                const paymentsByPeriod = new Map<string, any[]>();
+                data.payments.forEach((payment: any) => {
+                    const key = `${payment.billingYear}-${String(payment.billingMonth).padStart(2, '0')}`;
+                    if (!paymentsByPeriod.has(key)) {
+                        paymentsByPeriod.set(key, []);
+                    }
+                    paymentsByPeriod.get(key)?.push(payment);
+                });
+                
+                // Create invoices from grouped payments
+                const invoicesList: Invoice[] = [];
+                Array.from(paymentsByPeriod.entries())
+                    .sort(([a], [b]) => b.localeCompare(a)) // Sort by period desc
+                    .forEach(([_, payments]) => {
+                        const firstPayment = payments[0];
+                        
+                        // Calculate breakdown from individual payments by type
+                        const breakdown = {
+                            seatrent: 0,
+                            messbill: 0,
+                            laundry: 0,
+                            othercharges: 0,
+                        };
+                        
+                        let totalAmount = 0;
+                        const isPaid = payments.every((p: any) => p.status === 'completed');
+                        
+                        payments.forEach((payment: any) => {
+                            totalAmount += payment.finalAmount || payment.amount;
+                            
+                            switch (payment.type) {
+                                case 'hall_fee':
+                                    breakdown.seatrent += payment.amount;
+                                    break;
+                                case 'mess_fee':
+                                    breakdown.messbill += payment.amount;
+                                    break;
+                                case 'laundry_fee':
+                                    breakdown.laundry += payment.amount;
+                                    break;
+                                case 'fine':
+                                case 'other':
+                                    breakdown.othercharges += payment.amount;
+                                    break;
+                            }
+                        });
+                        
+                        // Calculate due date (last day of the billing month)
+                        const monthName = getMonthName(firstPayment.billingMonth, firstPayment.billingYear);
+                        const [month, year] = monthName.split(' ');
+                        const lastDay = new Date(parseInt(year), new Date(`${month} 1`).getMonth() + 1, 0).getDate();
+                        const dueDate = `${month.slice(0, 3)} ${lastDay}, ${year}`;
+                        
+                        invoicesList.push({
+                            invoice_id: firstPayment.paymentId,
+                            month: monthName,
+                            billinfo: breakdown,
+                            amount: totalAmount,
+                            isPaid,
+                            dueDate,
+                        });
+                    });
+                
+                setInvoices(invoicesList);
+                
+                // Create payment history from all payments
+                const history: PaymentHistory[] = data.payments.map((payment: any) => ({
+                    id: payment._id,
+                    paymentId: payment.paymentId,
+                    type: payment.type,
+                    amount: payment.finalAmount || payment.amount,
+                    status: payment.status,
+                    billingMonth: payment.billingMonth,
+                    billingYear: payment.billingYear,
+                    paidDate: payment.paidDate,
+                    createdAt: payment.createdAt,
+                }));
+                
+                setPaymentHistory(history);
             } catch (err) {
                 console.error('Error fetching invoices:', err);
             } finally {
@@ -153,9 +216,10 @@ export default function InvoicesPage() {
                                     </div>
                                     
                                     <div className="flex gap-2">
-                                        <StudentInvoice invoiceinfo={invoice} />
+                                        {invoice.isPaid ? <StudentInvoice invoiceinfo={invoice} /> : <PayNow amount={invoice.amount} dueDate={invoice.dueDate || ''} />}
+                                        {/* <StudentInvoice invoiceinfo={invoice} /> */}
                                         <button
-                                            className="h-10 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                            className="h-12 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium cursor-pointer"
                                             onClick={() => handleDownloadInvoice(invoice)}
                                         >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
