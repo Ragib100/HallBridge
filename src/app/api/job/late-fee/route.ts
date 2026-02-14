@@ -12,8 +12,7 @@ export async function GET(req: NextRequest) {
         const authHeader = req.headers.get("authorization");
         const cronSecret = process.env.CRON_SECRET;
         
-        const isCron = req.headers.get("x-vercel-cron") || 
-                      (authHeader && cronSecret && authHeader === `Bearer ${cronSecret}`);
+        const isCron = authHeader === `Bearer ${cronSecret}`;
 
         const cookieStore = await cookies();
         const session = cookieStore.get("hb_session")?.value;
