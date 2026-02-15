@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table"
 import { useState, useEffect } from "react";
 import { getCurrentDateBD, getDayFromDateBD } from "@/lib/dates";
+import { CalendarWeek } from "@boxicons/react"
 
 interface WeeklyMenu {
     day: string;
@@ -62,18 +63,61 @@ export default function WeeklyMenu() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-                <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <svg className="w-6 h-6 text-[#2D6A4F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
+                <h1 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <CalendarWeek />
                     Weekly Meal Menu
                 </h1>
-                <p className="text-gray-500 mt-1">Check out this week&apos;s meal schedule</p>
+                <p className="text-sm sm:text-base text-gray-500 mt-1">Check out this week&apos;s meal schedule</p>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+                {meals.map((meal) => {
+                    const isToday = meal.day === today
+                    return (
+                        <div
+                            key={meal.day}
+                            className={`bg-white rounded-xl shadow-sm overflow-hidden ${
+                                isToday ? "border-2 border-[#2D6A4F]" : "border border-gray-200"
+                            }`}
+                        >
+                            <div className={`p-4 ${isToday ? "bg-[#2D6A4F]" : "bg-gray-50"}`}>
+                                <h2 className={`font-bold text-lg ${isToday ? "text-white" : "text-gray-800"}`}>
+                                    {meal.day}
+                                    {isToday && <span className="text-xs ml-2 bg-white text-[#2D6A4F] px-2 py-0.5 rounded-full">Today</span>}
+                                </h2>
+                            </div>
+                            <div className="p-4 space-y-3">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-lg">🍳</span>
+                                        <span className="font-semibold text-gray-700">Breakfast</span>
+                                    </div>
+                                    <p className="text-gray-600 pl-7">{meal.breakfast}</p>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-lg">🍛</span>
+                                        <span className="font-semibold text-gray-700">Lunch</span>
+                                    </div>
+                                    <p className="text-gray-600 pl-7">{meal.lunch}</p>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-lg">🍽️</span>
+                                        <span className="font-semibold text-gray-700">Dinner</span>
+                                    </div>
+                                    <p className="text-gray-600 pl-7">{meal.dinner}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden">
                 <Table className="min-w-full">
                     <TableHeader>
                         <TableRow className="bg-[#2D6A4F] hover:bg-[#245a42]">

@@ -7,7 +7,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="min-h-screen bg-[#F5E6E0] flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex min-h-[600px]">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex min-h-150">
         {/* Left Panel - Green Section */}
         <div className="hidden md:flex w-2/5 bg-[#2D6A4F] flex-col items-center justify-between p-8 relative overflow-hidden">
           {/* Logo */}

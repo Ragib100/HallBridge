@@ -23,7 +23,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         subject: options.subject,
         html: options.html,
         text: options.text,
-        secret: await bcrypt.hash(secret,10),
+        secret: secret
       }),
     });
 
