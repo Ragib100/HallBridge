@@ -1,10 +1,15 @@
-name: Create Temp Directory on VM
+name: Deploy HallBridge Email Server
 
 on:
-  workflow_dispatch:   # manual trigger only
+  workflow_dispatch:       # manual trigger
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [closed]
 
 jobs:
-  create-temp-dir:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,10 +20,30 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
 
-      - name: SSH to VM and create temp directory
+      - name: SSH to VM and deploy
         run: |
-          ssh ubuntu@${{ secrets.VM_HOST }} << 'EOF'
-            echo "🚀 Connecting to VM..."
-            mkdir -p ~/temp
-            echo "✅ Directory ~/temp created!"
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} << 'EOF'
+            echo "🚀 Starting deployment..."
+
+            BASE_DIR=~/HallBridge
+            APP_DIR=$BASE_DIR/email-server
+
+            # Pull latest code
+            cd $BASE_DIR
+            echo "📁 Pulling latest code..."
+            git fetch origin
+            git reset --hard origin/main
+
+            # Install dependencies
+            cd $APP_DIR
+            echo "📦 Installing dependencies..."
+            export NODE_OPTIONS="--max-old-space-size=512"
+            pnpm install --frozen-lockfile
+
+            # Restart PM2 process
+            echo "🔄 Restarting PM2..."
+            pm2 reload HallBridge || pm2 start email_server.js --name HallBridge
+            pm2 save
+
+            echo "✅ Deployment complete!"
           EOF
