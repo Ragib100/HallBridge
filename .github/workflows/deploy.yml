@@ -1,5 +1,8 @@
 name: Deploy HallBridge Email Server
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:       # manual trigger
   push:
