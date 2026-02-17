@@ -59,6 +59,18 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Expected non-empty array" }, { status: 400 });
     }
 
+    const restrictedKeys = new Set(["meal_cutoff_time"]);
+    const attemptedRestricted = body
+      .map((item) => item?.key)
+      .filter((key) => typeof key === "string" && restrictedKeys.has(key));
+
+    if (attemptedRestricted.length > 0) {
+      return NextResponse.json(
+        { error: `These settings are not editable from admin panel: ${attemptedRestricted.join(", ")}` },
+        { status: 403 }
+      );
+    }
+
     const ops = body.map((item) => {
       const { key, value } = item || {};
       if (!key || value === undefined) {

@@ -101,7 +101,7 @@ export default function SettingsPage() {
         setMaxLaundryItems(data.max_laundry_items ?? maxLaundryItems);
         setBillGenerationDate(data.bill_generation_date ?? billGenerationDate);
         setPaymentDueDays(data.payment_due_days ?? paymentDueDays);
-        setLateFeePercent(data.late_fee_percentage ?? lateFeePercent);
+        setLateFeePercent(data.late_fee_percent ?? data.late_fee_percentage ?? lateFeePercent);
 
         setEmailNotifications(data.email_notifications ?? emailNotifications);
         setSmsNotifications(data.sms_notifications ?? smsNotifications);
@@ -111,9 +111,9 @@ export default function SettingsPage() {
 
         setPrices((prev) => prev.map((p) => {
           if (p.id === "1") return { ...p, price: data.monthly_rent ?? p.price };
-          if (p.id === "2") return { ...p, price: data.laundry_service_weekly ?? p.price };
+          if (p.id === "2") return { ...p, price: data.laundry_fee ?? data.laundry_service_weekly ?? p.price };
           if (p.id === "3") return { ...p, price: data.maintenance_fee ?? p.price };
-          if (p.id === "4") return { ...p, price: data.wifi_bill ?? p.price };
+          if (p.id === "4") return { ...p, price: data.wifi_fee ?? data.wifi_bill ?? p.price };
           return p;
         }));
 
@@ -167,9 +167,9 @@ export default function SettingsPage() {
   const handlePriceChange = (id: string, newPrice: number) => {
     const keyMap: Record<string, string> = {
       "1": "monthly_rent",
-      "2": "laundry_service_weekly",
+      "2": "laundry_fee",
       "3": "maintenance_fee",
-      "4": "wifi_bill",
+      "4": "wifi_fee",
     };
     setPrices(prices.map(item => 
       item.id === id ? { ...item, price: newPrice } : item
@@ -185,7 +185,6 @@ export default function SettingsPage() {
       { key: "admin_email", value: adminEmail },
       { key: "admin_phone", value: adminPhone },
       { key: "emergency_contact", value: emergencyContact },
-      { key: "meal_cutoff_time", value: mealCutoffTime },
       { key: "gate_pass_duration", value: gatePassDuration },
       { key: "gate_pass_unit", value: gatePassUnit },
       { key: "max_gate_pass_days", value: maxGatePassDays },
@@ -196,16 +195,16 @@ export default function SettingsPage() {
       { key: "max_laundry_items", value: maxLaundryItems },
       { key: "bill_generation_date", value: billGenerationDate },
       { key: "payment_due_days", value: paymentDueDays },
-      { key: "late_fee_percentage", value: lateFeePercent },
+      { key: "late_fee_percent", value: lateFeePercent },
       { key: "email_notifications", value: emailNotifications },
       { key: "sms_notifications", value: smsNotifications },
       { key: "payment_reminders", value: paymentReminders },
       { key: "meal_reminders", value: mealReminders },
       { key: "maintenance_alerts", value: maintenanceAlerts },
       { key: "monthly_rent", value: prices.find(p => p.id === "1")?.price ?? 3000 },
-      { key: "laundry_service_weekly", value: prices.find(p => p.id === "2")?.price ?? 400 },
+      { key: "laundry_fee", value: prices.find(p => p.id === "2")?.price ?? 400 },
       { key: "maintenance_fee", value: prices.find(p => p.id === "3")?.price ?? 100 },
-      { key: "wifi_bill", value: prices.find(p => p.id === "4")?.price ?? 100 },
+      { key: "wifi_fee", value: prices.find(p => p.id === "4")?.price ?? 100 },
     ].filter((item) => Object.prototype.hasOwnProperty.call(changes, item.key));
 
     // If no tracked changes, nothing to do
@@ -217,7 +216,7 @@ export default function SettingsPage() {
 
     try {
       setSaving(true);
-      const res = await fetch("/api/settings", {
+      const res = await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
@@ -360,11 +359,11 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Total Capacity</label>
                 <input
                   type="number"
-                  value="480"
+                  value={currentStats.totalBeds}
                   disabled
                   className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
                 />
-                <p className="text-xs text-gray-400 mt-1">Based on room configurations</p>
+                <p className="text-xs text-gray-400 mt-1">Auto-calculated from total room beds</p>
               </div>
             </div>
           </div>
@@ -560,10 +559,11 @@ export default function SettingsPage() {
                 <input
                   type="time"
                   value={mealCutoffTime}
-                  onChange={(e) => { setMealCutoffTime(e.target.value); markChange("meal_cutoff_time", e.target.value); }}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
+                  readOnly
+                  disabled
+                  className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                 />
-                <p className="text-xs text-gray-400 mt-1">Students must select meals before this time</p>
+                <p className="text-xs text-gray-400 mt-1">Managed by system policy (not editable from admin settings)</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -729,7 +729,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   value={lateFeePercent}
-                  onChange={(e) => { setLateFeePercent(e.target.value); markChange("late_fee_percentage", e.target.value); }}
+                  onChange={(e) => { setLateFeePercent(e.target.value); markChange("late_fee_percent", e.target.value); }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
               </div>
