@@ -280,7 +280,7 @@ export default function AdminMaintenancePage() {
                     </td>
                     <td className="py-3 px-4">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                           statusConfig[request.status]?.color || "bg-gray-100 text-gray-700"
                         }`}
                       >
@@ -359,7 +359,7 @@ export default function AdminMaintenancePage() {
                 <div className="grid grid-cols-1">
                   <label className="text-xs font-semibold text-gray-500 uppercase">Status</label>
                   <span
-                    className={`inline-block w-fit px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                    className={`inline-block w-fit px-2 py-1 rounded-full text-xs font-medium mt-1 whitespace-nowrap ${
                       statusConfig[selectedRequest.status]?.color || "bg-gray-100 text-gray-700"
                     }`}
                   >
