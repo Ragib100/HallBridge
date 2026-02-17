@@ -30,45 +30,15 @@ interface GatePass {
   createdAt: string;
 }
 
-interface EntryExitLog {
-  id: string;
-  logId: string;
-  student: {
-    fullName: string;
-    roomNumber?: string;
-  };
-  type: 'entry' | 'exit';
-  timestamp: string;
-  gatePass?: {
-    passId: string;
-    purpose: string;
-  };
-  loggedBy: {
-    fullName: string;
-  };
-  notes?: string;
-  isLate: boolean;
-}
-
-interface LogStats {
-  todayEntries: number;
-  todayExits: number;
-  lateReturns: number;
-  currentlyOut: number;
-}
-
 export default function SecurityPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'passes' | 'logs'>('passes');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [gatePasses, setGatePasses] = useState<GatePass[]>([]);
-  const [logs, setLogs] = useState<EntryExitLog[]>([]);
-  const [logStats, setLogStats] = useState<LogStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchGatePasses();
-    fetchLogs();
   }, []);
 
   const fetchGatePasses = async () => {
@@ -84,19 +54,6 @@ export default function SecurityPage() {
       setError(err instanceof Error ? err.message : 'Failed to load gate passes');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchLogs = async () => {
-    try {
-      const response = await fetch('/api/staff/security/logs');
-      if (response.ok) {
-        const data = await response.json();
-        setLogs(data.logs || []);
-        setLogStats(data.stats || null);
-      }
-    } catch (err) {
-      console.error('Failed to fetch logs:', err);
     }
   };
 
@@ -129,7 +86,6 @@ export default function SecurityPage() {
             gatePassId: pass._id,
           }),
         });
-        fetchLogs();
       }
 
       await fetchGatePasses();
@@ -139,10 +95,10 @@ export default function SecurityPage() {
     }
   };
 
-  const activePassesCount = logStats?.currentlyOut || gatePasses.filter(p => p.status === 'active').length;
+  const activePassesCount = gatePasses.filter(p => p.status === 'active').length;
   const approvedPassesCount = gatePasses.filter(p => p.status === 'approved').length;
-  const lateReturnsCount = gatePasses.filter(p => p.status === 'late').length;
   const pendingCount = gatePasses.filter(p => p.status === 'pending').length;
+  const lateReturnsCount = gatePasses.filter(p => p.status === 'late').length;
 
   const getStatusBadge = (status: GatePass['status']) => {
     const variants: Record<string, { color: string; label: string }> = {
@@ -166,17 +122,19 @@ export default function SecurityPage() {
     return new Date(date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dhaka' });
   };
 
-  const filteredPasses = gatePasses.filter(
-    pass =>
+  const filteredPasses = gatePasses.filter(pass => {
+    const matchesSearch = !searchQuery || 
       pass.studentId?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pass.passId.includes(searchQuery)
-  );
+      pass.passId.includes(searchQuery);
+    const matchesStatus = statusFilter === 'all' || pass.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <StaffRoleGuard allowedRoles={['security_guard']}>
       <div className="space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -195,7 +153,7 @@ export default function SecurityPage() {
                 <CheckCircle fill="#3a23cc" />
               </div>
               <div className="flex-1">
-                <p className="text-gray-500 text-sm">Approved Passes</p>
+                <p className="text-gray-500 text-sm">Approved</p>
                 <p className="text-2xl font-bold text-gray-800">{approvedPassesCount}</p>
               </div>
             </div>
@@ -226,41 +184,41 @@ export default function SecurityPage() {
           </div>
         </div>
 
-        {/* Tabs and Search */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex gap-1 border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab('passes')}
-              className={`px-6 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'passes'
-                  ? 'text-[#2D6A4F] border-b-2 border-[#2D6A4F]'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Gate Passes
-            </button>
-            <button
-              onClick={() => setActiveTab('logs')}
-              className={`px-6 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'logs'
-                  ? 'text-[#2D6A4F] border-b-2 border-[#2D6A4F]'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Entry/Exit Logs
-            </button>
+        {/* Filters and Search */}
+        <div className="flex flex-col md:flex-row md:items-center gap-4">
+          <div className="flex gap-2 bg-white rounded-xl p-2 shadow-sm flex-wrap">
+            {[
+              { id: 'all', label: 'All' },
+              { id: 'pending', label: 'Pending' },
+              { id: 'approved', label: 'Approved' },
+              { id: 'active', label: 'Active' },
+              { id: 'late', label: 'Late' },
+              { id: 'completed', label: 'Completed' },
+            ].map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => setStatusFilter(filter.id)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === filter.id
+                    ? 'bg-[#2D6A4F] text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
           
-          <div className="relative max-w-sm">
+          <div className="relative flex-1 max-w-sm">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <Search />
             </div>
             <input
               type="text"
-              placeholder="Search by student name or ID"
+              placeholder="Search by student name or pass ID"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] bg-white shadow-sm"
             />
           </div>
         </div>
@@ -277,13 +235,17 @@ export default function SecurityPage() {
           </div>
         )}
 
-        {!loading && !error && activeTab === 'passes' && (
+        {!loading && !error && (
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             {filteredPasses.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-gray-500">
                 <span className="text-5xl mb-4">🎫</span>
                 <p className="text-lg font-medium">No gate passes found</p>
-                <p className="text-sm">Gate passes will appear here when students request them</p>
+                <p className="text-sm">
+                  {searchQuery || statusFilter !== 'all'
+                    ? 'Try adjusting your filters'
+                    : 'Gate passes will appear here when students request them'}
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -367,76 +329,10 @@ export default function SecurityPage() {
                 </table>
               </div>
             )}
-          </div>
-        )}
 
-        {!loading && !error && activeTab === 'logs' && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            {logs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                <span className="text-5xl mb-4">📋</span>
-                <p className="text-lg font-medium">No logs yet</p>
-                <p className="text-sm">Entry/Exit logs will appear here when students check in/out</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Time</th>
-                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Type</th>
-                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Student</th>
-                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Gate Pass</th>
-                      <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {logs.map((log) => (
-                      <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="text-gray-900">{new Date(log.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dhaka' })}</p>
-                          <p className="text-xs text-gray-500">{new Date(log.timestamp).toLocaleDateString('en-US', { timeZone: 'Asia/Dhaka' })}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            log.type === 'entry' 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-blue-100 text-blue-700'
-                          }`}>
-                            {log.type === 'entry' ? '↩️ Entry' : '↪️ Exit'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="font-medium text-gray-900">{log.student?.fullName || 'N/A'}</p>
-                          {log.student?.roomNumber && (
-                            <p className="text-sm text-gray-500">Room {log.student.roomNumber}</p>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          {log.gatePass ? (
-                            <div>
-                              <p className="text-gray-900">{log.gatePass.passId}</p>
-                              <p className="text-xs text-gray-500 capitalize">{log.gatePass.purpose}</p>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          {log.isLate ? (
-                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                              Late Return
-                            </span>
-                          ) : (
-                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                              On Time
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {filteredPasses.length > 0 && (
+              <div className="px-6 py-3 border-t border-gray-100 text-sm text-gray-500 bg-gray-50">
+                Showing {filteredPasses.length} of {gatePasses.length} passes
               </div>
             )}
           </div>

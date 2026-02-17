@@ -19,29 +19,45 @@ type NavItem = {
 };
 
 const allNavItems: NavItem[] = [
+  // Mess Manager
   {
-    name: "Dashboard",
-    path: "/dashboard/staff/home",
-    icon: "dashboard",
-    roles: ["mess_manager", "financial_staff", "maintenance_staff", "laundry_manager", "security_guard"]
-  },
-  {
-    name: "Mess Management",
-    path: "/dashboard/staff/mess",
+    name: "Meal Count",
+    path: "/dashboard/staff/mess/meal_count",
     icon: "meals",
     roles: ["mess_manager"]
   },
+  {
+    name: "Weekly Menu",
+    path: "/dashboard/staff/mess/weekly_menu",
+    icon: "menu",
+    roles: ["mess_manager"]
+  },
+  {
+    name: "Voting Results",
+    path: "/dashboard/staff/mess/voting_result",
+    icon: "voting",
+    roles: ["mess_manager"]
+  },
+  // Maintenance Staff
   {
     name: "Maintenance",
     path: "/dashboard/staff/maintenance",
     icon: "maintenance",
     roles: ["maintenance_staff"]
   },
+  // Laundry Manager
   {
     name: "Laundry",
     path: "/dashboard/staff/laundry",
     icon: "laundry",
     roles: ["laundry_manager"]
+  },
+  // Financial Staff
+  {
+    name: "Financials",
+    path: "/dashboard/staff/financials",
+    icon: "financials",
+    roles: ["financial_staff"]
   },
   {
     name: "Expenses",
@@ -49,10 +65,17 @@ const allNavItems: NavItem[] = [
     icon: "expenses",
     roles: ["financial_staff"]
   },
+  // Security Guard
   {
-    name: "Security",
+    name: "Gate Passes",
     path: "/dashboard/staff/security",
     icon: "security",
+    roles: ["security_guard"]
+  },
+  {
+    name: "Entry/Exit Logs",
+    path: "/dashboard/staff/security/logs",
+    icon: "logs",
     roles: ["security_guard"]
   },
 ];
@@ -68,24 +91,41 @@ function getNavItemsForRole(staffRole?: StaffRole): NavItem[] {
 
 // Get default path for a specific staff role
 function getDefaultPathForRole(staffRole?: StaffRole): string {
-  return "/dashboard/staff/home";
+  switch (staffRole) {
+    case 'mess_manager': return '/dashboard/staff/mess/meal_count';
+    case 'financial_staff': return '/dashboard/staff/financials';
+    case 'maintenance_staff': return '/dashboard/staff/maintenance';
+    case 'laundry_manager': return '/dashboard/staff/laundry';
+    case 'security_guard': return '/dashboard/staff/security';
+    default: return '/dashboard/staff/home';
+  }
 }
 
 function getPageTitle(pathname: string): { title: string; subtitle: string } {
-  if (pathname === "/dashboard/staff/home" || pathname === "/dashboard/staff") {
-    return { title: "Dashboard", subtitle: "Welcome back, here's your overview" };
+  if (pathname.includes("/mess/meal_count")) {
+    return { title: "Meal Count", subtitle: "View daily meal counts and guest meals" };
+  } else if (pathname.includes("/mess/weekly_menu")) {
+    return { title: "Weekly Menu", subtitle: "Manage this week's meal schedule" };
+  } else if (pathname.includes("/mess/voting_result")) {
+    return { title: "Voting Results", subtitle: "Student feedback on meals" };
   } else if (pathname.includes("/mess")) {
     return { title: "Mess Management", subtitle: "Manage meals and menu" };
   } else if (pathname.includes("/maintenance")) {
     return { title: "Maintenance", subtitle: "Handle maintenance requests" };
   } else if (pathname.includes("/laundry")) {
     return { title: "Laundry", subtitle: "Manage laundry services" };
+  } else if (pathname.includes("/financials")) {
+    return { title: "Financials", subtitle: "Financial overview and reports" };
   } else if (pathname.includes("/expenses")) {
     return { title: "Expenses", subtitle: "Track and manage expenses" };
+  } else if (pathname.includes("/security/logs")) {
+    return { title: "Entry/Exit Logs", subtitle: "Student movement records" };
   } else if (pathname.includes("/security")) {
-    return { title: "Security", subtitle: "Gate pass verification and access control" };
+    return { title: "Gate Passes", subtitle: "Gate pass verification and management" };
   } else if (pathname.includes("/profile")) {
     return { title: "Profile", subtitle: "Manage your account information" };
+  } else if (pathname === "/dashboard/staff/home" || pathname === "/dashboard/staff") {
+    return { title: "Dashboard", subtitle: "Redirecting to your workspace..." };
   }
   return { title: "Staff Portal", subtitle: "Hall management system" };
 }
@@ -139,6 +179,30 @@ function NavIcon({ icon, className }: { icon: string; className?: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
       );
+    case "menu":
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+      );
+    case "voting":
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      );
+    case "financials":
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    case "logs":
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -169,10 +233,14 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
         : "Staff";
 
   const isActive = (path: string) => {
-    if (path === "/dashboard/staff/home") {
-      return pathname === path || pathname === "/dashboard/staff";
+    if (pathname === path) return true;
+    // For paths with sub-routes, check startsWith but prefer more specific matches
+    if (pathname.startsWith(path + '/')) {
+      return !navItems.some(
+        item => item.path !== path && item.path.startsWith(path + '/') && pathname.startsWith(item.path)
+      );
     }
-    return pathname.startsWith(path);
+    return false;
   };
 
   const handleLogout = async () => {
