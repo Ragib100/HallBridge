@@ -23,6 +23,10 @@ jobs:
       - name: SSH to VM and deploy
         run: |
           ssh ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} << 'EOF'
+            # Load NVM
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
             echo "🚀 Starting deployment..."
 
             BASE_DIR=~/HallBridge
