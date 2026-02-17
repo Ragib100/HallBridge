@@ -4,10 +4,7 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import Payment from "@/models/Payment";
 import Expense from "@/models/Expense";
-import Meal from "@/models/Meal";
-import GuestMeal from "@/models/GuestMeal";
-import SystemSettings from "@/models/SystemSettings";
-import Laundry from "@/models/Laundry";
+import { notifyPaymentDue } from "@/lib/notifications";
 import { getBDDate } from "@/lib/dates";
 
 // GET /api/staff/financials - Get financial overview
@@ -132,100 +129,74 @@ export async function GET(request: Request) {
     // Get all staff
     const staff = await User.find({ userType: "staff" }).select("fullName staffRole salary").lean() as unknown as StaffDoc[];
 
-    // Find settings for billing calculation
-    const settingsKeys = ["monthly_rent", "laundry_fee", "maintenance_fee", "wifi_fee", 
-                          "breakfast_price", "lunch_price", "dinner_price", "guest_meal_price"];
-    const settingsDocs = await SystemSettings.find({ key: { $in: settingsKeys } }).lean() as unknown as SettingsDoc[];
-    const settings: Record<string, number> = {};
-    settingsDocs.forEach(s => { settings[s.key] = parseFloat(s.value) || 0; });
+    // Calculate defaulters from actual pending payments (single source of truth)
+    const pendingPayments = await Payment.find({ status: "pending" })
+      .populate("student", "fullName roomNumber studentId")
+      .lean();
 
-    // Calculate defaulters with actual due amounts
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentYear = currentDate.getFullYear();
-    
-    const defaultersWithDues = [];
-    for (const student of students) {
-      // Check if they have paid for current month
-      const paidThisMonth = await Payment.findOne({
-        student: student._id,
-        billingMonth: currentMonth,
-        billingYear: currentYear,
-        status: "completed",
-      });
+    const defaultersMap = new Map<string, {
+      id: string;
+      name: string;
+      studentId: string;
+      room: string;
+      dueAmount: number;
+      dueDate: Date;
+    }>();
 
-      if (!paidThisMonth) {
-        // Calculate their due amount
-        const startOfCurrMonth = getBDDate();
-        startOfCurrMonth.setFullYear(currentYear);
-        startOfCurrMonth.setMonth(currentMonth - 1);
-        startOfCurrMonth.setDate(1);
-        startOfCurrMonth.setHours(0, 0, 0, 0);
-        
-        const endOfCurrMonth = getBDDate();
-        endOfCurrMonth.setFullYear(currentYear);
-        endOfCurrMonth.setMonth(currentMonth);
-        endOfCurrMonth.setDate(0);
-        endOfCurrMonth.setHours(23, 59, 59, 999);
-
-        // Get their meals
-        const meals = await Meal.find({
-          studentId: student._id,
-          date: { $gte: startOfCurrMonth, $lte: endOfCurrMonth },
-        });
-
-        let messBill = 0;
-        for (const meal of meals) {
-          if (meal.breakfast) messBill += settings.breakfast_price || 30;
-          if (meal.lunch) messBill += settings.lunch_price || 60;
-          if (meal.dinner) messBill += settings.dinner_price || 50;
-        }
-
-        // Guest meals
-        const guestMeals = await GuestMeal.find({
-          studentId: student._id,
-          date: { $gte: startOfCurrMonth, $lte: endOfCurrMonth },
-        });
-        for (const gm of guestMeals) {
-          const count = (gm.breakfast || 0) + (gm.lunch || 0) + (gm.dinner || 0);
-          messBill += count * (settings.guest_meal_price || 80);
-        }
-
-        const seatRent = settings.monthly_rent || 0;
-        const laundry = settings.laundry_fee || 0;
-        const other = (settings.maintenance_fee || 0) + (settings.wifi_fee || 0);
-        const dueAmount = seatRent + messBill + laundry + other;
-
-        // Check previous unpaid months
-        let monthsOverdue = 0;
-        for (let m = currentMonth - 1; m >= 1; m--) {
-          const prevPaid = await Payment.findOne({
-            student: student._id,
-            billingMonth: m,
-            billingYear: currentYear,
-            status: "completed",
-          });
-          if (!prevPaid) monthsOverdue++;
-          else break;
-        }
-
-        const dueDateObj = getBDDate();
-        dueDateObj.setFullYear(currentYear);
-        dueDateObj.setMonth(currentMonth - 1);
-        dueDateObj.setDate(15);
-        
-        defaultersWithDues.push({
-          id: student._id,
-          name: student.fullName,
-          studentId: student.studentId || `STU-${student._id.toString().slice(-6)}`,
-          room: student.roomNumber || 'N/A',
-          dueAmount,
-          dueDate: dueDateObj.toLocaleDateString('en-US', { 
-            month: 'short', day: 'numeric', year: 'numeric' 
-          }),
-          monthsOverdue: monthsOverdue + 1,
-        });
+    pendingPayments.forEach((payment) => {
+      const student = payment.student;
+      if (!student || typeof student !== "object" || !("_id" in student)) {
+        return;
       }
-    }
+
+      const studentKey = student._id.toString();
+      const current = defaultersMap.get(studentKey);
+      const amount = payment.finalAmount || payment.amount || 0;
+      const paymentDueDate = new Date(payment.dueDate);
+
+      if (!current) {
+        defaultersMap.set(studentKey, {
+          id: studentKey,
+          name: student.fullName || "Unknown",
+          studentId: student.studentId || `STU-${studentKey.slice(-6)}`,
+          room: student.roomNumber || "N/A",
+          dueAmount: amount,
+          dueDate: paymentDueDate,
+        });
+        return;
+      }
+
+      current.dueAmount += amount;
+      if (paymentDueDate < current.dueDate) {
+        current.dueDate = paymentDueDate;
+      }
+    });
+
+    const now = getBDDate();
+    const defaultersWithDues = Array.from(defaultersMap.values())
+      .map((defaulter) => {
+        const monthsOverdue = Math.max(
+          1,
+          (now.getFullYear() - defaulter.dueDate.getFullYear()) * 12 +
+            (now.getMonth() - defaulter.dueDate.getMonth()) +
+            (now.getDate() >= defaulter.dueDate.getDate() ? 1 : 0)
+        );
+
+        return {
+          id: defaulter.id,
+          name: defaulter.name,
+          studentId: defaulter.studentId,
+          room: defaulter.room,
+          dueAmount: defaulter.dueAmount,
+          dueDate: defaulter.dueDate.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
+          monthsOverdue,
+        };
+      })
+      .sort((a, b) => b.dueAmount - a.dueAmount);
 
     // Calculate staff salaries (from salary expenses in the period)
     const salaryExpenses = await Expense.find({
@@ -358,10 +329,88 @@ export async function GET(request: Request) {
         label: periodLabel,
         range: timeRange,
       },
-      settings,
     });
   } catch (error) {
     console.error("Error fetching financials:", error);
     return NextResponse.json({ message: "Something went wrong" }, { status: 500 });
+  }
+}
+
+// POST /api/staff/financials - Send payment reminders to defaulters
+export async function POST(request: Request) {
+  try {
+    const cookieStore = await cookies();
+    const session = cookieStore.get("hb_session")?.value;
+
+    if (!session) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+
+    await connectDB();
+
+    const user = await User.findById(session).select("userType staffRole");
+    if (!user) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+
+    if (user.userType !== "admin" && user.staffRole !== "financial_staff") {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const studentIdsInput = Array.isArray(body.studentIds) ? body.studentIds : [];
+
+    if (studentIdsInput.length === 0) {
+      return NextResponse.json({ message: "Student IDs are required" }, { status: 400 });
+    }
+
+    const studentIds = studentIdsInput.map((id: unknown) => String(id));
+    const pendingPayments = await Payment.find({
+      student: { $in: studentIds },
+      status: "pending",
+    })
+      .select("student finalAmount amount dueDate")
+      .lean();
+
+    const dueMap = new Map<string, { amount: number; dueDate: Date | null }>();
+    pendingPayments.forEach((payment) => {
+      const studentId = payment.student?.toString();
+      if (!studentId) return;
+
+      const current = dueMap.get(studentId) || { amount: 0, dueDate: null };
+      const amount = payment.finalAmount || payment.amount || 0;
+      const paymentDueDate = payment.dueDate ? new Date(payment.dueDate) : null;
+
+      current.amount += amount;
+      if (paymentDueDate && (!current.dueDate || paymentDueDate < current.dueDate)) {
+        current.dueDate = paymentDueDate;
+      }
+
+      dueMap.set(studentId, current);
+    });
+
+    const reminderTargets = Array.from(dueMap.entries()).filter(([, due]) => due.amount > 0);
+
+    await Promise.all(
+      reminderTargets.map(([studentId, due]) =>
+        notifyPaymentDue(
+          studentId,
+          due.amount,
+          (due.dueDate || getBDDate()).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        )
+      )
+    );
+
+    return NextResponse.json({
+      message: `Payment reminders sent to ${reminderTargets.length} student(s).`,
+      sentCount: reminderTargets.length,
+    });
+  } catch (error) {
+    console.error("Error sending payment reminders:", error);
+    return NextResponse.json({ message: "Failed to send reminders" }, { status: 500 });
   }
 }

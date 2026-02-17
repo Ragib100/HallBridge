@@ -137,6 +137,8 @@ export default function FinancialsPage() {
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
   const [processingBilling, setProcessingBilling] = useState(false);
   const [processingLateFee, setProcessingLateFee] = useState(false);
+  const [processingReminders, setProcessingReminders] = useState(false);
+  const [reminderTargetId, setReminderTargetId] = useState<string | null>(null);
 
   const fetchFinancialData = async (range: TimeRange) => {
     setLoading(true);
@@ -201,6 +203,39 @@ export default function FinancialsPage() {
       alert("Failed to process late fees. Please try again.");
     } finally {
       setProcessingLateFee(false);
+    }
+  };
+
+  const handleSendReminders = async (studentIds: string[], targetId?: string) => {
+    if (studentIds.length === 0) {
+      alert("No defaulters to remind.");
+      return;
+    }
+
+    setProcessingReminders(true);
+    setReminderTargetId(targetId || null);
+
+    try {
+      const response = await fetch("/api/staff/financials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentIds }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.message || "Failed to send reminders");
+        return;
+      }
+
+      alert(result.message || "Reminder sent successfully");
+    } catch (error) {
+      console.error("Failed to send reminders:", error);
+      alert("Failed to send reminders. Please try again.");
+    } finally {
+      setProcessingReminders(false);
+      setReminderTargetId(null);
     }
   };
 
@@ -1356,11 +1391,15 @@ export default function FinancialsPage() {
                       className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] w-64"
                     />
                   </div>
-                  <button className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2 cursor-pointer">
+                  <button
+                    onClick={() => handleSendReminders(filteredDefaulters.map((d) => d.id))}
+                    disabled={processingReminders || filteredDefaulters.length === 0}
+                    className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
-                    Send Reminders
+                    {processingReminders && !reminderTargetId ? "Sending..." : "Send Reminders"}
                   </button>
                 </div>
               </div>
@@ -1408,11 +1447,15 @@ export default function FinancialsPage() {
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-red-600">৳{defaulter.dueAmount.toLocaleString()}</td>
                         <td className="px-6 py-4">
-                          <button className="px-3 py-1.5 bg-[#2D6A4F] text-white text-xs font-medium rounded-lg hover:bg-[#245840] transition-colors flex items-center gap-1 cursor-pointer">
+                          <button
+                            onClick={() => handleSendReminders([defaulter.id], defaulter.id)}
+                            disabled={processingReminders}
+                            className="px-3 py-1.5 bg-[#2D6A4F] text-white text-xs font-medium rounded-lg hover:bg-[#245840] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
-                            Remind
+                            {processingReminders && reminderTargetId === defaulter.id ? "Sending..." : "Remind"}
                           </button>
                         </td>
                       </tr>
