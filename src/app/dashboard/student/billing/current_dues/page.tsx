@@ -13,6 +13,7 @@ interface Bill {
     seatrent: number;
     messbill: number;
     laundry: number;
+    fine: number;
     othercharges: number;
 }
 
@@ -99,11 +100,13 @@ export default function CurrentDuesPage() {
                         seatrent: 0,
                         messbill: 0,
                         laundry: 0,
+                        fine: 0,
                         othercharges: 0,
                     };
                     
                     let totalAmount = 0;
                     let combinedPaymentId = '';
+                    console.log('Current period payments:', currentPeriodPayments);
                     
                     currentPeriodPayments.forEach((payment: any) => {
                         totalAmount += payment.finalAmount || payment.amount;
@@ -123,6 +126,10 @@ export default function CurrentDuesPage() {
                             case 'other':
                                 breakdown.othercharges += payment.amount;
                                 break;
+                        }
+
+                        if(payment.lateFee) {
+                            breakdown.fine += payment.lateFee;
                         }
                     });
                     
@@ -160,6 +167,7 @@ export default function CurrentDuesPage() {
                     seatrent: billdata.billinfo.seatrent,
                     messbill: billdata.billinfo.messbill,
                     laundry: billdata.billinfo.laundry,
+                    fine: billdata.billinfo.fine,
                     othercharges: billdata.billinfo.othercharges,
                 },
                 amount: billdata.amount,
@@ -178,6 +186,7 @@ export default function CurrentDuesPage() {
         { key: 'seatrent', label: 'Seat Rent', icon: '🏠', color: 'bg-[#2D6A4F]/10 text-[#2D6A4F]', description: 'Monthly room rent' },
         { key: 'messbill', label: 'Mess Bill', icon: '🍽️', color: 'bg-blue-50 text-blue-600', description: 'Meals consumed this month', hasDetails: true },
         { key: 'laundry', label: 'Laundry', icon: '🧺', color: 'bg-orange-50 text-orange-600', description: 'Laundry service charges' },
+        { key: 'fine', label: 'Fine', icon: '⚠️', color: 'bg-red-50 text-red-600', description: 'Late fees and penalties' },
         { key: 'othercharges', label: 'Other Charges', icon: '📋', color: 'bg-purple-50 text-purple-600', description: 'Maintenance, WiFi, etc.' },
     ];
 
@@ -286,7 +295,7 @@ export default function CurrentDuesPage() {
             </div>
 
             {/* Bill Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 {billItems.map((item) => (
                     <div 
                         key={item.key} 
