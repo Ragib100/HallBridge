@@ -139,6 +139,24 @@ importers:
         specifier: ^5
         version: 5.9.3
 
+  email-server:
+    dependencies:
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
+      express:
+        specifier: ^4.22.1
+        version: 4.22.1
+      express-rate-limit:
+        specifier: ^7.5.1
+        version: 7.5.1(express@4.22.1)
+      nodemailer:
+        specifier: ^7.0.13
+        version: 7.0.13
+      sanitize-html:
+        specifier: ^2.17.0
+        version: 2.17.0
+
 packages:
 
   '@alloc/quick-lru@5.2.0':
