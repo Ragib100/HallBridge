@@ -237,45 +237,45 @@ export default function FinancialsPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-green-500">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-green-500 min-w-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-xl">💰</div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-gray-500">Revenue</p>
-                <p className="text-lg font-bold text-green-600">{formatCurrency(summary.totalRevenue)}</p>
+                <p className="text-base xl:text-lg font-bold text-green-600 break-all leading-tight">{formatCurrency(summary.totalRevenue)}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-red-500">
+          <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-red-500 min-w-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center text-xl">💸</div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-gray-500">Expenses</p>
-                <p className="text-lg font-bold text-red-600">{formatCurrency(summary.totalExpenses)}</p>
+                <p className="text-base xl:text-lg font-bold text-red-600 break-all leading-tight">{formatCurrency(summary.totalExpenses)}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-blue-500">
+          <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-blue-500 min-w-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-xl">📊</div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-gray-500">Net Income</p>
-                <p className={`text-lg font-bold ${summary.netIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                <p className={`text-base xl:text-lg font-bold break-all leading-tight ${summary.netIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {formatCurrency(summary.netIncome)}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-yellow-500">
+          <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-yellow-500 min-w-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center text-xl">⏳</div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-gray-500">Pending Dues</p>
-                <p className="text-lg font-bold text-yellow-600">{formatCurrency(summary.pendingDues)}</p>
+                <p className="text-base xl:text-lg font-bold text-yellow-600 break-all leading-tight">{formatCurrency(summary.pendingDues)}</p>
               </div>
             </div>
           </div>

@@ -226,7 +226,7 @@ export default function ExpensesPage() {
         </div>
 
         {/* Summary Cards - All 6 Categories + Total */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7 gap-4">
           {Object.entries(CATEGORY_ICONS).map(([cat, icon]) => {
             const catTotal = totals[cat]?.total || 0;
             const catCount = totals[cat]?.count || 0;
@@ -235,17 +235,17 @@ export default function ExpensesPage() {
               <div 
                 key={cat} 
                 onClick={() => setSelectedCategory(selectedCategory === cat ? 'all' : cat)}
-                className={`bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer border-l-4 ${colors.border} ${
+                className={`bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer border-l-4 min-w-0 ${colors.border} ${
                   selectedCategory === cat ? 'ring-2 ring-offset-2 ring-' + colors.border.replace('border-', '') : ''
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3 min-w-0">
                   <div className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center`}>
                     <span className="text-xl">{icon}</span>
                   </div>
                   <div className="min-w-0">
                     <p className="text-gray-500 text-xs capitalize">{cat}</p>
-                    <p className={`text-lg font-bold ${colors.text}`}>৳{catTotal.toLocaleString()}</p>
+                    <p className={`text-base xl:text-lg font-bold leading-tight break-all ${colors.text}`}>৳{catTotal.toLocaleString()}</p>
                     <p className="text-xs text-gray-400">{catCount} items</p>
                   </div>
                 </div>
@@ -253,14 +253,14 @@ export default function ExpensesPage() {
             );
           })}
           {/* Total Card */}
-          <div className="bg-linear-to-br from-[#2D6A4F] to-[#40916c] rounded-xl p-4 shadow-sm text-white">
-            <div className="flex items-center gap-3">
+          <div className="bg-linear-to-br from-[#2D6A4F] to-[#40916c] rounded-xl p-4 shadow-sm text-white min-w-0">
+            <div className="flex items-start gap-3 min-w-0">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                 <span className="text-xl">💰</span>
               </div>
               <div className="min-w-0">
                 <p className="text-white/70 text-xs">Total</p>
-                <p className="text-lg font-bold">৳{grandTotal.toLocaleString()}</p>
+                <p className="text-base xl:text-lg font-bold leading-tight break-all">৳{grandTotal.toLocaleString()}</p>
                 <p className="text-xs text-white/60">{expenses.length} expenses</p>
               </div>
             </div>
