@@ -1,0 +1,24 @@
+name: Create Temp Directory on VM
+
+on:
+  workflow_dispatch:   # manual trigger only
+
+jobs:
+  create-temp-dir:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: SSH to VM and create temp directory
+        run: |
+          ssh ubuntu@${{ secrets.VM_HOST }} << 'EOF'
+            echo "🚀 Connecting to VM..."
+            mkdir -p ~/temp
+            echo "✅ Directory ~/temp created!"
+          EOF
