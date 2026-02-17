@@ -63,15 +63,13 @@ export default function GuestMeal() {
 			if (!response.ok) {
 				const errorData = await response.json();
 				console.error("Submission error:", errorData?.message || "Unknown error");
+				toast.error('Registration Failed', errorData?.message || 'Failed to register guest meal. Please try again.');
 				return;
 			}
 
 			const data = await response.json();
 			toast.success('Guest Meal Registered', 'Guest meal registered successfully!');
 
-		} catch (error) {
-			console.error("Submission error:", error);
-		} finally {
 			setFormData({
 				name: "",
 				id: "",
@@ -81,6 +79,10 @@ export default function GuestMeal() {
 				lunch: false,
 				dinner: false,
 			});
+		} catch (error) {
+			console.error("Submission error:", error);
+			toast.error('Submission Failed', 'Failed to register guest meal. Please try again.');
+		} finally {
 			setIsSubmitting(false);
 		}
 	};

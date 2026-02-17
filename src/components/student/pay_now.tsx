@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, Dialog
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/toast";
 
 interface PayNowProps {
     amount: number;
@@ -23,6 +24,7 @@ const mobileAccountNumbers: Record<MobileBankingProvider, string> = {
 
 export default function PayNow({ amount , dueDate, onPaymentSuccess }: PayNowProps) {
     const router = useRouter();
+    const { toast } = useToast();
     const [open, setOpen] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
     const [mobileBankingProvider, setMobileBankingProvider] = useState<MobileBankingProvider>("bkash");
@@ -69,7 +71,7 @@ export default function PayNow({ amount , dueDate, onPaymentSuccess }: PayNowPro
 
             // Get current month and year
             const currentDate = new Date();
-            const billingMonth = currentDate.getMonth();
+            const billingMonth = currentDate.getMonth() + 1;
             const billingYear = currentDate.getFullYear();
 
             // Prepare payment data
@@ -101,6 +103,7 @@ export default function PayNow({ amount , dueDate, onPaymentSuccess }: PayNowPro
 
             // Success - close dialog and refresh
             setOpen(false);
+            toast.success('Payment Successful', 'Your payment has been processed successfully');
             
             // Call the callback to reload parent data
             if (onPaymentSuccess) {
@@ -111,7 +114,9 @@ export default function PayNow({ amount , dueDate, onPaymentSuccess }: PayNowPro
             
         } catch (err) {
             console.error("Payment error:", err);
-            setError(err instanceof Error ? err.message : "Payment failed. Please try again.");
+            const errorMsg = err instanceof Error ? err.message : "Payment failed. Please try again.";
+            setError(errorMsg);
+            toast.error('Payment Failed', errorMsg);
         } finally {
             setLoading(false);
         }

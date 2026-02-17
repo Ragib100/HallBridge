@@ -87,9 +87,10 @@ export default function TomorrowMeals() {
                 return;
             }
 
-            console.log('Saved meal successfully');
+            toast.success('Meals Updated', 'Your meal selection has been saved successfully');
         } catch (error) {
             console.error('Error saving:', error);
+            toast.error('Save Failed', 'Something went wrong while saving your meal selection');
         } finally {
             setIsSaving(false);
         }

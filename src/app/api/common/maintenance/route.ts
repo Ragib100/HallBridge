@@ -211,7 +211,7 @@ export async function PATCH(request: Request) {
       updateData.completionNotes = completionNotes;
     }
 
-    const updatedRequest = await MaintenanceRequest.findByIdAndUpdate(id, updateData, { new: true })
+    const updatedRequest = await MaintenanceRequest.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
       .populate("student", "fullName email")
       .populate("assignedTo", "fullName email");
 
@@ -229,7 +229,7 @@ export async function PATCH(request: Request) {
         studentId,
         updatedRequest._id.toString(),
         status,
-        updatedRequest.issueType
+        updatedRequest.category
       );
     }
 

@@ -219,7 +219,7 @@ export default function InvoicesPage() {
                                 
                                 {/* Bottom Section: Action Buttons */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    {invoice.isPaid ? <StudentInvoice invoiceinfo={invoice} /> : <PayNow amount={invoice.amount} dueDate={invoice.dueDate || ''} />}
+                                    {invoice.isPaid ? <StudentInvoice invoiceinfo={invoice} /> : <PayNow amount={invoice.amount} dueDate={invoice.dueDate || ''} onPaymentSuccess={() => window.location.reload()} />}
                                     <button
                                         className="h-10 sm:h-12 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium cursor-pointer"
                                         onClick={() => handleDownloadInvoice(invoice)}

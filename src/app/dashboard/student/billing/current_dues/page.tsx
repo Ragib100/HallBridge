@@ -55,7 +55,7 @@ export default function CurrentDuesPage() {
     const isNearDue = daysUntilDue >= 0 && daysUntilDue <= 5;
 
     const handlePaymentSuccess = () => {
-        setRefreshKey(prev => (prev + 1)%2);
+        setRefreshKey(prev => prev + 1);
     };
 
     useEffect(() => {
@@ -160,7 +160,7 @@ export default function CurrentDuesPage() {
                     seatrent: billdata.billinfo.seatrent,
                     messbill: billdata.billinfo.messbill,
                     laundry: billdata.billinfo.laundry,
-                    othercharges: billdata.billinfo.othercharges + billdata.billinfo.laundry,
+                    othercharges: billdata.billinfo.othercharges,
                 },
                 amount: billdata.amount,
             },

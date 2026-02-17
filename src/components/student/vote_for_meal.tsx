@@ -72,13 +72,16 @@ export default function VoteForMeal({ mealinfo, onSubmit }: VoteForMealProps) {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("Error submitting meal review:", errorData?.message || "Unknown error");
+                toast.error('Submission Failed', errorData?.message || 'Failed to submit your review. Please try again.');
                 return;
             }
 
+            toast.success('Review Submitted', 'Your meal review has been submitted successfully');
             onSubmit(mealinfo.mealTime);
         }
         catch (error) {
             console.error("Error submitting meal review:", error);
+            toast.error('Submission Failed', 'Something went wrong. Please try again.');
         }
     };
 

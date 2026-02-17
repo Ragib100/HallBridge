@@ -9,12 +9,11 @@ import mongoose from "mongoose";
 import { getCurrentDateBD, getDayFromDateBD } from "@/lib/dates";
 
 export async function POST(req: Request) {
+    await connectDB();
     const dbSession = await mongoose.startSession();
     dbSession.startTransaction();
 
     try {
-        await connectDB();
-
         // Auth check
         const cookieStore = await cookies();
         const session = cookieStore.get("hb_session")?.value;
@@ -46,7 +45,7 @@ export async function POST(req: Request) {
 
         if (
             typeof rating !== "number" ||
-            rating < 0 || rating > 5 ||
+            rating < 1 || rating > 5 ||
             (mealTime !== "breakfast" && mealTime !== "lunch" && mealTime !== "dinner")
         ) {
             return NextResponse.json(
@@ -68,6 +67,7 @@ export async function POST(req: Request) {
 
         if(!savedVoteMeal) {
             await dbSession.abortTransaction();
+            dbSession.endSession();
             return NextResponse.json(
                 { message: "Failed to save meal vote" },
                 { status: 500 }
@@ -82,6 +82,7 @@ export async function POST(req: Request) {
 
         if(!mealUpdate) {
             await dbSession.abortTransaction();
+            dbSession.endSession();
             return NextResponse.json(
                 { message: "Meal record not found" },
                 { status: 404 }

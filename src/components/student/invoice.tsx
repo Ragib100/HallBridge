@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, Dialog
 interface Bill {
     seatrent: number;
     messbill: number;
+    laundry: number;
     othercharges: number;
 }
 
