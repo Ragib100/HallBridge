@@ -1,5 +1,6 @@
 packages:
   - .
+  - email-server
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
