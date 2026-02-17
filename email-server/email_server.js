@@ -31,10 +31,7 @@ app.post("/send-email", async (req, res) => {
 
   // 🔐 API authentication
   const secret_matched = process.env.EMAIL_API_SECRET === secret;
-  console.log("🔐 Secret matched:", secret_matched);
   if (!secret || !secret_matched) {
-    console.log(to, subject, html, text)
-    console.log(secret, process.env.EMAIL_API_SECRET)
     return res.status(401).json({ success: false, message: "Unauthorized" });
   }
 
