@@ -34,6 +34,9 @@ export default function SettingsPage() {
   
   // Operations
   const [mealCutoffTime, setMealCutoffTime] = useState("22:00");
+  const [breakfastTime, setBreakfastTime] = useState("7:30 - 9:30 AM");
+  const [lunchTime, setLunchTime] = useState("12:30 - 2:30 PM");
+  const [dinnerTime, setDinnerTime] = useState("7:30 - 9:30 PM");
   const [gatePassDuration, setGatePassDuration] = useState("3");
   const [gatePassUnit, setGatePassUnit] = useState("days");
   const [maxGatePassDays, setMaxGatePassDays] = useState("7");
@@ -91,6 +94,9 @@ export default function SettingsPage() {
         setEmergencyContact(data.emergency_contact ?? emergencyContact);
 
         setMealCutoffTime(data.meal_cutoff_time ?? mealCutoffTime);
+        setBreakfastTime(data.breakfast_time ?? breakfastTime);
+        setLunchTime(data.lunch_time ?? lunchTime);
+        setDinnerTime(data.dinner_time ?? dinnerTime);
         setGatePassDuration(data.gate_pass_duration ?? gatePassDuration);
         setGatePassUnit(data.gate_pass_unit ?? gatePassUnit);
         setMaxGatePassDays(data.max_gate_pass_days ?? maxGatePassDays);
@@ -185,6 +191,10 @@ export default function SettingsPage() {
       { key: "admin_email", value: adminEmail },
       { key: "admin_phone", value: adminPhone },
       { key: "emergency_contact", value: emergencyContact },
+      { key: "meal_cutoff_time", value: mealCutoffTime },
+      { key: "breakfast_time", value: breakfastTime },
+      { key: "lunch_time", value: lunchTime },
+      { key: "dinner_time", value: dinnerTime },
       { key: "gate_pass_duration", value: gatePassDuration },
       { key: "gate_pass_unit", value: gatePassUnit },
       { key: "max_gate_pass_days", value: maxGatePassDays },
@@ -559,11 +569,10 @@ export default function SettingsPage() {
                 <input
                   type="time"
                   value={mealCutoffTime}
-                  readOnly
-                  disabled
-                  className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                  onChange={(e) => { setMealCutoffTime(e.target.value); markChange("meal_cutoff_time", e.target.value); }}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
                 />
-                <p className="text-xs text-gray-400 mt-1">Managed by system policy (not editable from admin settings)</p>
+                <p className="text-xs text-gray-400 mt-1">Students must select meals before this time</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -572,15 +581,30 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-xs text-gray-500 mb-1">Breakfast</p>
-                    <p className="font-medium text-gray-800">7:30 - 9:30 AM</p>
+                    <input
+                      type="text"
+                      value={breakfastTime}
+                      onChange={(e) => { setBreakfastTime(e.target.value); markChange("breakfast_time", e.target.value); }}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-800 focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white"
+                    />
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-xs text-gray-500 mb-1">Lunch</p>
-                    <p className="font-medium text-gray-800">12:30 - 2:30 PM</p>
+                    <input
+                      type="text"
+                      value={lunchTime}
+                      onChange={(e) => { setLunchTime(e.target.value); markChange("lunch_time", e.target.value); }}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-800 focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white"
+                    />
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-xs text-gray-500 mb-1">Dinner</p>
-                    <p className="font-medium text-gray-800">7:30 - 9:30 PM</p>
+                    <input
+                      type="text"
+                      value={dinnerTime}
+                      onChange={(e) => { setDinnerTime(e.target.value); markChange("dinner_time", e.target.value); }}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-800 focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none bg-white"
+                    />
                   </div>
                 </div>
               </div>
