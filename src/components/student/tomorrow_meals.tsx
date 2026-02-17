@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { MealDocument } from "@/models/Meal";
+import { useToast } from "@/components/ui/toast";
 
 export default function TomorrowMeals() {
     const { user } = useCurrentUser();
+    const { toast } = useToast();
     const [breakfast, setBreakfast] = useState<boolean>(false);
     const [lunch, setLunch] = useState<boolean>(false);
     const [dinner, setDinner] = useState<boolean>(false);
@@ -81,7 +83,7 @@ export default function TomorrowMeals() {
 
             if (!response.ok) {
                 const data = await response.json() as { message?: string };
-                alert(`Error saving meal selection: ${data?.message || 'Unknown error'}`);
+                toast.error('Save Failed', `Error saving meal selection: ${data?.message || 'Unknown error'}`);
                 return;
             }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { StaffRoleGuard } from '@/components/staff/role-guard';
 import { Spinner } from '@/components/ui/spinner';
+import { useToast } from '@/components/ui/toast';
 import { getBDDate } from '@/lib/dates';
 
 type TimeRange = 'this-month' | 'last-month' | 'this-year';
@@ -95,6 +96,7 @@ export default function FinancialsPage() {
   const [data, setData] = useState<FinancialData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
+  const { toast, confirm } = useToast();
 
   const fetchFinancialData = async (range: TimeRange) => {
     setLoading(true);
@@ -125,12 +127,12 @@ export default function FinancialsPage() {
       });
       const result = await response.json();
       if (response.ok) {
-        alert(result.message || 'Reminder sent successfully');
+        toast.success('Reminder Sent', result.message || 'Payment reminder sent successfully');
       } else {
-        alert(result.message || 'Failed to send reminder');
+        toast.error('Failed', result.message || 'Failed to send reminder');
       }
     } catch {
-      alert('Failed to send reminder');
+      toast.error('Error', 'Failed to send reminder');
     } finally {
       setSendingReminder(null);
     }
@@ -138,7 +140,13 @@ export default function FinancialsPage() {
 
   const handleSendAllReminders = async () => {
     if (!data?.defaulters.length) return;
-    if (!confirm(`Send payment reminders to all ${data.defaulters.length} defaulters?`)) return;
+    const confirmed = await confirm({
+      title: 'Send Payment Reminders',
+      message: `This will send payment reminders to all ${data.defaulters.length} defaulters. Continue?`,
+      confirmText: 'Send All',
+      variant: 'warning',
+    });
+    if (!confirmed) return;
 
     setSendingReminder('all');
     try {
@@ -149,12 +157,12 @@ export default function FinancialsPage() {
       });
       const result = await response.json();
       if (response.ok) {
-        alert(result.message || 'Reminders sent successfully');
+        toast.success('Reminders Sent', result.message || 'All reminders sent successfully');
       } else {
-        alert(result.message || 'Failed to send reminders');
+        toast.error('Failed', result.message || 'Failed to send reminders');
       }
     } catch {
-      alert('Failed to send reminders');
+      toast.error('Error', 'Failed to send reminders');
     } finally {
       setSendingReminder(null);
     }

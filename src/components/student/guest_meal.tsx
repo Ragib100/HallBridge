@@ -12,6 +12,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useToast } from "@/components/ui/toast";
 
 interface GuestMealFormData {
 	name: string;
@@ -35,6 +36,7 @@ export default function GuestMeal() {
 	});
 
 	const { user } = useCurrentUser();
+	const { toast } = useToast();
 	const [is_submitting, setIsSubmitting] = useState<boolean>(false);
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -65,7 +67,7 @@ export default function GuestMeal() {
 			}
 
 			const data = await response.json();
-			alert("Guest meal registered successfully!");
+			toast.success('Guest Meal Registered', 'Guest meal registered successfully!');
 
 		} catch (error) {
 			console.error("Submission error:", error);

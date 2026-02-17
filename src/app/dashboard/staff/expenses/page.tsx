@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { StaffRoleGuard } from '@/components/staff/role-guard';
 import { Spinner } from '@/components/ui/spinner';
+import { useToast } from '@/components/ui/toast';
 import { getBDDate } from '@/lib/dates';
 
 type TimeRange = 'this-month' | 'last-month' | 'this-year' | 'all-time';
@@ -47,6 +48,7 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { confirm } = useToast();
   
   // Filters
   const [timeRange, setTimeRange] = useState<TimeRange>('this-month');
@@ -131,7 +133,13 @@ export default function ExpensesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this expense?')) return;
+    const confirmed = await confirm({
+      title: 'Delete Expense',
+      message: 'Are you sure you want to delete this expense? This action cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
 
     try {
       const response = await fetch(`/api/staff/expenses?id=${id}`, {

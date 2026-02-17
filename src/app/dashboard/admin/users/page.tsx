@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { STAFF_ROLE_LABELS, type StaffRole } from "@/types";
+import { useToast } from "@/components/ui/toast";
 
 type TabType = "pending" | "active" | "staff";
 
@@ -64,6 +65,7 @@ const DEFAULT_STAFF_FORM_DATA: StaffFormData = {
 };
 
 export default function UserManagementPage() {
+  const { toast, confirm } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
@@ -325,7 +327,13 @@ export default function UserManagementPage() {
   };
 
   const handleDeleteStaff = async (staffId: string) => {
-    if (!confirm("Are you sure you want to delete this staff member?")) return;
+    const confirmed = await confirm({
+      title: 'Delete Staff Member',
+      message: 'Are you sure you want to delete this staff member?',
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
 
     try {
       const response = await fetch(`/api/admin/staff?id=${staffId}`, {
@@ -414,10 +422,9 @@ export default function UserManagementPage() {
         }]);
       }
 
-      // Close modal and show success
       setShowApproveModal(false);
       setStudentToApprove(null);
-      alert(`Student approved and allocated to Room ${data.room.roomNumber}, Bed ${data.room.bedNumber}!`);
+      toast.success('Student Approved', `Student approved and allocated to Room ${data.room.roomNumber}, Bed ${data.room.bedNumber}!`);
     } catch (error) {
       setApproveError("Something went wrong. Please try again.");
     } finally {
@@ -428,7 +435,13 @@ export default function UserManagementPage() {
   const selectedRoom = availableRooms.find(r => r.id === selectedRoomId);
 
   const handleRejectStudent = async (studentId: string) => {
-    if (!confirm("Are you sure you want to reject this student registration? This action cannot be undone.")) return;
+    const confirmed = await confirm({
+      title: 'Reject Student',
+      message: 'Are you sure you want to reject this student registration? This action cannot be undone.',
+      confirmText: 'Reject',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
 
     try {
       const response = await fetch("/api/admin/users", {
@@ -446,7 +459,13 @@ export default function UserManagementPage() {
   };
 
   const handleDeactivateStudent = async (studentId: string) => {
-    if (!confirm("Are you sure you want to deactivate this student?")) return;
+    const confirmed = await confirm({
+      title: 'Deactivate Student',
+      message: 'Are you sure you want to deactivate this student?',
+      confirmText: 'Deactivate',
+      variant: 'warning',
+    });
+    if (!confirmed) return;
 
     try {
       const response = await fetch("/api/admin/users", {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { StaffRoleGuard } from '@/components/staff/role-guard';
 import { Spinner } from '@/components/ui/spinner';
+import { useToast } from '@/components/ui/toast';
 import { ArrowOutRightSquareHalf, CheckCircle, Clock4, AlertTriangle, Search } from '@boxicons/react';
 
 interface GatePass {
@@ -36,6 +37,7 @@ export default function SecurityPage() {
   const [gatePasses, setGatePasses] = useState<GatePass[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchGatePasses();
@@ -70,7 +72,7 @@ export default function SecurityPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data?.message || data?.error || 'Action failed');
+        toast.error('Action Failed', data?.message || data?.error || 'Could not complete the action');
         return;
       }
 
@@ -91,7 +93,7 @@ export default function SecurityPage() {
       await fetchGatePasses();
     } catch (err) {
       console.error("Action error:", err);
-      alert(err instanceof Error ? err.message : 'Action failed');
+      toast.error('Action Failed', err instanceof Error ? err.message : 'Something went wrong');
     }
   };
 

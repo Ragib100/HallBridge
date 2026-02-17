@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useToast } from "@/components/ui/toast";
 
 type RoomStatus = "occupied" | "vacant" | "partial" | "maintenance";
 type ViewMode = "grid" | "list";
@@ -88,6 +89,7 @@ function getHeaderColor(status: RoomStatus) {
 }
 
 export default function RoomAllocationPage() {
+  const { toast, confirm } = useToast();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [stats, setStats] = useState<RoomStats>({
     totalRooms: 0,
@@ -177,7 +179,7 @@ export default function RoomAllocationPage() {
     const hasAllocatedStudents = Boolean(targetRoom && targetRoom.occupiedBeds > 0);
 
     if (status === "maintenance" && hasAllocatedStudents) {
-      alert("Cannot set room to maintenance while students are allocated. Remove allocated students first.");
+      toast.warning('Action Blocked', 'Cannot set room to maintenance while students are allocated. Remove allocated students first.');
       return;
     }
 
@@ -194,7 +196,7 @@ export default function RoomAllocationPage() {
         setShowRoomDetails(false);
       } else {
         const data = await res.json();
-        alert(data.message || "Failed to update room status");
+        toast.error('Update Failed', data.message || 'Failed to update room status');
       }
     } catch (error) {
       console.error("Failed to update room status:", error);
@@ -204,7 +206,13 @@ export default function RoomAllocationPage() {
   };
 
   const handleRemoveStudent = async (roomId: string, bedNumber: number) => {
-    if (!confirm("Are you sure you want to remove this student from the room?")) return;
+    const confirmed = await confirm({
+      title: 'Remove Student',
+      message: 'Are you sure you want to remove this student from the room?',
+      confirmText: 'Remove',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
     
     setActionLoading(true);
     try {
@@ -239,7 +247,7 @@ export default function RoomAllocationPage() {
   const handleCreateRoom = async () => {
     if (bulkMode) {
       if (!bulkRoomRange.startRoom || !bulkRoomRange.endRoom) {
-        alert("Please enter both start and end room numbers");
+        toast.warning('Missing Input', 'Please enter both start and end room numbers');
         return;
       }
 
@@ -247,12 +255,12 @@ export default function RoomAllocationPage() {
       const end = parseInt(bulkRoomRange.endRoom);
 
       if (isNaN(start) || isNaN(end) || start > end) {
-        alert("Invalid room range");
+        toast.warning('Invalid Range', 'Start room number must be less than or equal to end room number');
         return;
       }
 
       if (end - start > 50) {
-        alert("Cannot create more than 50 rooms at once");
+        toast.warning('Limit Exceeded', 'Cannot create more than 50 rooms at once');
         return;
       }
 
@@ -281,7 +289,11 @@ export default function RoomAllocationPage() {
         }
       }
 
-      alert(`Created ${successCount} rooms successfully${failCount > 0 ? `, ${failCount} failed` : ""}`);
+      if (failCount > 0) {
+        toast.warning('Partially Completed', `Created ${successCount} rooms successfully, ${failCount} failed`);
+      } else {
+        toast.success('Rooms Created', `Created ${successCount} rooms successfully`);
+      }
       setShowCreateRoom(false);
       setCreateRoomData({
         floor: "1",
@@ -295,7 +307,7 @@ export default function RoomAllocationPage() {
       setActionLoading(false);
     } else {
       if (!createRoomData.roomNumber) {
-        alert("Please enter a room number");
+        toast.warning('Missing Input', 'Please enter a room number');
         return;
       }
 
@@ -310,7 +322,7 @@ export default function RoomAllocationPage() {
         const data = await res.json();
 
         if (res.ok) {
-          alert(data.message || "Room created successfully!");
+          toast.success('Room Created', data.message || 'Room created successfully!');
           setShowCreateRoom(false);
           setCreateRoomData({
             floor: "1",
@@ -320,11 +332,11 @@ export default function RoomAllocationPage() {
           });
           fetchRooms();
         } else {
-          alert(data.message || "Failed to create room");
+          toast.error('Creation Failed', data.message || 'Failed to create room');
         }
       } catch (error) {
         console.error("Failed to create room:", error);
-        alert("Failed to create room. Please try again.");
+        toast.error('Creation Failed', 'Failed to create room. Please try again.');
       } finally {
         setActionLoading(false);
       }

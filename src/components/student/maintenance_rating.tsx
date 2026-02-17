@@ -4,6 +4,7 @@ import { Textarea } from "../ui/textarea";
 import Rating from "../ui/rating";
 import { useState } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useToast } from "@/components/ui/toast";
 
 interface MaintenanceRatingProps {
     requestId: string;
@@ -16,6 +17,7 @@ export default function MaintenanceRating({ requestId, onSuccess }: MaintenanceR
     const [feedback, setFeedback] = useState<string>("");
     const [submitting, setSubmitting] = useState(false);
     const { user } = useCurrentUser();
+    const { toast } = useToast();
 
     const handleSubmitReview = async () => {
         try {
@@ -24,7 +26,7 @@ export default function MaintenanceRating({ requestId, onSuccess }: MaintenanceR
             }
 
             if (rating === 0) {
-                alert("Please provide a rating before submitting.");
+                toast.warning('Rating Required', 'Please provide a rating before submitting.');
                 return;
             }
 
@@ -38,7 +40,7 @@ export default function MaintenanceRating({ requestId, onSuccess }: MaintenanceR
                 body: JSON.stringify({ rating, feedback }),
             });
             if (!response.ok) {
-                alert("There was an error submitting your review. Please try again later.");
+                toast.error('Submission Failed', 'There was an error submitting your review. Please try again later.');
                 return;
             }
             
@@ -49,7 +51,7 @@ export default function MaintenanceRating({ requestId, onSuccess }: MaintenanceR
             
         }
         catch (error) {
-            alert("There was an error submitting your review. Please try again later.");
+            toast.error('Submission Failed', 'There was an error submitting your review. Please try again later.');
         } finally {
             setSubmitting(false);
         }

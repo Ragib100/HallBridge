@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { useToast } from '@/components/ui/toast'
 
 interface MealCount {
     type: 'breakfast' | 'lunch' | 'dinner';
@@ -18,6 +19,7 @@ export default function MealCountPage() {
     const [totalStudents, setTotalStudents] = useState(0)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const { toast } = useToast()
 
     useEffect(() => {
         const fetchMealCounts = async () => {
@@ -67,7 +69,7 @@ export default function MealCountPage() {
 
                 setTotalStudents(todayDataRes?.totalStudents ?? 0)
             } catch (err) {
-                alert("Failed to load meal counts. Please try again later.");
+                toast.error('Load Failed', 'Failed to load meal counts. Please try again later.')
             } finally {
                 setLoading(false)
             }

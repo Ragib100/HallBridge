@@ -5,6 +5,7 @@ import Rating from "../ui/rating";
 import { useState } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { getBDTime } from '@/lib/dates';
+import { useToast } from "@/components/ui/toast";
 
 interface mealinfo {
     mealTime: 'breakfast' | 'lunch' | 'dinner';
@@ -28,6 +29,7 @@ export default function VoteForMeal({ mealinfo, onSubmit }: VoteForMealProps) {
     const [rating, setRating] = useState<number>(0);
     const [comments, setComments] = useState<string>("");
     const { user } = useCurrentUser();
+    const { toast } = useToast();
     const votingTime = [
         { mealTime: 'breakfast', start: '09:30:00' },
         { mealTime: 'lunch', start: '15:30:00' },
@@ -43,15 +45,15 @@ export default function VoteForMeal({ mealinfo, onSubmit }: VoteForMealProps) {
             }
             
             if(mealinfo.mealTime==='breakfast' && currentTime < votingTime[0].start) {
-                alert("Voting for breakfast will open at 9:30 AM");
+                toast.info('Not Yet Open', 'Voting for breakfast will open at 9:30 AM');
                 return;
             }
             if(mealinfo.mealTime==='lunch' && currentTime < votingTime[1].start) {
-                alert("Voting for lunch will open at 3:30 PM");
+                toast.info('Not Yet Open', 'Voting for lunch will open at 3:30 PM');
                 return;
             }
             if(mealinfo.mealTime==='dinner' && currentTime < votingTime[2].start) {
-                alert("Voting for dinner will open at 9:30 PM");
+                toast.info('Not Yet Open', 'Voting for dinner will open at 9:30 PM');
                 return;
             }
 

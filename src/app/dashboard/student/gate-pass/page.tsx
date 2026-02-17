@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { getCurrentDateBD, getNextDateBD, getBDDate } from '@/lib/dates';
+import { useToast } from '@/components/ui/toast';
 
 export default function StudentGatePassPage() {
+	const { toast } = useToast();
 	const [purpose, setPurpose] = useState<string>('');
 	const [purposeDetails, setPurposeDetails] = useState<string>('');
 	const [destination, setDestination] = useState<string>('');
@@ -68,7 +70,7 @@ export default function StudentGatePassPage() {
 					}
 				}
 				else {
-					alert('Failed to check active gate pass. Please try again later.');
+					toast.error('Load Failed', 'Failed to check active gate pass. Please try again later.');
 				}
 			} catch (error) {
 				console.error('Failed to check active gate pass:', error);

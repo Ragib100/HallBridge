@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useToast } from '@/components/ui/toast'
 import {
     Table,
     TableBody,
@@ -29,6 +30,7 @@ export default function GuestMeal() {
     const [loading, setLoading] = useState(true)
     const [editingDay, setEditingDay] = useState<string | null>(null)
     const [editedMeal, setEditedMeal] = useState<Meal | null>(null)
+    const { toast } = useToast()
     const today = getBDDate().toLocaleDateString('en-US', { weekday: 'long' })
 
     // Fetch meals from database on page load
@@ -79,13 +81,13 @@ export default function GuestMeal() {
                     ))
                     setEditingDay(null)
                     setEditedMeal(null)
-                    alert('Saved to database!')
+                    toast.success('Saved', 'Menu saved to database successfully!')
                 } else {
-                    alert('Failed to save: ' + (data.message || 'Unknown error'))
+                    toast.error('Save Failed', 'Failed to save: ' + (data.message || 'Unknown error'))
                 }
             } catch (error) {
                 console.error('Error:', error)
-                alert('Network error - but changes may have saved. Refresh the page to check.')
+                toast.warning('Network Error', 'Network error - changes may have saved. Refresh to check.')
             }
         }
     }

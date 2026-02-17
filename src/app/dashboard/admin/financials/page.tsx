@@ -3,6 +3,7 @@
 import React, { useState, useEffect, FormEvent } from "react";
 import Image from "next/image";
 import { Spinner } from "@/components/ui/spinner";
+import { useToast } from '@/components/ui/toast';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 type TimeRange = "this-month" | "last-month" | "this-year";
@@ -139,6 +140,7 @@ export default function FinancialsPage() {
   const [processingLateFee, setProcessingLateFee] = useState(false);
   const [processingReminders, setProcessingReminders] = useState(false);
   const [reminderTargetId, setReminderTargetId] = useState<string | null>(null);
+  const { toast, confirm } = useToast();
 
   const fetchFinancialData = async (range: TimeRange) => {
     setLoading(true);
@@ -157,7 +159,13 @@ export default function FinancialsPage() {
   };
 
   const handleProcessBillingJobs = async () => {
-    if (!confirm("Are you sure you want to process billing jobs? This will generate bills for all students.")) {
+    const confirmed = await confirm({
+      title: 'Process Billing Jobs',
+      message: 'This will generate bills for all students. Are you sure you want to proceed?',
+      confirmText: 'Process Bills',
+      variant: 'warning',
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -167,22 +175,28 @@ export default function FinancialsPage() {
 
       if (response.ok) {
         const result = await response.json();
-        alert(`Billing jobs processed successfully!\n${result.message || 'Bills generated for all students.'}`);
+        toast.success('Billing Processed', result.message || 'Bills generated for all students.');
         fetchFinancialData(timeRange);
       } else {
         const err = await response.json();
-        alert(err.message || "Failed to process billing jobs");
+        toast.error('Billing Failed', err.message || 'Failed to process billing jobs');
       }
     } catch (error) {
       console.error("Failed to process billing jobs:", error);
-      alert("Failed to process billing jobs. Please try again.");
+      toast.error('Error', 'Failed to process billing jobs. Please try again.');
     } finally {
       setProcessingBilling(false);
     }
   };
 
   const handleProcessLateFees = async () => {
-    if (!confirm("Are you sure you want to process late fees? This will apply late fees to all overdue payments.")) {
+    const confirmed = await confirm({
+      title: 'Process Late Fees',
+      message: 'This will apply late fees to all overdue payments. Are you sure?',
+      confirmText: 'Apply Late Fees',
+      variant: 'warning',
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -192,15 +206,15 @@ export default function FinancialsPage() {
 
       if (response.ok) {
         const result = await response.json();
-        alert(`Late fees processed successfully!\n${result.message || 'Late fees applied to overdue payments.'}`);
+        toast.success('Late Fees Processed', result.message || 'Late fees applied to overdue payments.');
         fetchFinancialData(timeRange);
       } else {
         const err = await response.json();
-        alert(err.message || "Failed to process late fees");
+        toast.error('Late Fees Failed', err.message || 'Failed to process late fees');
       }
     } catch (error) {
       console.error("Failed to process late fees:", error);
-      alert("Failed to process late fees. Please try again.");
+      toast.error('Error', 'Failed to process late fees. Please try again.');
     } finally {
       setProcessingLateFee(false);
     }
@@ -208,7 +222,7 @@ export default function FinancialsPage() {
 
   const handleSendReminders = async (studentIds: string[], targetId?: string) => {
     if (studentIds.length === 0) {
-      alert("No defaulters to remind.");
+      toast.warning('No Defaulters', 'There are no defaulters to send reminders to.');
       return;
     }
 
@@ -225,14 +239,14 @@ export default function FinancialsPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        alert(result.message || "Failed to send reminders");
+        toast.error('Reminder Failed', result.message || 'Failed to send reminders');
         return;
       }
 
-      alert(result.message || "Reminder sent successfully");
+      toast.success('Reminders Sent', result.message || 'Payment reminders sent successfully');
     } catch (error) {
       console.error("Failed to send reminders:", error);
-      alert("Failed to send reminders. Please try again.");
+      toast.error('Error', 'Failed to send reminders. Please try again.');
     } finally {
       setProcessingReminders(false);
       setReminderTargetId(null);
@@ -271,10 +285,10 @@ export default function FinancialsPage() {
         fetchFinancialData(timeRange);
       } else {
         const err = await response.json();
-        alert(err.message || "Failed to add expense");
+        toast.error('Expense Failed', err.message || 'Failed to add expense');
       }
     } catch {
-      alert("Failed to add expense");
+      toast.error('Error', 'Failed to add expense');
     } finally {
       setSubmitting(false);
     }
@@ -301,10 +315,10 @@ export default function FinancialsPage() {
         fetchFinancialData(timeRange);
       } else {
         const err = await response.json();
-        alert(err.message || "Failed to record salary payment");
+        toast.error('Salary Failed', err.message || 'Failed to record salary payment');
       }
     } catch {
-      alert("Failed to record salary payment");
+      toast.error('Error', 'Failed to record salary payment');
     } finally {
       setSubmitting(false);
     }
