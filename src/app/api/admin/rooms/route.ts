@@ -229,6 +229,23 @@ export async function PATCH(request: Request) {
 
     // Update room status (e.g., set to maintenance)
     if (action === "updateStatus" && status) {
+      if (status === "maintenance") {
+        const hasAllocatedStudent = room.beds.some(
+          (bed: { isOccupied: boolean; studentId?: unknown }) =>
+            bed.isOccupied || Boolean(bed.studentId)
+        );
+
+        if (hasAllocatedStudent) {
+          return NextResponse.json(
+            {
+              message:
+                "Cannot set room to maintenance while students are allocated. Remove all allocated students first.",
+            },
+            { status: 400 }
+          );
+        }
+      }
+
       room.status = status;
       await room.save();
       return NextResponse.json({

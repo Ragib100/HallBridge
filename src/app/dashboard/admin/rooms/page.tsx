@@ -173,6 +173,14 @@ export default function RoomAllocationPage() {
   };
 
   const handleUpdateRoomStatus = async (roomId: string, status: RoomStatus) => {
+    const targetRoom = rooms.find((room) => room.id === roomId) || selectedRoom;
+    const hasAllocatedStudents = Boolean(targetRoom && targetRoom.occupiedBeds > 0);
+
+    if (status === "maintenance" && hasAllocatedStudents) {
+      alert("Cannot set room to maintenance while students are allocated. Remove allocated students first.");
+      return;
+    }
+
     setActionLoading(true);
     try {
       const res = await fetch("/api/admin/rooms", {
@@ -184,6 +192,9 @@ export default function RoomAllocationPage() {
       if (res.ok) {
         fetchRooms();
         setShowRoomDetails(false);
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to update room status");
       }
     } catch (error) {
       console.error("Failed to update room status:", error);
@@ -859,13 +870,19 @@ export default function RoomAllocationPage() {
               ) : (
                 <button 
                   onClick={() => handleUpdateRoomStatus(selectedRoom.id, "maintenance")}
-                  disabled={actionLoading}
-                  className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                  disabled={actionLoading || selectedRoom.occupiedBeds > 0}
+                  className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={selectedRoom.occupiedBeds > 0 ? "Remove allocated students before setting maintenance" : ""}
                 >
                   {actionLoading ? "Updating..." : "Set to Maintenance"}
                 </button>
               )}
             </div>
+            {selectedRoom.status !== "maintenance" && selectedRoom.occupiedBeds > 0 && (
+              <p className="mt-3 text-xs text-red-600">
+                This room has allocated students. Remove all students before setting it to maintenance.
+              </p>
+            )}
           </div>
         </div>
       )}
