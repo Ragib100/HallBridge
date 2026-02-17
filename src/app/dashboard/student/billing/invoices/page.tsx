@@ -11,6 +11,7 @@ interface Bill {
     seatrent: number;
     messbill: number;
     laundry: number;
+    fine: number;
     othercharges: number;
 }
 
@@ -79,6 +80,7 @@ export default function InvoicesPage() {
                             seatrent: 0,
                             messbill: 0,
                             laundry: 0,
+                            fine: 0,
                             othercharges: 0,
                         };
                         
@@ -99,9 +101,15 @@ export default function InvoicesPage() {
                                     breakdown.laundry += payment.amount;
                                     break;
                                 case 'fine':
+                                    breakdown.fine += payment.amount;
+                                    break;
                                 case 'other':
                                     breakdown.othercharges += payment.amount;
                                     break;
+                            }
+
+                            if(payment.lateFee) {
+                                breakdown.fine += payment.lateFee;
                             }
                         });
                         

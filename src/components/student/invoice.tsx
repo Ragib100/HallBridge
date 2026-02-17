@@ -6,6 +6,7 @@ interface Bill {
     seatrent: number;
     messbill: number;
     laundry: number;
+    fine: number;
     othercharges: number;
 }
 
