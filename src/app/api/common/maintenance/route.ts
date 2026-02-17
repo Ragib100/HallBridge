@@ -180,7 +180,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { id, status, assignedTo, estimatedCompletion, completionNotes } = body;
+    const { id, status, estimatedCompletion, completionNotes } = body;
 
     if (!id) {
       return NextResponse.json({ message: "Request ID is required" }, { status: 400 });
@@ -190,18 +190,17 @@ export async function PATCH(request: Request) {
 
     if (status) {
       updateData.status = status;
-      if (status === "in-progress" && !assignedTo) {
+      if (
+        status === "in-progress" &&
+        user.userType === "staff" &&
+        user.staffRole === "maintenance_staff"
+      ) {
         updateData.assignedTo = session;
         updateData.assignedAt = getBDDate();
       }
       if (status === "completed") {
         updateData.completedAt = getBDDate();
       }
-    }
-
-    if (assignedTo) {
-      updateData.assignedTo = assignedTo;
-      updateData.assignedAt = getBDDate();
     }
 
     if (estimatedCompletion) {

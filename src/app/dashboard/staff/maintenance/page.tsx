@@ -116,9 +116,20 @@ export default function MaintenancePage() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        const updatedAssignedTo = data?.request?.assignedTo;
+        const updatedCompletedAt = data?.request?.completedAt;
+
         setTasks(prev => prev.map(task => 
           task.id === taskId 
-            ? { ...task, status: newStatus, completedAt: newStatus === 'completed' ? getBDDate().toISOString() : task.completedAt }
+            ? {
+                ...task,
+                status: newStatus,
+                assignedTo: newStatus === 'in-progress' ? updatedAssignedTo || task.assignedTo : task.assignedTo,
+                completedAt: newStatus === 'completed'
+                  ? updatedCompletedAt || getBDDate().toISOString()
+                  : task.completedAt,
+              }
             : task
         ));
       }
