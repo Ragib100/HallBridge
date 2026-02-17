@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { STAFF_ROLE_LABELS, type StaffRole } from '@/types';
@@ -95,8 +94,17 @@ const roleConfigs: Record<StaffRole, {
     },
     maintenance_staff: {
         greeting: "Maintenance Staff",
-        statsCards: [],
-        quickActions: [],
+        statsCards: [
+            { title: "Pending Tasks", valueKey: "pending", icon: "maintenance", iconBgColor: "bg-yellow-100", textColor: "text-yellow-600", link: "/dashboard/staff/maintenance", linkText: "Handle now →" },
+            { title: "In Progress", valueKey: "inProgress", icon: "maintenance", iconBgColor: "bg-blue-100", textColor: "text-blue-600", link: "/dashboard/staff/maintenance", linkText: "View tasks →" },
+            { title: "Completed", valueKey: "completed", icon: "maintenance", iconBgColor: "bg-green-100", textColor: "text-green-600", link: "/dashboard/staff/maintenance", linkText: "Review →" },
+            { title: "Urgent", valueKey: "urgent", icon: "alert", iconBgColor: "bg-red-100", textColor: "text-red-600", link: "/dashboard/staff/maintenance", linkText: "Prioritize →" },
+        ],
+        quickActions: [
+            { title: "Open Maintenance Queue", icon: "🛠️", link: "/dashboard/staff/maintenance" },
+            { title: "Start Pending Tasks", icon: "▶️", link: "/dashboard/staff/maintenance" },
+            { title: "Update Task Status", icon: "✅", link: "/dashboard/staff/maintenance" },
+        ],
     },
     laundry_manager: {
         greeting: "Laundry Manager",
@@ -130,16 +138,8 @@ const roleConfigs: Record<StaffRole, {
 
 export default function StaffHomePage() {
     const { user, loading } = useCurrentUser();
-    const router = useRouter();
     const [stats, setStats] = useState<Record<string, number>>({});
     const [statsLoading, setStatsLoading] = useState(true);
-
-    // Redirect maintenance_staff to maintenance page
-    useEffect(() => {
-        if (!loading && user?.staffRole === 'maintenance_staff') {
-            router.replace('/dashboard/staff/maintenance');
-        }
-    }, [user?.staffRole, loading, router]);
 
     // Fetch role-specific stats
     useEffect(() => {
@@ -182,6 +182,18 @@ export default function StaffHomePage() {
                         monthlyCollection: 0,
                         totalStudents: 0,
                     });
+                } else if (user.staffRole === 'maintenance_staff') {
+                    const response = await fetch('/api/common/maintenance');
+                    if (response.ok) {
+                        const data = await response.json();
+                        const requests = data?.requests || [];
+                        setStats({
+                            pending: requests.filter((r: { status: string }) => r.status === 'pending').length,
+                            inProgress: requests.filter((r: { status: string }) => r.status === 'in-progress').length,
+                            completed: requests.filter((r: { status: string }) => r.status === 'completed').length,
+                            urgent: requests.filter((r: { priority: string; status: string }) => r.priority === 'urgent' && r.status !== 'completed').length,
+                        });
+                    }
                 } else if (user.staffRole === 'laundry_manager') {
                     setStats({
                         todayPickups: 0,

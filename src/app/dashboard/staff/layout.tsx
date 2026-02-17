@@ -23,7 +23,7 @@ const allNavItems: NavItem[] = [
     name: "Dashboard",
     path: "/dashboard/staff/home",
     icon: "dashboard",
-    roles: ["mess_manager", "financial_staff", "laundry_manager", "security_guard"]
+    roles: ["mess_manager", "financial_staff", "maintenance_staff", "laundry_manager", "security_guard"]
   },
   {
     name: "Mess Management",
@@ -68,9 +68,6 @@ function getNavItemsForRole(staffRole?: StaffRole): NavItem[] {
 
 // Get default path for a specific staff role
 function getDefaultPathForRole(staffRole?: StaffRole): string {
-  if (staffRole === "maintenance_staff") {
-    return "/dashboard/staff/maintenance";
-  }
   return "/dashboard/staff/home";
 }
 
