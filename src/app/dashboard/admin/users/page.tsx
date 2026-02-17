@@ -53,10 +53,22 @@ interface AvailableRoom {
   hallId?: string;
 }
 
+const ACTIVE_STUDENTS_PER_PAGE = 10;
+
+const DEFAULT_STAFF_FORM_DATA: StaffFormData = {
+  fullName: "",
+  email: "",
+  password: "",
+  staffRole: "",
+  phone: "",
+};
+
 export default function UserManagementPage() {
   const [activeTab, setActiveTab] = useState<TabType>("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [activeStudentsPage, setActiveStudentsPage] = useState(1);
   const [showStudentDetailsModal, setShowStudentDetailsModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showApproveModal, setShowApproveModal] = useState(false);
@@ -76,13 +88,7 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [staffFormData, setStaffFormData] = useState<StaffFormData>({
-    fullName: "",
-    email: "",
-    password: "",
-    staffRole: "",
-    phone: "",
-  });
+  const [staffFormData, setStaffFormData] = useState<StaffFormData>(DEFAULT_STAFF_FORM_DATA);
 
   // Fetch data on mount
   useEffect(() => {
@@ -164,6 +170,33 @@ export default function UserManagementPage() {
     setFormError(null);
   };
 
+  const resetStaffForm = () => {
+    setShowAddStaffModal(false);
+    setEditingStaff(null);
+    setFormError(null);
+    setStaffFormData(DEFAULT_STAFF_FORM_DATA);
+  };
+
+  const handleOpenAddStaffModal = () => {
+    setEditingStaff(null);
+    setFormError(null);
+    setStaffFormData(DEFAULT_STAFF_FORM_DATA);
+    setShowAddStaffModal(true);
+  };
+
+  const handleEditStaff = (staff: Staff) => {
+    setEditingStaff(staff);
+    setFormError(null);
+    setStaffFormData({
+      fullName: staff.name,
+      email: staff.email,
+      password: "",
+      staffRole: staff.role,
+      phone: staff.phone || "",
+    });
+    setShowAddStaffModal(true);
+  };
+
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -205,11 +238,63 @@ export default function UserManagementPage() {
         joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
         avatar: "/logos/profile.png",
       };
-      setStaffList([newStaff, ...staffList]);
+      setStaffList((prev) => [newStaff, ...prev]);
       
       // Reset form and close modal
-      setStaffFormData({ fullName: "", email: "", password: "", staffRole: "", phone: "" });
-      setShowAddStaffModal(false);
+      resetStaffForm();
+    } catch (error) {
+      setFormError("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    if (!editingStaff) return;
+
+    if (!staffFormData.fullName || !staffFormData.staffRole) {
+      setFormError("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/admin/staff", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingStaff.id,
+          fullName: staffFormData.fullName,
+          staffRole: staffFormData.staffRole,
+          phone: staffFormData.phone,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFormError(data.message || "Failed to update staff member");
+        return;
+      }
+
+      setStaffList((prev) =>
+        prev.map((staff) =>
+          staff.id === editingStaff.id
+            ? {
+                ...staff,
+                name: data.staff.fullName,
+                role: data.staff.staffRole,
+                phone: data.staff.phone || "",
+              }
+            : staff
+        )
+      );
+
+      resetStaffForm();
     } catch (error) {
       setFormError("Something went wrong. Please try again.");
     } finally {
@@ -398,6 +483,27 @@ export default function UserManagementPage() {
     STAFF_ROLE_LABELS[staff.role]?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalActiveStudentPages = Math.max(
+    1,
+    Math.ceil(filteredActiveStudents.length / ACTIVE_STUDENTS_PER_PAGE)
+  );
+
+  const paginatedActiveStudents = filteredActiveStudents.slice(
+    (activeStudentsPage - 1) * ACTIVE_STUDENTS_PER_PAGE,
+    activeStudentsPage * ACTIVE_STUDENTS_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (activeTab !== "active") return;
+    setActiveStudentsPage(1);
+  }, [searchQuery, activeTab]);
+
+  useEffect(() => {
+    if (activeStudentsPage > totalActiveStudentPages) {
+      setActiveStudentsPage(totalActiveStudentPages);
+    }
+  }, [activeStudentsPage, totalActiveStudentPages]);
+
   return (
     <div className="space-y-6">
       {/* Page Title */}
@@ -433,7 +539,7 @@ export default function UserManagementPage() {
         </div>
         {activeTab === "staff" && (
           <button 
-            onClick={() => setShowAddStaffModal(true)}
+            onClick={handleOpenAddStaffModal}
             className="px-4 py-2 bg-[#2D6A4F] text-white rounded-lg text-sm font-medium hover:bg-[#245840] transition-colors"
           >
             + Add Staff
@@ -558,7 +664,7 @@ export default function UserManagementPage() {
                   </td>
                 </tr>
               ) : (
-                filteredActiveStudents.map((student) => (
+                paginatedActiveStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -612,14 +718,48 @@ export default function UserManagementPage() {
           
           {/* Pagination */}
           <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-            <p className="text-sm text-gray-500">Showing {filteredActiveStudents.length} of {activeStudents.length} students</p>
+            <p className="text-sm text-gray-500">
+              {filteredActiveStudents.length === 0
+                ? "Showing 0 students"
+                : `Showing ${(activeStudentsPage - 1) * ACTIVE_STUDENTS_PER_PAGE + 1}-${Math.min(
+                    activeStudentsPage * ACTIVE_STUDENTS_PER_PAGE,
+                    filteredActiveStudents.length
+                  )} of ${filteredActiveStudents.length} students`}
+            </p>
             <div className="flex items-center gap-2">
-              <button className="px-3 py-1.5 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50" disabled>
+              <button
+                onClick={() => setActiveStudentsPage((prev) => Math.max(1, prev - 1))}
+                className="px-3 py-1.5 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                disabled={activeStudentsPage === 1 || filteredActiveStudents.length === 0}
+              >
                 Previous
               </button>
-              <button className="px-3 py-1.5 bg-[#2D6A4F] text-white rounded-md text-sm cursor-pointer">1</button>
-              <button className="px-3 py-1.5 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 cursor-pointer">2</button>
-              <button className="px-3 py-1.5 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 cursor-pointer">
+              {Array.from({ length: totalActiveStudentPages }, (_, index) => {
+                const pageNumber = index + 1;
+                const isActivePage = pageNumber === activeStudentsPage;
+
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => setActiveStudentsPage(pageNumber)}
+                    className={`px-3 py-1.5 rounded-md text-sm cursor-pointer ${
+                      isActivePage
+                        ? "bg-[#2D6A4F] text-white"
+                        : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                    aria-label={`Go to page ${pageNumber}`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setActiveStudentsPage((prev) => Math.min(totalActiveStudentPages, prev + 1))}
+                className="px-3 py-1.5 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                disabled={
+                  activeStudentsPage === totalActiveStudentPages || filteredActiveStudents.length === 0
+                }
+              >
                 Next
               </button>
             </div>
@@ -667,7 +807,7 @@ export default function UserManagementPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium">
+                    <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium whitespace-nowrap inline-block">
                       {STAFF_ROLE_LABELS[staff.role]}
                     </span>
                   </td>
@@ -687,7 +827,11 @@ export default function UserManagementPage() {
                   <td className="px-6 py-4 text-sm text-gray-500">{staff.joinedDate}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <button className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer">
+                      <button
+                        onClick={() => handleEditStaff(staff)}
+                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                        title="Edit staff"
+                      >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
@@ -715,13 +859,11 @@ export default function UserManagementPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Add New Staff</h2>
+              <h2 className="text-xl font-bold text-gray-800">
+                {editingStaff ? "Edit Staff" : "Add New Staff"}
+              </h2>
               <button 
-                onClick={() => {
-                  setShowAddStaffModal(false);
-                  setFormError(null);
-                  setStaffFormData({ fullName: "", email: "", password: "", staffRole: "", phone: "" });
-                }}
+                onClick={resetStaffForm}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -736,7 +878,7 @@ export default function UserManagementPage() {
               </div>
             )}
             
-            <form onSubmit={handleAddStaff} className="space-y-4">
+            <form onSubmit={editingStaff ? handleUpdateStaff : handleAddStaff} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                 <input
@@ -757,23 +899,26 @@ export default function UserManagementPage() {
                   value={staffFormData.email}
                   onChange={handleStaffInputChange}
                   placeholder="Enter email address"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none disabled:bg-gray-100 disabled:text-gray-500"
                   required
+                  disabled={Boolean(editingStaff)}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={staffFormData.password}
-                  onChange={handleStaffInputChange}
-                  placeholder="Enter password (min 8 characters)"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
-                  required
-                  minLength={8}
-                />
-              </div>
+              {!editingStaff && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={staffFormData.password}
+                    onChange={handleStaffInputChange}
+                    placeholder="Enter password (min 8 characters)"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent outline-none"
+                    required
+                    minLength={8}
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                 <input
@@ -805,11 +950,7 @@ export default function UserManagementPage() {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowAddStaffModal(false);
-                    setFormError(null);
-                    setStaffFormData({ fullName: "", email: "", password: "", staffRole: "", phone: "" });
-                  }}
+                  onClick={resetStaffForm}
                   className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                 >
                   Cancel
@@ -819,7 +960,7 @@ export default function UserManagementPage() {
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-3 bg-[#2D6A4F] text-white rounded-lg font-medium hover:bg-[#245840] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? "Adding..." : "Add Staff"}
+                  {isSubmitting ? (editingStaff ? "Updating..." : "Adding...") : (editingStaff ? "Update Staff" : "Add Staff")}
                 </button>
               </div>
             </form>
