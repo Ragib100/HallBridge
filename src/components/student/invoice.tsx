@@ -23,7 +23,7 @@ export default function StudentInvoice({ invoiceinfo }: { invoiceinfo: Invoice }
         <Dialog>
             <DialogTrigger asChild>
                 <button
-                    className="h-10 px-4 bg-[#2D6A4F] hover:bg-[#245a42] text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium cursor-pointer"
+                    className="h-12 px-4 bg-[#2D6A4F] hover:bg-[#245a42] text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium cursor-pointer justify-center"
                 >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
