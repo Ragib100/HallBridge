@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     }
 
     const currentDate = getBDDate();
-    const month = billingMonth || currentDate.getMonth() + 1;
+    const month = billingMonth || currentDate.getMonth();
     const year = billingYear || currentDate.getFullYear();
 
     // Check for existing payment

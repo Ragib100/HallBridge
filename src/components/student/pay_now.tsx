@@ -10,6 +10,8 @@ import { useToast } from "@/components/ui/toast";
 interface PayNowProps {
     amount: number;
     dueDate: string;
+    billingMonth: number;
+    billingYear: number;
     onPaymentSuccess?: () => void;
 }
 
@@ -22,7 +24,7 @@ const mobileAccountNumbers: Record<MobileBankingProvider, string> = {
     rocket: "01790-078409"
 };
 
-export default function PayNow({ amount , dueDate, onPaymentSuccess }: PayNowProps) {
+export default function PayNow({ amount, dueDate, billingMonth, billingYear, onPaymentSuccess }: PayNowProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
@@ -68,11 +70,6 @@ export default function PayNow({ amount , dueDate, onPaymentSuccess }: PayNowPro
                     return;
                 }
             }
-
-            // Get current month and year
-            const currentDate = new Date();
-            const billingMonth = currentDate.getMonth() + 1;
-            const billingYear = currentDate.getFullYear();
 
             // Prepare payment data
             const paymentData = {

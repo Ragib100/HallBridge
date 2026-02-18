@@ -27,6 +27,8 @@ interface MealBreakdown {
 interface BillData {
     invoice_id: string;
     month: string;
+    billingMonth: number;
+    billingYear: number;
     billinfo: Bill;
     amount: number;
     dueDate: string;
@@ -136,6 +138,8 @@ export default function CurrentDuesPage() {
                     setBilldata({
                         invoice_id: combinedPaymentId,
                         month: `${monthName} ${firstPayment.billingYear}`,
+                        billingMonth: firstPayment.billingMonth,
+                        billingYear: firstPayment.billingYear,
                         billinfo: breakdown,
                         amount: totalAmount,
                         dueDate: new Date(firstPayment.dueDate).toLocaleDateString('en-GB'),
@@ -242,7 +246,13 @@ export default function CurrentDuesPage() {
                         </p>
                     </div>
                     <div className="w-full md:w-[20%]">
-                        <PayNow amount={billdata.amount} dueDate={billdata.dueDate} onPaymentSuccess={handlePaymentSuccess} />
+                        <PayNow
+                            amount={billdata.amount}
+                            dueDate={billdata.dueDate}
+                            billingMonth={billdata.billingMonth}
+                            billingYear={billdata.billingYear}
+                            onPaymentSuccess={handlePaymentSuccess}
+                        />
                     </div>
                 </div>
             )}
@@ -382,7 +392,13 @@ export default function CurrentDuesPage() {
             {/* Action Buttons */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {!billdata.isPaid && (
-                    <PayNow amount={billdata.amount} dueDate={billdata.dueDate} onPaymentSuccess={handlePaymentSuccess} />
+                    <PayNow
+                        amount={billdata.amount}
+                        dueDate={billdata.dueDate}
+                        billingMonth={billdata.billingMonth}
+                        billingYear={billdata.billingYear}
+                        onPaymentSuccess={handlePaymentSuccess}
+                    />
                 )}
                 <Button 
                     className={`w-full h-12 ${billdata.isPaid ? 'col-span-full' : ''} bg-gray-600 hover:bg-gray-700 text-white font-medium cursor-pointer flex items-center justify-center gap-2`} 
