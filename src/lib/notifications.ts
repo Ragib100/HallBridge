@@ -369,6 +369,153 @@ export async function notifyAccountRejected(
 }
 
 /**
+ * Notify student about room allocation
+ */
+export async function notifyRoomAllocated(
+  userId: string,
+  roomNumber: string,
+  bedNumber: number,
+  floor: number
+) {
+  return createNotification({
+    userId,
+    type: "system",
+    title: "Room Allocated",
+    message: `You have been allocated to Room ${roomNumber}, Bed ${bedNumber} (Floor ${floor}).`,
+    priority: "high",
+  });
+}
+
+/**
+ * Notify student about room deallocation
+ */
+export async function notifyRoomDeallocated(
+  userId: string,
+  roomNumber: string
+) {
+  return createNotification({
+    userId,
+    type: "system",
+    title: "Room Deallocation Notice",
+    message: `You have been removed from Room ${roomNumber}. Please contact the administration for further details.`,
+    priority: "high",
+  });
+}
+
+/**
+ * Notify student about laundry status update
+ */
+export async function notifyLaundryStatusUpdate(
+  userId: string,
+  laundryId: string,
+  status: string,
+  requestId: string
+) {
+  const statusMessages: Record<string, string> = {
+    collected: `Your laundry request (${requestId}) has been collected.`,
+    washing: `Your laundry request (${requestId}) is now being washed.`,
+    ready: `Your laundry request (${requestId}) is ready for pickup!`,
+    delivered: `Your laundry request (${requestId}) has been delivered.`,
+  };
+
+  return createNotification({
+    userId,
+    type: "laundry",
+    title: `Laundry ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+    message: statusMessages[status] || `Your laundry request (${requestId}) status changed to ${status}.`,
+    priority: status === "ready" ? "high" : "normal",
+    relatedEntity: {
+      type: "laundry",
+      id: laundryId,
+    },
+  });
+}
+
+/**
+ * Notify student when a new gate pass is created (notify security staff)
+ */
+export async function notifyGatePassCreated(
+  studentName: string,
+  destination: string,
+  outDate: string
+) {
+  return notifyByRole({
+    roles: ["security_guard", "admin"],
+    type: "gatepass",
+    title: "New Gate Pass Request",
+    message: `${studentName} requested a gate pass to ${destination} on ${outDate}.`,
+    priority: "normal",
+  });
+}
+
+/**
+ * Notify students when monthly billing is generated
+ */
+export async function notifyBillingGenerated(
+  userIds: string[],
+  billingMonth: number,
+  billingYear: number
+) {
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthName = monthNames[billingMonth - 1] || String(billingMonth);
+
+  return createBulkNotifications({
+    userIds,
+    type: "payment",
+    title: "Monthly Bill Generated",
+    message: `Your bill for ${monthName} ${billingYear} has been generated. Please check your billing section for details.`,
+    priority: "high",
+  });
+}
+
+/**
+ * Notify student when a late fee is applied
+ */
+export async function notifyLateFeeApplied(
+  userId: string,
+  lateFee: number,
+  paymentType: string
+) {
+  return createNotification({
+    userId,
+    type: "payment",
+    title: "Late Fee Applied",
+    message: `A late fee of ৳${lateFee.toLocaleString()} has been applied to your overdue ${paymentType.replace("_", " ")} payment. Please make the payment as soon as possible.`,
+    priority: "high",
+  });
+}
+
+/**
+ * Notify student about account deactivation
+ */
+export async function notifyAccountDeactivated(
+  userId: string
+) {
+  return createNotification({
+    userId,
+    type: "system",
+    title: "Account Deactivated",
+    message: "Your account has been deactivated. Please contact the administration for more information.",
+    priority: "high",
+  });
+}
+
+/**
+ * Notify student about account reactivation
+ */
+export async function notifyAccountReactivated(
+  userId: string
+) {
+  return createNotification({
+    userId,
+    type: "system",
+    title: "Account Reactivated",
+    message: "Your account has been reactivated. Welcome back to HallBridge!",
+    priority: "normal",
+  });
+}
+
+/**
  * Broadcast system notice to all active users
  */
 export async function broadcastNotice(

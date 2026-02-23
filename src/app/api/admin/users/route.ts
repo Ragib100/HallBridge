@@ -7,6 +7,7 @@ import User from "@/models/User";
 import Room from "@/models/Room";
 import { sendRoomAllocationEmail, sendRejectionEmail } from "@/lib/email";
 import { getBDDate } from "@/lib/dates";
+import { notifyAccountApproved, notifyAccountRejected, notifyAccountDeactivated, notifyAccountReactivated } from "@/lib/notifications";
 
 // GET /api/admin/users - Get all users (admin only)
 export async function GET(request: Request) {
@@ -203,6 +204,14 @@ export async function PATCH(request: Request) {
           console.error("Failed to send room allocation email:", err);
         });
 
+        // Send in-app notification for account approval
+        notifyAccountApproved(
+          id,
+          room.roomNumber
+        ).catch((err) => {
+          console.error("Failed to send account approval notification:", err);
+        });
+
         return NextResponse.json({
           message: "Student approved and room allocated successfully.",
           user: {
@@ -235,6 +244,11 @@ export async function PATCH(request: Request) {
           console.error("Failed to send rejection email:", err);
         });
 
+        // Send in-app notification for account rejection
+        notifyAccountRejected(id).catch((err) => {
+          console.error("Failed to send account rejection notification:", err);
+        });
+
         return NextResponse.json({
           message: "Student request rejected",
           user: {
@@ -256,6 +270,17 @@ export async function PATCH(request: Request) {
 
     if (!updatedUser) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    // Send in-app notification for activation/deactivation
+    if (isActive === false) {
+      notifyAccountDeactivated(id).catch((err) => {
+        console.error("Failed to send deactivation notification:", err);
+      });
+    } else if (isActive === true) {
+      notifyAccountReactivated(id).catch((err) => {
+        console.error("Failed to send reactivation notification:", err);
+      });
     }
 
     return NextResponse.json({

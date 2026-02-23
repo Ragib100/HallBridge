@@ -5,6 +5,7 @@ import connectDB from "@/lib/db";
 import Payment from "@/models/Payment";
 import SystemSettings from "@/models/SystemSettings";
 import { getBDDate } from "@/lib/dates";
+import { notifyLateFeeApplied } from "@/lib/notifications";
 
 export async function GET(req: NextRequest) {
     try {
@@ -68,6 +69,23 @@ export async function GET(req: NextRequest) {
         const messages = [];
         if (updateResponse.modifiedCount > 0) {
             messages.push(`Applied late fees to ${updateResponse.modifiedCount} overdue payment(s).`);
+
+            // Notify each student who got a late fee
+            const overduePayments = await Payment.find({
+                status: "pending",
+                dueDate: { $lt: currentDate },
+                lateFee: { $gt: 0 },
+            }).select("student lateFee type").lean();
+
+            for (const payment of overduePayments) {
+                notifyLateFeeApplied(
+                    payment.student.toString(),
+                    payment.lateFee,
+                    payment.type || "hall_fee"
+                ).catch((err) => {
+                    console.error("Failed to send late fee notification:", err);
+                });
+            }
         }
 
         const message = messages.length > 0 ? messages.join(" ") : "No payments required late fee updates.";

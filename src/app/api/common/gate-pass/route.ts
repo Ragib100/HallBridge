@@ -5,7 +5,7 @@ import User from "@/models/User";
 import GatePass from "@/models/GatePass";
 import { getCurrentDateBD } from "@/lib/dates";
 import mongoose from "mongoose";
-import { notifyGatePassUpdated } from "@/lib/notifications";
+import { notifyGatePassUpdated, notifyGatePassCreated, createNotification } from "@/lib/notifications";
 import { getBDDate } from "@/lib/dates";
 
 // GET /api/gate-pass - Get user's gate passes
@@ -141,6 +141,16 @@ export async function POST(request: Request) {
       { new: true, upsert: true }
     );
 
+    // Notify security staff about new gate pass request
+    const studentUser = await User.findById(session).select("fullName");
+    notifyGatePassCreated(
+      studentUser?.fullName || "A student",
+      destination,
+      outDate
+    ).catch((err) => {
+      console.error("Failed to send gate pass creation notification:", err);
+    });
+
     return NextResponse.json(
       {
         message: "Gate pass submitted successfully",
@@ -251,6 +261,21 @@ export async function PATCH(request: Request) {
           checkedOutBy: userId
         });
         
+        // Notify student about exit verification
+        createNotification({
+          userId: gatePass.studentId.toString(),
+          type: "gatepass",
+          title: "Exit Verified",
+          message: "Your gate pass exit has been verified. Have a safe trip!",
+          priority: "normal",
+          relatedEntity: {
+            type: "gatepass",
+            id: gatePass._id.toString(),
+          },
+        }).catch((err) => {
+          console.error("Failed to send exit verification notification:", err);
+        });
+        
         return NextResponse.json(
           {
             message: "Gate pass exit verified successfully",
@@ -280,6 +305,23 @@ export async function PATCH(request: Request) {
           status: newStatus,
           actualReturnTime: now,
           checkedInBy: userId
+        });
+        
+        // Notify student about return verification
+        createNotification({
+          userId: gatePass.studentId.toString(),
+          type: "gatepass",
+          title: isLate ? "Late Return Recorded" : "Return Verified",
+          message: isLate
+            ? "Your return has been recorded as late. Please ensure timely returns in the future."
+            : "Your gate pass return has been verified. Welcome back!",
+          priority: isLate ? "high" : "normal",
+          relatedEntity: {
+            type: "gatepass",
+            id: gatePass._id.toString(),
+          },
+        }).catch((err) => {
+          console.error("Failed to send return verification notification:", err);
         });
         
         return NextResponse.json(

@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import Payment from "@/models/Payment";
 import User from "@/models/User";
 import { getBDDate } from "@/lib/dates";
+import { notifyPaymentReceived, notifyByRole } from "@/lib/notifications";
 
 // GET /api/billing - Get billing information with settings from database
 export async function GET(request: NextRequest) {
@@ -108,6 +109,38 @@ export async function POST(request: Request) {
         { status: 404 }
       );
     }
+
+    // Notify student about payment confirmation
+    // Find the updated payment to get the payment ID
+    const updatedPayment = await Payment.findOne({
+      student: session,
+      billingMonth: month,
+      billingYear: year,
+      status: "completed",
+    });
+
+    if (updatedPayment) {
+      notifyPaymentReceived(
+        session,
+        updatedPayment._id.toString(),
+        amount,
+        paymentMethod
+      ).catch((err) => {
+        console.error("Failed to send payment notification:", err);
+      });
+    }
+
+    // Notify financial staff about the payment
+    const student = await User.findById(session).select("fullName");
+    notifyByRole({
+      roles: ["accountant", "admin"],
+      type: "payment",
+      title: "Payment Received",
+      message: `${student?.fullName || "A student"} made a payment of \u09f3${amount.toLocaleString()} via ${paymentMethod}.`,
+      priority: "normal",
+    }).catch((err) => {
+      console.error("Failed to send payment notification to staff:", err);
+    });
 
     return NextResponse.json(
       { message: "Payment processed successfully" },

@@ -8,6 +8,7 @@ import Meal from "@/models/Meal"
 import GuestMeal from "@/models/GuestMeal"
 import Laundry from "@/models/Laundry"
 import { getBDDate } from "@/lib/dates"
+import { notifyBillingGenerated } from "@/lib/notifications"
 
 export async function GET(req: NextRequest) {
     try {
@@ -193,6 +194,19 @@ export async function GET(req: NextRequest) {
         });
 
         await Payment.insertMany(paymentsToInsert);
+
+        // Notify all students about billing generation
+        const studentIdStrings = students.map(s => String(s._id));
+        if (studentIdStrings.length > 0) {
+            notifyBillingGenerated(
+                studentIdStrings,
+                billingMonth,
+                billingYear
+            ).catch((err) => {
+                console.error("Failed to send billing notifications:", err);
+            });
+        }
+
         // console.log(`Billing for ${billingMonth} ${billingYear} processed successfully for ${students.length} students.`);
         return NextResponse.json({ message: "Billing processed successfully" }, { status: 200 });
     }

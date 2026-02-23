@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import Room from "@/models/Room";
 import User from "@/models/User";
 import { getBDDate } from "@/lib/dates";
+import { notifyRoomAllocated, notifyRoomDeallocated } from "@/lib/notifications";
 
 // GET /api/admin/rooms - Get all rooms with filters
 export async function GET(request: Request) {
@@ -180,6 +181,16 @@ export async function POST(request: Request) {
     };
     await student.save();
 
+    // Notify student about room allocation
+    notifyRoomAllocated(
+      studentId,
+      room.roomNumber,
+      bedNumber,
+      room.floor
+    ).catch((err) => {
+      console.error("Failed to send room allocation notification:", err);
+    });
+
     return NextResponse.json({
       message: "Room allocated successfully",
       room: {
@@ -266,6 +277,14 @@ export async function PATCH(request: Request) {
         // Remove room allocation from student
         await User.findByIdAndUpdate(studentId, {
           $unset: { roomAllocation: 1 },
+        });
+
+        // Notify student about room deallocation
+        notifyRoomDeallocated(
+          studentId.toString(),
+          room.roomNumber
+        ).catch((err) => {
+          console.error("Failed to send room deallocation notification:", err);
         });
       }
 

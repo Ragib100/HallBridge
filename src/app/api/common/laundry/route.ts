@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import Laundry, { LAUNDRY_STATUSES } from "@/models/Laundry";
 import { getBDDate } from "@/lib/dates";
+import { notifyLaundryStatusUpdate, notifyByRole } from "@/lib/notifications";
 
 // GET /api/common/laundry - Get laundry requests
 export async function GET(request: Request) {
@@ -145,6 +146,17 @@ export async function POST(request: Request) {
 
     await laundryRequest.save();
 
+    // Notify laundry staff about new request
+    notifyByRole({
+      roles: ["laundry_manager", "admin"],
+      type: "laundry",
+      title: "New Laundry Request",
+      message: `A new laundry request (${requestId}) with ${totalItems} items has been submitted.`,
+      priority: "normal",
+    }).catch((err) => {
+      console.error("Failed to send laundry request notification:", err);
+    });
+
     return NextResponse.json({
       message: "Laundry request submitted successfully",
       request: {
@@ -216,6 +228,18 @@ export async function PATCH(request: Request) {
     laundryRequest.handledBy = session;
 
     await laundryRequest.save();
+
+    // Notify student about laundry status update
+    if (status && ["collected", "washing", "ready", "delivered"].includes(status)) {
+      notifyLaundryStatusUpdate(
+        laundryRequest.student.toString(),
+        laundryRequest._id.toString(),
+        status,
+        laundryRequest.requestId
+      ).catch((err) => {
+        console.error("Failed to send laundry status notification:", err);
+      });
+    }
 
     return NextResponse.json({
       message: "Laundry request updated successfully",
