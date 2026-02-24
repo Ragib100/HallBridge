@@ -7,7 +7,7 @@ import { generateInvoicePDF } from "@/lib/generate-invoice-pdf";
 import { Spinner } from "@/components/ui/spinner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { getBDDate } from "@/lib/dates";
-import {AlertTriangle } from "@boxicons/react"
+import { AlertTriangle } from "@boxicons/react"
 
 interface Bill {
     seatrent: number;

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Check } from "@boxicons/react";
 
 type Step = "email" | "otp" | "reset" | "success";
 
@@ -265,9 +266,7 @@ export default function ForgotPasswordPage() {
                 href="/auth/login"
                 className="text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-2"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
+                <ArrowLeft />
                 Back to login
               </Link>
             </div>
@@ -343,9 +342,7 @@ export default function ForgotPasswordPage() {
                 }}
                 className="text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-2 cursor-pointer"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
+                <ArrowLeft />
                 Change email
               </button>
             </div>
@@ -415,9 +412,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center">
           <div className="mb-6 flex justify-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <Check fill="#338a25" removePadding />
             </div>
           </div>
 
