@@ -280,6 +280,7 @@ export default function SecurityPage() {
                         <td className="px-6 py-4">
                           <div>
                             <p className="text-gray-900">{pass.outTime}</p>
+                            <p className="text-sm text-gray-500">{formatDateTime(pass.outDate)}</p>
                             {pass.actualOutTime && (
                               <p className="text-xs text-green-600">Actual: {formatTime(pass.actualOutTime)}</p>
                             )}

@@ -6,8 +6,11 @@
  */
 
 import { connectDB, disconnectDB } from "../lib/db";
+import mongoose from "mongoose";
 import User from "../../src/models/User";
 import VoteMeal from "../../src/models/VoteMeal";
+import Meal from "../../src/models/Meal";
+import { getCurrentDateBD } from "../../src/lib/dates";
 
 export async function seedVoteMeals(): Promise<{ success: number; skipped: number; failed: number }> {
   console.log("\n📌 Seeding Meal Votes...");
@@ -45,18 +48,51 @@ export async function seedVoteMeals(): Promise<{ success: number; skipped: numbe
   ];
 
   for (const student of students) {
+    // For demo, randomly pick a mealTime
+    const mealTimes = ["breakfast", "lunch", "dinner"];
+    const mealTime = mealTimes[Math.floor(Math.random() * mealTimes.length)];
+    const dbSession = await mongoose.startSession();
+    dbSession.startTransaction();
     try {
       // Random rating between 1-5
       const rating = Math.floor(Math.random() * 5) + 1;
       const comment = comments[Math.floor(Math.random() * comments.length)];
+      const currentDate = getCurrentDateBD();
 
-      await VoteMeal.create({
+      // Create VoteMeal
+      const voteMeal = new VoteMeal({
         studentId: student._id,
         rating,
         comments: comment,
+        date: currentDate,
       });
+      const savedVoteMeal = await voteMeal.save({ session: dbSession });
+      if (!savedVoteMeal) {
+        await dbSession.abortTransaction();
+        dbSession.endSession();
+        failed++;
+        continue;
+      }
+
+      // Update Meal document for the student for today
+      const mealUpdate = await Meal.findOneAndUpdate(
+        { studentId: student._id, date: currentDate },
+        { [`${mealTime}_rating`]: savedVoteMeal._id },
+        { session: dbSession, new: true }
+      );
+      if (!mealUpdate) {
+        await dbSession.abortTransaction();
+        dbSession.endSession();
+        skipped++;
+        continue;
+      }
+
+      await dbSession.commitTransaction();
+      dbSession.endSession();
       success++;
     } catch (error) {
+      await dbSession.abortTransaction();
+      dbSession.endSession();
       console.error(`  ❌ Failed to create vote for ${student.fullName}:`, error);
       failed++;
     }

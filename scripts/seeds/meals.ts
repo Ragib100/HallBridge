@@ -8,7 +8,7 @@
 import { connectDB, disconnectDB } from "../lib/db";
 import User from "../../src/models/User";
 import Meal from "../../src/models/Meal";
-import { getBDDateWithOffset } from "../../src/lib/dates";
+import { getPreviousDateBD, getCurrentDateBD, getNextDateBD } from "../../src/lib/dates";
 
 export async function seedMeals(): Promise<{ success: number; skipped: number; failed: number }> {
   console.log("\n📌 Seeding Meal Selections...");
@@ -34,9 +34,9 @@ export async function seedMeals(): Promise<{ success: number; skipped: number; f
 
   // Create meal selections for the last 30 days + today and tomorrow
   const dates = [];
-  for (let i = -30; i <= 1; i++) {
-    dates.push(getBDDateWithOffset(i));
-  }
+  dates.push(getPreviousDateBD()); // Yesterday
+  dates.push(getCurrentDateBD()); // Today
+  dates.push(getNextDateBD()); // Tomorrow
 
   for (const student of students) {
     for (const date of dates) {
