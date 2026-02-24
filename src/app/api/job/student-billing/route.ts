@@ -11,7 +11,7 @@ import { getBDDate } from "@/lib/dates"
 
 export async function GET(req: NextRequest) {
     try {
-        // Check for Vercel Cron authentication
+        // Check for Cron authentication
         const authHeader = req.headers.get("authorization");
         const cronSecret = process.env.CRON_SECRET;
         
