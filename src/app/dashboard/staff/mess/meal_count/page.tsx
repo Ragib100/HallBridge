@@ -96,6 +96,19 @@ export default function MealCountPage() {
         }
     }
 
+    const processTomorrowMeal = async () => {
+        try {
+            const response = await fetch('/api/job/tomorrow-meal');
+            if (!response.ok) {
+                throw new Error('Failed to process tomorrow\'s meal');
+            }
+            toast.success('Process Successful', 'Tomorrow\'s meal processed successfully.')
+        }
+        catch (error) {
+            toast.error('Process Failed', 'Failed to process tomorrow\'s meal. Please try again later.')
+        }
+    }
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-75">
@@ -108,12 +121,30 @@ export default function MealCountPage() {
         <div className="space-y-6">
             {/* Header */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
-                <div className="flex items-center gap-3">
-                    <span className="text-2xl">📋</span>
-                    <div>
-                        <h2 className="text-lg font-bold text-gray-800">Meal Count Overview</h2>
-                        <p className="text-sm text-gray-500">Students who opted in for meals</p>
+                <div className="flex items-center justify-between">
+                    
+                    {/* Left Section */}
+                    <div className="flex items-center gap-3">
+                        <span className="text-2xl">📋</span>
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-800">
+                                Meal Count Overview
+                            </h2>
+                            <p className="text-sm text-gray-500">
+                                Students who opted in for meals
+                            </p>
+                        </div>
                     </div>
+
+                    {/* Right Section (Button) */}
+                    <button
+                        type="button"
+                        onClick={processTomorrowMeal}
+                        className="bg-[#2D6A4F] hover:bg-[#245a42] text-white px-4 py-2 rounded-lg text-sm font-medium transition cursor-pointer"
+                    >
+                        Process Tomorrow's Meal
+                    </button>
+
                 </div>
             </div>
 

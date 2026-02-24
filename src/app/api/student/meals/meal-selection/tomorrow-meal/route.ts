@@ -137,50 +137,22 @@ export async function GET() {
 
         if (!meal) {
 
-            const currentDate = getCurrentDateBD();
-            const todayMeal = await Meal.findOne({
-                studentId,
-                date: currentDate
-            });
-
-            if (!todayMeal) {
-                const todayDefaultMeal = new Meal({
-                    studentId,
-                    date: tomorrowDate,
-                    breakfast: false,
-                    lunch: false,
-                    dinner: false,
-                    breakfast_rating: null,
-                    lunch_rating: null,
-                    dinner_rating: null
-                });
-                await todayDefaultMeal.save();
-
-                return NextResponse.json(
-                    {
-                        message: "No meal selection found for tomorrow or today, returning default selection for tomorrow",
-                        meal: todayDefaultMeal
-                    },
-                    { status: 200 }
-                )
-            }
-
-            const newMeal = new Meal({
+            const defaultMeal = new Meal({
                 studentId,
                 date: tomorrowDate,
-                breakfast: todayMeal.breakfast,
-                lunch: todayMeal.lunch,
-                dinner: todayMeal.dinner,
+                breakfast: false,
+                lunch: false,
+                dinner: false,
                 breakfast_rating: null,
                 lunch_rating: null,
                 dinner_rating: null
             });
-            await newMeal.save();
+            await defaultMeal.save();
 
             return NextResponse.json(
                 {
-                    message: "No meal selection found for tomorrow, returning today's selection as default",
-                    meal: newMeal
+                    message: "No meal selection found for tomorrow or today, returning default selection for tomorrow",
+                    meal: defaultMeal
                 },
                 { status: 200 }
             )

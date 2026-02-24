@@ -43,16 +43,16 @@ export default function GuestMeal() {
 		e.preventDefault();
 		setIsSubmitting(true);
 
-		if(!user) {
+		if (!user) {
 			console.error("No user logged in.");
 			setIsSubmitting(false);
 			return;
 		}
-		
+
 		try {
-			
+
 			const url = `/api/student/meals/meal-selection/guest-meal`;
-			const response = await fetch(url,{
+			const response = await fetch(url, {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json"
@@ -92,9 +92,18 @@ export default function GuestMeal() {
 		setFormData((prev) => ({ ...prev, [name]: value }));
 	};
 
-	const handleCheckboxChange = (meal: "breakfast" | "lunch" | "dinner") => {
-		setFormData((prev) => ({ ...prev, [meal]: !prev[meal] }));
+	const toggleMeal = (meal: "breakfast" | "lunch" | "dinner") => {
+		setFormData((prev) => ({
+			...prev,
+			[meal]: !prev[meal],
+		}));
 	};
+
+	const mealBtnStyle = (active: boolean) =>
+		`flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${active
+			? "border-[#2D6A4F] bg-[#2D6A4F]/5 scale-[0.98]"
+			: "border-gray-200 hover:border-gray-300"
+		}`;
 
 	return (
 		<div className="bg-white rounded-xl shadow-sm p-6 mt-6">
@@ -104,7 +113,7 @@ export default function GuestMeal() {
 				</svg>
 				<h2 className="text-lg font-bold text-gray-800">Guest Meal Registration</h2>
 			</div>
-			
+
 			<form onSubmit={handleSubmit} className="space-y-6">
 				<div className="space-y-2">
 					<label className="text-sm font-medium text-gray-700">Guest Name *</label>
@@ -180,70 +189,43 @@ export default function GuestMeal() {
 				</div>
 
 				<div className="space-y-3">
-					<label className="text-sm font-medium text-gray-700">Select Meals</label>
+					<label className="text-sm font-medium text-gray-700">
+						Select Meals
+					</label>
+
 					<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-						<label 
-							htmlFor="breakfast"
-							className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
-								formData.breakfast 
-									? 'border-[#2D6A4F] bg-[#2D6A4F]/5' 
-									: 'border-gray-200 hover:border-gray-300'
-							}`}
+						<button
+							type="button"
+							onClick={() => toggleMeal("breakfast")}
+							className={mealBtnStyle(formData.breakfast)}
 						>
-							<input
-								id="breakfast"
-								type="checkbox"
-								checked={formData.breakfast}
-								onChange={() => handleCheckboxChange("breakfast")}
-								className="sr-only"
-							/>
 							<span className="text-xl">🍳</span>
-							<span className="font-medium text-gray-700">Breakfast</span>
-						</label>
+							<span>Breakfast</span>
+						</button>
 
-						<label 
-							htmlFor="lunch"
-							className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
-								formData.lunch 
-									? 'border-[#2D6A4F] bg-[#2D6A4F]/5' 
-									: 'border-gray-200 hover:border-gray-300'
-							}`}
+						<button
+							type="button"
+							onClick={() => toggleMeal("lunch")}
+							className={mealBtnStyle(formData.lunch)}
 						>
-							<input
-								id="lunch"
-								type="checkbox"
-								checked={formData.lunch}
-								onChange={() => handleCheckboxChange("lunch")}
-								className="sr-only"
-							/>
 							<span className="text-xl">🍛</span>
-							<span className="font-medium text-gray-700">Lunch</span>
-						</label>
+							<span>Lunch</span>
+						</button>
 
-						<label 
-							htmlFor="dinner"
-							className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
-								formData.dinner 
-									? 'border-[#2D6A4F] bg-[#2D6A4F]/5' 
-									: 'border-gray-200 hover:border-gray-300'
-							}`}
+						<button
+							type="button"
+							onClick={() => toggleMeal("dinner")}
+							className={mealBtnStyle(formData.dinner)}
 						>
-							<input
-								id="dinner"
-								type="checkbox"
-								checked={formData.dinner}
-								onChange={() => handleCheckboxChange("dinner")}
-								className="sr-only"
-							/>
 							<span className="text-xl">🍽️</span>
-							<span className="font-medium text-gray-700">Dinner</span>
-						</label>
+							<span>Dinner</span>
+						</button>
 					</div>
 				</div>
 
-				<Button 
-					type="submit" 
-					className="w-full h-11 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium cursor-pointer" 
+				<Button
+					type="submit"
+					className="w-full h-11 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium cursor-pointer"
 					disabled={is_submitting}
 				>
 					{is_submitting ? (
