@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { Loading } from '@/components/ui/loading';
 
 interface LaundryItem {
   type: string;
@@ -130,11 +131,7 @@ export default function StudentLaundryPage() {
   const pastRequests = requests.filter(r => r.status === 'delivered');
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner className="w-6 h-6 text-[#2D6A4F]" />
-      </div>
-    );
+    return <Loading />;
   }
 
   return (

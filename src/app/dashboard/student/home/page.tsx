@@ -214,13 +214,17 @@ export default function HomePage() {
             </span>
           </div>
 
-          <p
-            className={`text-2xl font-bold
-              ${currentBill >= 10000 ? "text-red-800" : "text-gray-800"}
-            `}
-          >
-            ৳{currentBill}
-          </p>
+          {loading ? (
+            <div className="animate-pulse h-8 bg-gray-200 rounded w-20"></div>
+          ) : (
+            <p
+              className={`text-2xl font-bold
+                ${currentBill >= 10000 ? "text-red-800" : "text-gray-800"}
+              `}
+            >
+              ৳{currentBill}
+            </p>
+          )}
 
           {currentBill >= 10000 && (
             <p className="mt-2 text-sm text-red-700 font-medium">

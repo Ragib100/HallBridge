@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import PayNow from "@/components/student/pay_now";
 import { generateInvoicePDF } from "@/lib/generate-invoice-pdf";
 import { Spinner } from "@/components/ui/spinner";
+import { Loading } from "@/components/ui/loading";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { getBDDate } from "@/lib/dates";
 import { AlertTriangle } from "@boxicons/react"
@@ -195,11 +196,7 @@ export default function CurrentDuesPage() {
     ];
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <Spinner className="w-6 h-6 text-[#2D6A4F]" />
-            </div>
-        );
+        return <Loading />;
     }
 
     if (error || !billdata) {

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
     Select,
     SelectContent,
@@ -206,7 +207,7 @@ export default function NewRequestPage() {
                         disabled={isSubmitting}
                         className="w-full h-12 bg-[#2D6A4F] hover:bg-[#245a42] text-white font-medium cursor-pointer disabled:opacity-50"
                     >
-                        {isSubmitting ? 'Submitting...' : (
+                        {isSubmitting ? <Spinner /> : (
                             <span className="flex items-center gap-2">
                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

@@ -8,7 +8,11 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { MealDocument } from "@/models/Meal";
 import { useToast } from "@/components/ui/toast";
 
-export default function TomorrowMeals() {
+interface TomorrowMealsProps {
+    setLoading?: (loading: boolean) => void;
+}
+
+export default function TomorrowMeals({ setLoading }: TomorrowMealsProps) {
     const { user } = useCurrentUser();
     const { toast } = useToast();
     const [breakfast, setBreakfast] = useState<boolean>(false);
@@ -33,6 +37,7 @@ export default function TomorrowMeals() {
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error('Error fetching meal selection:', errorData?.message || 'Unknown error');
+                    setLoading?.(false);
                     return;
                 }
 
@@ -48,9 +53,11 @@ export default function TomorrowMeals() {
                     setLunch(data.meal.lunch);
                     setDinner(data.meal.dinner);
                 }
+                setLoading?.(false);
             }
             catch (error) {
                 console.error('Error fetching meal selection:', error);
+                setLoading?.(false);
             }
         };
 

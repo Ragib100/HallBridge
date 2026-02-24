@@ -11,6 +11,7 @@ import {
 import { useState, useEffect } from "react";
 import { getCurrentDateBD, getDayFromDateBD } from "@/lib/dates";
 import { CalendarWeek } from "@boxicons/react"
+import { Loading } from "@/components/ui/loading";
 
 interface WeeklyMenu {
     day: string;
@@ -29,6 +30,7 @@ export default function WeeklyMenu() {
     const today = getToday();
 
     const [meals, setMeals] = useState<WeeklyMenu[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchWeeklyMenu = async () => {
@@ -54,11 +56,17 @@ export default function WeeklyMenu() {
             catch (error) {
                 console.error("Error fetching weekly menu:", error);
                 return;
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchWeeklyMenu();
     }, []);
+
+    if (loading) {
+        return <Loading />;
+    }
 
     return (
         <div className="space-y-6">
