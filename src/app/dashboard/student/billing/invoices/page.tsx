@@ -118,9 +118,7 @@ export default function InvoicesPage() {
                         
                         // Calculate due date (last day of the billing month)
                         const monthName = getMonthName(firstPayment.billingMonth, firstPayment.billingYear);
-                        const [month, year] = monthName.split(' ');
-                        const lastDay = new Date(parseInt(year), new Date(`${month} 1`).getMonth() + 1, 0).getDate();
-                        const dueDate = `${month.slice(0, 3)} ${lastDay}, ${year}`;
+                        const dueDate = new Date(firstPayment.dueDate).toLocaleDateString('en-GB');
                         
                         invoicesList.push({
                             invoice_id: firstPayment.paymentId,
@@ -169,7 +167,7 @@ export default function InvoicesPage() {
         
         generateInvoicePDF(
             invoice,
-            dueDate,
+            invoice.dueDate || dueDate,
             {
                 name: user?.fullName || "Student",
                 studentId: user?.studentId || "N/A",
