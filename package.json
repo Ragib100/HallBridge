@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "Digital Hall Management System - A streamlined web application for university residential hall operations",
+  "pnpm": {
+    "onlyBuiltDependencies": ["bcrypt", "core-js", "esbuild"]
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
