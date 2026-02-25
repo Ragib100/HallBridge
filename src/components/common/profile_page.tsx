@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
+import ChangePassword from "./change_password";
 
 export type UserRole = "admin" | "student" | "staff";
 
@@ -453,11 +454,9 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
             <p className="font-medium text-gray-800">Password</p>
-            <p className="text-sm text-gray-500">Last changed 30 days ago</p>
+            <p className="text-sm text-gray-500">Update your account password</p>
           </div>
-          <button className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium cursor-pointer">
-            Change Password
-          </button>
+          <ChangePassword />
         </div>
       </div>
     </div>
