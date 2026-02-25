@@ -22,7 +22,7 @@ export default function Home() {
         </div>
         <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-4">
           <Link
-            href="/auth/login"
+            href={user ? "/dashboard" : "/auth/login"}
             className="w-24 py-1.5 text-center text-sm text-white border border-white rounded-md hover:bg-white/10 transition-colors font-medium sm:w-28 sm:py-2 sm:text-base"
           >
             {user ? "Dashboard" : "Log In"}
