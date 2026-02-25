@@ -1,6 +1,6 @@
 import TopNavigation from "@/components/common/top_navigation";
 
-export default function MealsLayout( { children } : { children: React.ReactNode } ) {
+export default function BillingLayout( { children } : { children: React.ReactNode } ) {
 
     const nav_items = [
         { name: 'Current Dues', path: '/dashboard/student/billing/current_dues' },

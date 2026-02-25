@@ -67,8 +67,7 @@ export async function proxy(request: NextRequest) {
             // ─────────────────────────────────────────
             if (
                 !user.mustChangePassword &&
-                (pathname === "/" ||
-                    pathname === "/dashboard" ||
+                (pathname === "/dashboard" ||
                     pathname.startsWith("/auth/"))
             ) {
                 if (user.userType === "admin") {
@@ -88,6 +87,11 @@ export async function proxy(request: NextRequest) {
                         new URL("/dashboard/student/home", request.url)
                     );
                 }
+
+                // Unknown role
+                return NextResponse.redirect(
+                    new URL("/unauthorized", request.url)
+                );
             }
 
             // ─────────────────────────────────────────

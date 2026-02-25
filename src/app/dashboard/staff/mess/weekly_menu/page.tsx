@@ -25,7 +25,7 @@ interface Meal {
 
 const dayOrder = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
-export default function GuestMeal() {
+export default function WeeklyMenu() {
     const [meals, setMeals] = useState<Meal[]>([])
     const [loading, setLoading] = useState(true)
     const [editingDay, setEditingDay] = useState<string | null>(null)
@@ -118,7 +118,113 @@ export default function GuestMeal() {
                 <p className="text-gray-500">Manage this week's meal schedule</p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+                {meals.map((meal) => {
+                    const isToday = meal.day === today
+                    const isEditing = editingDay === meal.day
+                    const currentMeal = isEditing ? editedMeal! : meal
+
+                    return (
+                        <div
+                            key={meal.day}
+                            className={`bg-white rounded-xl shadow-sm overflow-hidden ${
+                                isToday ? "border-2 border-[#2D6A4F]" : "border border-gray-200"
+                            }`}
+                        >
+                            <div className={`p-4 flex items-center justify-between ${isToday ? "bg-[#2D6A4F]" : "bg-gray-50"}`}>
+                                <h2 className={`font-bold text-lg ${isToday ? "text-white" : "text-gray-800"}`}>
+                                    {meal.day}
+                                    {isToday && <span className="text-xs ml-2 bg-white text-[#2D6A4F] px-2 py-0.5 rounded-full">Today</span>}
+                                </h2>
+                                {!isEditing && (
+                                    <Button
+                                        onClick={() => handleEdit(meal)}
+                                        size="sm"
+                                        disabled={isToday}
+                                        className={`cursor-pointer ${
+                                            isToday
+                                                ? "bg-gray-300 cursor-not-allowed text-gray-500"
+                                                : "bg-white text-[#2D6A4F] hover:bg-gray-100"
+                                        }`}
+                                    >
+                                        {isToday ? "Can't Edit" : "Edit"}
+                                    </Button>
+                                )}
+                            </div>
+                            <div className="p-4 space-y-3">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-lg">🍳</span>
+                                        <span className="font-semibold text-gray-700">Breakfast</span>
+                                    </div>
+                                    {isEditing ? (
+                                        <Input
+                                            value={currentMeal.breakfast}
+                                            onChange={(e) => handleInputChange("breakfast", e.target.value)}
+                                            className="mt-1"
+                                        />
+                                    ) : (
+                                        <p className="text-gray-600 pl-7">{meal.breakfast}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-lg">🍛</span>
+                                        <span className="font-semibold text-gray-700">Lunch</span>
+                                    </div>
+                                    {isEditing ? (
+                                        <Input
+                                            value={currentMeal.lunch}
+                                            onChange={(e) => handleInputChange("lunch", e.target.value)}
+                                            className="mt-1"
+                                        />
+                                    ) : (
+                                        <p className="text-gray-600 pl-7">{meal.lunch}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-lg">🍽️</span>
+                                        <span className="font-semibold text-gray-700">Dinner</span>
+                                    </div>
+                                    {isEditing ? (
+                                        <Input
+                                            value={currentMeal.dinner}
+                                            onChange={(e) => handleInputChange("dinner", e.target.value)}
+                                            className="mt-1"
+                                        />
+                                    ) : (
+                                        <p className="text-gray-600 pl-7">{meal.dinner}</p>
+                                    )}
+                                </div>
+                                {isEditing && (
+                                    <div className="flex gap-2 pt-1">
+                                        <Button
+                                            onClick={handleSave}
+                                            size="sm"
+                                            className="bg-[#2D6A4F] hover:bg-[#1B4332] cursor-pointer flex-1"
+                                        >
+                                            Save
+                                        </Button>
+                                        <Button
+                                            onClick={handleCancel}
+                                            size="sm"
+                                            variant="outline"
+                                            className="border-gray-300 text-gray-600 hover:bg-gray-100 cursor-pointer flex-1"
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden">
                 <Table className="min-w-full">
                     <TableHeader>
                         <TableRow className="bg-[#2D6A4F]">

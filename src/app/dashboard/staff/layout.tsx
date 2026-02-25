@@ -220,6 +220,18 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
     setSidebarOpen(false);
   }, [pathname]);
 
+  // Lock body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen]);
+
   // Get navigation items based on staff role
   const navItems = getNavItemsForRole(user?.staffRole);
 
@@ -270,7 +282,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className={`
         fixed inset-y-0 left-0 z-50
-        w-64 bg-[#1a1d21] flex flex-col h-screen overflow-y-auto
+        w-64 bg-[#1a1d21] flex flex-col
         transform transition-transform duration-300 ease-in-out
         lg:translate-x-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -287,13 +299,15 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
 
         {/* Logo */}
         <div className="p-4">
-          <Image
-            src="/logos/vector/default-monochrome-white2.svg"
-            alt="HallBridge"
-            width={140}
-            height={32}
-            className="h-8 w-auto"
-          />
+          <button className="cursor-pointer" onClick={() => router.push("/")}>
+            <Image
+              src="/logos/vector/default-monochrome-white2.svg"
+              alt="HallBridge"
+              width={140}
+              height={32}
+              className="h-8 w-auto"
+            />
+          </button>
         </div>
 
         {/* Menu Label */}

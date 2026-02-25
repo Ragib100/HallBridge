@@ -97,7 +97,7 @@ function LoginForm() {
       }
 
       // Let the proxy handle routing based on user type and mustChangePassword
-      router.push("/");
+      router.push("/dashboard");
     } catch (err) {
       setError("Unable to sign in. Please try again.");
     } finally {

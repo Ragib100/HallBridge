@@ -20,16 +20,16 @@ export default function Home() {
             className="h-10 w-auto"
           />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-4">
           <Link
             href="/auth/login"
-            className="px-6 py-2 text-white border border-white rounded-md hover:bg-white/10 transition-colors font-medium"
+            className="w-24 py-1.5 text-center text-sm text-white border border-white rounded-md hover:bg-white/10 transition-colors font-medium sm:w-28 sm:py-2 sm:text-base"
           >
             {user ? "Dashboard" : "Log In"}
           </Link>
           <Link
             href="/auth/register"
-            className="px-6 py-2 bg-[#2D6A4F] text-white rounded-md hover:bg-[#245840] transition-colors font-medium"
+            className="w-24 py-1.5 text-center text-sm bg-[#2D6A4F] text-white rounded-md hover:bg-[#245840] transition-colors font-medium sm:w-28 sm:py-2 sm:text-base"
           >
             Sign Up
           </Link>
@@ -41,7 +41,7 @@ export default function Home() {
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/lading image.png"
+            src="/images/landing image.png"
             alt="Hall Building"
             fill
             className="object-cover"
@@ -167,7 +167,7 @@ export default function Home() {
                 <h3 className="text-center font-bold text-gray-800 mb-2">
                   Accommodation &
                   <br />
-                  & Room Management
+                  Room Management
                 </h3>
                 <p className="text-center text-gray-500 text-sm">
                   Oversee room allocations
