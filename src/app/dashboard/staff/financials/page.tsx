@@ -535,7 +535,7 @@ export default function FinancialsPage() {
                 <p className="text-sm">No transactions recorded for this period</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+              <div className="divide-y divide-gray-100 max-h-150 overflow-y-auto">
                 {data.transactions.map((txn) => (
                   <div key={txn.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                     <div className="flex items-center gap-4">
