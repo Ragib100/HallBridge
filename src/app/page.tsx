@@ -75,7 +75,7 @@ export default function Home() {
               <button
                 className="flex items-center gap-2 text-white hover:text-white/80 transition-colors font-medium cursor-pointer"
                 onClick={() => {
-                  const videoUrl = process.env.NEXT_PUBLIC_DEMO_VIDEO_URL || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+                  const videoUrl = process.env.NEXT_PUBLIC_DEMO_VIDEO_URL || "https://www.youtube.com/watch?v=uqgMNB4NMdE";
                   window.open(videoUrl, "_blank");
                 }}
               >
