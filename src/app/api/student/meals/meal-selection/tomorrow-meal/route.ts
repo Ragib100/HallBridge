@@ -134,25 +134,55 @@ export async function GET() {
             studentId,
             date: tomorrowDate
         });
+        console.log("Meal found for tomorrow:", meal);
 
         if (!meal) {
 
-            const defaultMeal = new Meal({
+            const currentDate = getCurrentDateBD();
+            const todayMeal = await Meal.findOne({
+                studentId,
+                date: currentDate
+            });
+            console.log("Meal found for today:", todayMeal);
+
+            if (!todayMeal) {
+                const defaultMeal = new Meal({
+                    studentId,
+                    date: tomorrowDate,
+                    breakfast: false,
+                    lunch: false,
+                    dinner: false,
+                    breakfast_rating: null,
+                    lunch_rating: null,
+                    dinner_rating: null
+                });
+                await defaultMeal.save();
+
+                return NextResponse.json(
+                    {
+                        message: "No meal selection found for tomorrow or today, returning default selection for tomorrow",
+                        meal: defaultMeal
+                    },
+                    { status: 200 }
+                )
+            }
+
+            const newMeal = new Meal({
                 studentId,
                 date: tomorrowDate,
-                breakfast: false,
-                lunch: false,
-                dinner: false,
+                breakfast: todayMeal.breakfast,
+                lunch: todayMeal.lunch,
+                dinner: todayMeal.dinner,
                 breakfast_rating: null,
                 lunch_rating: null,
                 dinner_rating: null
             });
-            await defaultMeal.save();
+            await newMeal.save();
 
             return NextResponse.json(
                 {
-                    message: "No meal selection found for tomorrow or today, returning default selection for tomorrow",
-                    meal: defaultMeal
+                    message: "No meal selection found for tomorrow, returning today's selection as default",
+                    meal: newMeal
                 },
                 { status: 200 }
             )
