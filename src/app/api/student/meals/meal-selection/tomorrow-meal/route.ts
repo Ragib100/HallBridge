@@ -134,7 +134,7 @@ export async function GET() {
             studentId,
             date: tomorrowDate
         });
-        console.log("Meal found for tomorrow:", meal);
+        // console.log("Meal found for tomorrow:", meal);
 
         if (!meal) {
 
@@ -143,7 +143,6 @@ export async function GET() {
                 studentId,
                 date: currentDate
             });
-            console.log("Meal found for today:", todayMeal);
 
             if (!todayMeal) {
                 const defaultMeal = new Meal({
@@ -156,7 +155,6 @@ export async function GET() {
                     lunch_rating: null,
                     dinner_rating: null
                 });
-                await defaultMeal.save();
 
                 return NextResponse.json(
                     {
@@ -177,7 +175,6 @@ export async function GET() {
                 lunch_rating: null,
                 dinner_rating: null
             });
-            await newMeal.save();
 
             return NextResponse.json(
                 {

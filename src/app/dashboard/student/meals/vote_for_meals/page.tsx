@@ -32,7 +32,7 @@ export default function VoteForMealsPage() {
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.log("Error fetching today's meal info:", errorData?.message || "Unknown error");
+                    // console.log("Error fetching today's meal info:", errorData?.message || "Unknown error");
                     setIsLoading(false);
                     return;
                 }

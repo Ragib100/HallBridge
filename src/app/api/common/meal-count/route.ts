@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     // Get the appropriate date string in BD timezone
     const dateString = day === "tomorrow" ? getNextDateBD() : getCurrentDateBD();
     
-    console.log(`Fetching meal counts for date: ${dateString}`);
+    // console.log(`Fetching meal counts for date: ${dateString}`);
 
     const [breakfast, lunch, dinner] = await Promise.all([
       Meal.countDocuments({

@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         }
 
         const { rating, feedback } = await request.json();
-        console.log("Received rating:", rating, "and feedback:", feedback);
+        // console.log("Received rating:", rating, "and feedback:", feedback);
 
         if (typeof rating !== "number" || rating < 1 || rating > 5) {
             return NextResponse.json(

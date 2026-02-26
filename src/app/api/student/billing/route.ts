@@ -60,7 +60,7 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const { amount, paymentMethod, billingMonth, billingYear, description } = body;
-    console.log("Payment request body:", body);
+    // console.log("Payment request body:", body);
 
     if (!amount || !paymentMethod) {
       return NextResponse.json({ message: "Amount and payment method are required" }, { status: 400 });

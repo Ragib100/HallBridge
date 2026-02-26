@@ -10,7 +10,7 @@ export default function TomorrowMeals() {
     const [dinner, setDinner] = useState<boolean>(false);
     
     useEffect(() => {
-        console.log({breakfast, lunch, dinner});
+        // console.log({breakfast, lunch, dinner});
     }, [breakfast, lunch, dinner]);
     
     return (

@@ -109,7 +109,7 @@ export default function CurrentDuesPage() {
                     
                     let totalAmount = 0;
                     let combinedPaymentId = '';
-                    console.log('Current period payments:', currentPeriodPayments);
+                    // console.log('Current period payments:', currentPeriodPayments);
                     
                     currentPeriodPayments.forEach((payment: any) => {
                         totalAmount += payment.finalAmount || payment.amount;
