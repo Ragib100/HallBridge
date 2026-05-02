@@ -182,6 +182,11 @@ export default function ProfilePage({ initialData, onSave }: ProfilePageProps) {
               width={96}
               height={96}
               className="w-24 h-24 rounded-full object-cover border-4 border-[#2D6A4F]/20"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/default_profile.svg";
+                target.srcset = "/default_profile.svg";
+              }}
             />
             {isEditing && (
               <>

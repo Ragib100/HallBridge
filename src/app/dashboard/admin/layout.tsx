@@ -251,6 +251,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 width={32}
                 height={32}
                 className="w-8 h-8 rounded-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/default_profile.svg";
+                  target.srcset = "/default_profile.svg";
+                }}
               />
               <span className="hidden md:block text-sm font-medium text-gray-700">{displayName}</span>
             </button>
