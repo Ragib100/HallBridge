@@ -1,4 +1,6 @@
-import bcrypt from "bcryptjs";
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.EMAIL_API_SECRET!);
 const APP_NAME = "HallBridge";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -13,25 +15,19 @@ export interface EmailOptions {
  * Send an email using the configured provider (SMTP)
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  const secret: string = process.env.EMAIL_API_SECRET!;
-  try {
-    const res = await fetch(process.env.EMAIL_API_URL!, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text,
-        secret: secret
-      }),
-    });
+  const {data, error} = await resend.emails.send({
+    from: process.env.EMAIL_FROM!,
+    to: options.to,
+    subject: options.subject,
+    html: options.html,
+    text: options.text
+  });
 
-    return res.ok;
-  } catch (err) {
-    console.error("[EMAIL API ERROR]", err);
+  if (error) {
+    console.error("[EMAIL API ERROR]", error);
     return false;
   }
+  return true;
 }
 
 /**
