@@ -12,7 +12,7 @@ export interface EmailOptions {
 }
 
 /**
- * Send an email using the configured provider (SMTP)
+ * Send an email using Resend API
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   const {data, error} = await resend.emails.send({

@@ -19,7 +19,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "email-server": "nodemon email_server.js",
     "seed": "npx tsx scripts/seed.ts",
     "seed:users": "npx tsx scripts/seeds/users.ts",
     "seed:maintenance": "npx tsx scripts/seeds/maintenance.ts",

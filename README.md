@@ -109,9 +109,7 @@ The platform serves three user roles — **Students**, **Staff** (with specializ
 | **MongoDB + Mongoose 8** | Database and ODM |
 | **bcrypt / bcryptjs** | Password hashing |
 | **Supabase** | File storage (profile images) |
-| **Nodemailer** | Email delivery (via separate email server) |
-| **sanitize-html** | HTML sanitization for email content |
-| **express-rate-limit** | Rate limiting on email server |
+| **Resend** | Email delivery API |
 
 ### DevOps & Tooling
 | Technology | Purpose |
@@ -145,9 +143,9 @@ The platform serves three user roles — **Students**, **Staff** (with specializ
 └──────┬─────────────┬────────────────────────────┘
        │             │
 ┌──────▼──────┐ ┌────▼─────┐  ┌──────────────────┐
-│  MongoDB    │ │ Supabase │  │  Email Server    │
-│ (Mongoose)  │ │ Storage  │  │  (Express +      │
-│             │ │ (Images) │  │   Nodemailer)    │
+│  MongoDB    │ │ Supabase │  │   Resend API     │
+│ (Mongoose)  │ │ Storage  │  │   (Emails)       │
+│             │ │ (Images) │  │                  │
 └─────────────┘ └──────────┘  └──────────────────┘
 ```
 
@@ -160,7 +158,7 @@ The platform serves three user roles — **Students**, **Staff** (with specializ
 - pnpm (`npm install -g pnpm`)
 - MongoDB instance (local or Atlas)
 - Supabase project (for image storage)
-- SMTP credentials (for email service)
+- Resend API key (for email service)
 
 ### Installation
 
@@ -184,14 +182,6 @@ pnpm dev
 
 The application will be available at [http://localhost:3000](http://localhost:3000).
 
-### Running the Email Server
-
-```bash
-# In a separate terminal
-cd email-server
-node email_server.js
-```
-
 ---
 
 ## Environment Variables
@@ -206,26 +196,15 @@ MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/<database>
 NEXT_PUBLIC_SUPABASE_URL=https://<project-id>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 
-# Email Server
-EMAIL_API_URL=http://localhost:4000/send-email
-EMAIL_API_SECRET=<shared-secret>
+# Email Service (Resend)
+EMAIL_API_SECRET=<resend-api-key>
+EMAIL_FROM=noreply@yourdomain.com
 
 # App URL
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Demo Video URL (optional, landing page)
 NEXT_PUBLIC_DEMO_VIDEO_URL=<youtube-url>
-```
-
-For the email server, create `.env.email`:
-
-```env
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=<email>
-SMTP_PASS=<password>
-EMAIL_API_SECRET=<shared-secret>
 ```
 
 ---
@@ -466,18 +445,12 @@ OTP-based password reset with 10-minute TTL, brute-force attempt tracking, and v
 
 ## Email Service
 
-HallBridge uses a separate Express.js email server for sending transactional emails:
+HallBridge uses Resend for sending transactional emails:
 
 - **Approval notifications** — Sent when admin approves a student, includes temporary password
 - **Rejection notifications** — Sent when admin rejects a registration
 - **Password reset OTPs** — 6-digit codes for forgot password flow
 - **Welcome emails** — After successful registration
-
-The email server runs independently with:
-- Rate limiting (30 requests/minute)
-- HTML sanitization via `sanitize-html`
-- Shared secret authentication between Next.js app and email server
-- SMTP transport via Nodemailer
 
 ---
 
@@ -485,9 +458,6 @@ The email server runs independently with:
 
 ```
 HallBridge/
-├── email-server/              # Standalone Express email service
-│   ├── email_server.js
-│   └── package.json
 ├── public/
 │   ├── images/                # Landing page images
 │   └── logos/                 # Brand logos (SVG)
@@ -554,7 +524,6 @@ HallBridge/
 | `pnpm seed` | Seed all database collections |
 | `pnpm seed:clear` | Clear all seeded data |
 | `pnpm db:reset` | Clear and re-seed the database |
-| `pnpm email-server` | Start the email server with nodemon |
 
 ---
 

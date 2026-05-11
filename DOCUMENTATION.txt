@@ -33,7 +33,7 @@ TECHNOLOGY STACK:
 - Backend: Next.js API Routes
 - Database: MongoDB with Mongoose ODM
 - Authentication: Session-based (HTTP-only cookies)
-- Email: Nodemailer with SMTP
+- Email: Resend
 
 KEY FEATURES:
 -------------
